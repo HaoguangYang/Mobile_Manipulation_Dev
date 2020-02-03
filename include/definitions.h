@@ -44,13 +44,13 @@
 /* Caster measurements */
 #define PC_r 						(0.055*1.000) 		// [m] -- Wheel radius  * Empirical_Cal_Factor
 #define PC_b 						(-0.020*0.995) 		// [m] -- Caster offset * Empirical_Cal_Factor
-#define PC_h 						( 0.2159) 			// [m] -- FROM BOB's CODE
+#define PC_h 						( 0.2934) 			// [m] -- FROM BOB's CODE. Never used in program. Originally 0.2159 for a smaller base
 
 /********************************** VEHICLE *****************************************/
 #define NUM_CASTERS 				4
-#define DIST_TO_CASTER_X 			0.1375     	// from cad. need to verify (Haley's old number: 0.1300)
-#define DIST_TO_CASTER_Y 			0.147114  	// from cad. need to verify (Haley's old number: 0.1325)
-#define DIST_TO_CASTER 				0.201		// radial dist calculated from X and Y above (used for max angular vel) (Haley's old number: 0.1856)
+#define DIST_TO_CASTER_X 			0.2075     	// from cad. need to verify (Haley's old number: 0.1300) 0.1375
+#define DIST_TO_CASTER_Y 			0.2075  	// from cad. need to verify (Haley's old number: 0.1325) 0.147114
+#define DIST_TO_CASTER 				0.2934		// radial dist calculated from X and Y above (used for max angular vel) (Haley's old number: 0.1856) 0.201
 
 // Max change in velocity for one control loop (inc = increase, dec = decrease)
 #define MAX_VEL_TRANS_INC   		(MAX_ACCEL_TRANS * CONTROL_PERIOD_s)
@@ -77,8 +77,8 @@
 #define PC_Ip 						(0.022)      		// [kg m2] -- pumpkin Inertia (non-moving in pumpkin frame)
 
 // Vehicle CONSTANTS.  Change these for CM (x,y) Mass and Inertia
-#define PC_length					(0.465)             // [m]     -- length of vehicle along the x and y directions
-#define PC_height 					(0.30)              // [m]     -- height of vehicle 
+#define PC_length					(0.60)              // [m]     -- length of vehicle along the x and y directions. Originally 0.465
+#define PC_height 					(0.35)              // [m]     -- height of vehicle 
 #define PC_Vx 						(0.0)      			// [m]     -- Vehicle CoM x-coord
 #define PC_Vy 						(0.0)      			// [m]     -- Vehicle CoM y-coord
 #define PC_Mv 						(61.5 - 4.0 * (PC_Mp + PC_Mf))           // [kg]  -- Vehicle Mass
