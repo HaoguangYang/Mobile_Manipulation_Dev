@@ -25,6 +25,15 @@
 #include <termios.h>
 #include <fcntl.h>
 
+
+// ROS headers
+#include "ros/ros.h"
+#include "geometry_msgs/Twist.h"
+#include "std_msgs/Byte.h"
+#include "nav_msgs/Odometry.h"
+#include "tf/transform_broadcaster.h"
+
+
 /* these parameters were for testing sine wave inputs, uncomment next line 
    to run the platform in a circular motion and ignore controller inputs */
 
@@ -64,6 +73,11 @@ static double cur_x_dot = 0;
 static double cur_y_dot = 0;
 static double cur_theta_dot = 0;
 
+/* variables for torque control mode */
+static Eigen::Vector3d gx_des   = Eigen::Vector3d::Zero();  // Position desired
+static Eigen::Vector3d gxd_des  = Eigen::Vector3d::Zero();  // Velocity desired
+static Eigen::Vector3d gxdd_des = Eigen::Vector3d::Zero();  // Acceleration desired
+
 /* for recording data */
 static bool dumpData = true;
 static std::ofstream file;
@@ -82,6 +96,69 @@ static const char *mq_name = "/joystick message queue";
  * output data to a csv for debugging. This file i/o is performed in the
  * control_thread function if it needs to be changed.
  */
+
+
+void cmdVelRecvCallback(const geometry_msgs::Twist::ConstPtr& cmdVel)
+{
+    cur_x_dot = cmdVel->linear->x;
+    cur_y_dot = cmdVel->linear->y;
+    cur_theta_dot = cmdVel->angular->z;
+}
+
+void cmdTorqXRecvCallback(const geometry_msgs::Pose::ConstPtr& x_des)
+{
+    gx_des(0) = x_des->position->x;
+    gx_des(1) = x_des->position->y;
+    gx_des(2) = tf.getYaw(x_des->orientation);
+}
+
+void cmdTorqXdRecvCallback(const geometry_msgs::Twist::ConstPtr& xd_des)
+{
+    gxd_des(0) = xd_des->linear->x;
+    gxd_des(1) = xd_des->linear->y;
+    gxd_des(2) = xd_des->angular->z;
+}
+
+void cmdTorqXddRecvCallback(const geometry_msgs::Accel::ConstPtr& xdd_des)
+{
+    gxdd_des(0) = xdd_des->linear->x;
+    gxdd_des(1) = xdd_des->linear->y;
+    gxdd_des(2) = xdd_des->angular->z;
+}
+
+void ctrlModeRecvCallback(const std_msgs::Byte::ConstPtr& ctrlMode)
+{
+    switch (ctrlMode->data){
+        case 0:
+            if (vehicle->isEnabled())
+                vehicle->disable();
+            break;
+        case 1:
+            if (vehicel->getCtrlMode()!=VELOCITY){      // CtrlMode == Torque
+                if (vehicle->isEnabled())               // Vehicle Enabled
+                    vehicle->disable();                 // First disable vehicle
+                vehicle->setCtrlMode(VELOCITY);         // Set CtrlMode to Velocity
+                vehicle->enable();                      // Reenable vehicle
+            }
+            else if (!vehicle->isEnabled())             // CtrlMode == Velocity and vehicle disabled
+                vehicle->enable();                      // Enables vehicle
+            break;
+        case 2:
+            if (vehicel->getCtrlMode()!=TORQUE){        // CtrlMode == VELOCITY
+                if (vehicle->isEnabled())               // Vehicle Enabled
+                    vehicle->disable();                 // First disable vehicle
+                vehicle->setCtrlMode(TORQUE);           // Set CtrlMode to TORQUE
+                vehicle->enable();                      // Reenable vehicle
+            }
+            else if (!vehicle->isEnabled())             // CtrlMode == Torque and vehicle disabled
+                vehicle->enable();                      // Enables vehicle
+            break;
+        default:
+            ROSERROR("Unknown Control Mode!");
+            break;
+    }
+}
+
 int 
 main (int argc, char *argv[])
 {
@@ -197,9 +274,40 @@ main (int argc, char *argv[])
 		launch_rt_thread (control_thread, &control, NULL, MAX_PRIO);
 	}
 
+    /* Initialize ROS node: 
+            Set node name = PCV_Base
+            Publishes sensor status to topic = TBD
+            Publish rate = 50Hz.
+     */
+    ros::init(argc, argv, "PCV_Base");
+    ros::nodeHandle rosNH;
+    ros::Publisher odomPub = rosNH.advertise<nav_msgs::Odometry>("odom", 10);
+    //ros::Publisher statusPub = rosNH.advertise<std_msgs::Float64MultiArray>("dump",10);
+    ros::Rate pub_rate(50);
+    ros::Subscriber cmdSubV = rosNH.subscribe("/mobile_base_controller/cmd_vel", 10, cmdVelRecvCallback);
+    ros::Subscriber cmdSubTx = rosNH.subscribe("/mobile_base_controller/cmd_torq_x", 10, cmdTorqXRecvCallback);
+    ros::Subscriber cmdSubTxd = rosNH.subscribe("/mobile_base_controller/cmd_torq_xd", 10, cmdTorqXdRecvCallback);
+    ros::Subscriber cmdSubTxdd = rosNH.subscribe("/mobile_base_controller/cmd_torq_xdd", 10, cmdTorqXddRecvCallback);
+    ros::Subscriber ctrlModeSub = rosNH.subscribe("/mobile_base_controller/control_mode", 10, ctrlModeRecvCallback);
+    
+    tf::TransformBroadcaster odom_broadcaster;
+    geometry_msgs::TransformStamped odom_trans;
+    nav_msgs::Odometry odom;
+    ros::Time current_time;
+    odom_trans.transform.translation.z = 0.0;
+    odom.pose.pose.position.z = 0.0;
+    odom.twist.twist.linear.z = 0.0;
+    odom.twist.twist.angular.x = 0.0;
+    odom.twist.twist.angular.y = 0.0;
+    
+    Eigen::Vector3d gx       = Eigen::Vector3d::Zero(); 
+	Eigen::Vector3d gxd      = Eigen::Vector3d::Zero(); 
+    
 	/* main loop - receive events from controller */
-	while (1)
+	while (ros::ok())
 	{
+        
+    #ifdef BUMPER_SENSORS
 		if (vehicle->isInitialized()){
 			//"SAFETY" -- stop vehicle and program if bumper is hit 
 			if (vehicle->isBumperHit()) {
@@ -207,9 +315,36 @@ main (int argc, char *argv[])
 				sig_handler(0); 
 			}
 		}
-
+    #endif
+    
+        // ROS Code Goes Here.
+        current_time = ros::Time::now();
+        gx = vehicle->getGlobalPosition();
+        gxd = vehicle->getGlobalVelocity();
+        geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(gx(2));
+        odom_trans.header.stamp = current_time;
+        odom_trans.header.frame_id = "odom";
+        odom_trans.child_frame_id = "base_link";
+        odom_trans.transform.translation.x = g(0);
+        odom_trans.transform.translation.y = g(1);
+        odom_trans.transform.rotation = odom_quat;
+        odom_broadcaster.sendTransform(odom_trans);
+        
+        odom.header.stamp = current_time;
+        odom.header.frame_id = "odom";
+        odom.child_frame_id = "base_link";
+        odom.pose.pose.position.x = g(0);
+        odom.pose.pose.position.y = g(1);
+        odom.pose.pose.orientation = odom_quat;
+        odom.twist.twist.linear.x = gxd(0);
+        odom.twist.twist.linear.y = gxd(1);
+        odom.twist.twist.angular.z = gxd(2);
+        
+        odom_pub.publish(odom);
+        pub_rate.sleep();
+    
+    /*
 	#ifdef JOYSTICK
-	
 		struct event e;
 		mq_receive (mq_joystick, (char *)&e, sizeof (e), NULL);
 		switch (e.type)
@@ -227,7 +362,7 @@ main (int argc, char *argv[])
 				break;
 
 			if (vehicle->isInitialized()) {
-				/* handle button events */
+				// handle button events
 				case BUTTON_PRESSED:
 				{
 					switch (e.param)
@@ -235,12 +370,12 @@ main (int argc, char *argv[])
 						// "SAFETY" -- convenience stop!
 						case A_BUTTON:
 							cout << "A button pressed" << endl; 
-							/* "A" button toggles enable/disable of vehicle */
+							// "A" button toggles enable/disable of vehicle
 							vehicle->isEnabled() ? vehicle->disable() : vehicle->enable();
 						break;
 						case X_BUTTON:
 							cout << "X button pressed" << endl; 
-							/* "X" changes the control mode to torque control */
+							// "X" changes the control mode to torque control
 							control_mode = TORQUE;
 							vehicle->disable(); 
 							vehicle->setCtrlMode(control_mode);
@@ -248,7 +383,7 @@ main (int argc, char *argv[])
 						break;
 						case Y_BUTTON:
 							cout << "Y button pressed" << endl; 
-							/* "B" changes the control mode to velocity control */
+							// "B" changes the control mode to velocity control
 							control_mode = VELOCITY;
 							vehicle->disable(); 
 							vehicle->setCtrlMode(control_mode);
@@ -269,8 +404,8 @@ main (int argc, char *argv[])
 			cout << "Key is hit" << endl; // Todo: remove print statement - not safe
 			sig_handler(0); 
 		}
-
 	#endif
+    */
 	}
 
 	delete vehicle;
@@ -303,9 +438,6 @@ control_thread (void *aux)
 	/* Initialize variables */
 	Eigen::Vector3d gx       = Eigen::Vector3d::Zero(); 
 	Eigen::Vector3d gxd      = Eigen::Vector3d::Zero(); 
-	Eigen::Vector3d gx_des   = Eigen::Vector3d::Zero();
-	Eigen::Vector3d gxd_des  = Eigen::Vector3d::Zero();
-	Eigen::Vector3d gxdd_des = Eigen::Vector3d::Zero();
 	Eigen::Vector3d x_local  = Eigen::Vector3d::Zero(); 
 	Eigen::Vector3d xd_local = Eigen::Vector3d::Zero(); 
 	Eigen::Matrix<double, 8, 1> qd;
@@ -374,7 +506,7 @@ control_thread (void *aux)
 	auto t_start = std::chrono::high_resolution_clock::now(); 
 	auto t_previous_loop_start = t_start; 
 
-	while (1) 
+	while (ros::ok()) 
 	{
 		/* ---------- first half of control loop ---------- */
 		/* Get loop timestamp */ 
@@ -399,8 +531,8 @@ control_thread (void *aux)
 		/***************** Write data to csv file *********************************/
 		if (dumpData)
 		{
-			gx = vehicle->getGlobalPosition();
-			gxd = vehicle->getGlobalVelocity();
+			gx = vehicle->getGlobalPosition();  //Odom
+			gxd = vehicle->getGlobalVelocity(); //Odom
 			tq_des = vehicle->getDesJointTorques();
 			cf_des_local = vehicle->getLocalCommandForces();
 			lambda = vehicle->getLambda(); 
@@ -442,7 +574,7 @@ control_thread (void *aux)
 				file << "," << C_pinv(i); 
 			}
 			file << endl;
-		} 
+		}
 		/**************************************************************************/
 
 		switch(control_mode) {
@@ -546,7 +678,7 @@ control_thread (void *aux)
 				otg->computeNextState(step_desired_position, step_desired_velocity);
 				vehicle->setTargets(step_desired_position,step_desired_velocity,gxdd_des);
    			#else
-				vehicle->setTargets(gx_des, gxd_des, gxdd_des);
+				vehicle->setTargets(gx_des, gxd_des, gxdd_des);                         // Torque Control Input
 			#endif
 				break;
 			}
