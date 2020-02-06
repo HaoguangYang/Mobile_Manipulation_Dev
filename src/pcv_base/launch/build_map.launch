@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+	<!-- static transform -->
+	<include file="$(find map_follower)/launch/includes/static_tf.launch" />
+
+	<!-- Laser scanner -->
+	<include file="$(find map_follower)/launch/includes/laser.launch" />
+
+    <!-- Odometry (IMU, odom, ekf) -->
+	<include file="$(find map_follower)/launch/includes/odom.launch" />
+
+    <!-- SLAM -->
+    <include file="$(find map_follower)/launch/includes/slam.launch" />
+	
+	<!-- Visualization -->
+    <!-- node pkg="rviz" type="rviz" name="rviz"/-->
+    
+	<!-- control scripts below -->
+    
+</launch>
