@@ -28,10 +28,13 @@
 
 // ROS headers
 #include "ros/ros.h"
+#include "geometry_msgs/Accel.h"
 #include "geometry_msgs/Twist.h"
+#include "geometry_msgs/Pose.h"
 #include "std_msgs/Byte.h"
 #include "nav_msgs/Odometry.h"
 #include "tf/transform_broadcaster.h"
+#include "tf/transform_datatypes.h"
 
 
 /* these parameters were for testing sine wave inputs, uncomment next line 
@@ -100,30 +103,30 @@ static const char *mq_name = "/joystick message queue";
 
 void cmdVelRecvCallback(const geometry_msgs::Twist::ConstPtr& cmdVel)
 {
-    cur_x_dot = cmdVel->linear->x;
-    cur_y_dot = cmdVel->linear->y;
-    cur_theta_dot = cmdVel->angular->z;
+    cur_x_dot = cmdVel->linear.x;
+    cur_y_dot = cmdVel->linear.y;
+    cur_theta_dot = cmdVel->angular.z;
 }
 
 void cmdTorqXRecvCallback(const geometry_msgs::Pose::ConstPtr& x_des)
 {
-    gx_des(0) = x_des->position->x;
-    gx_des(1) = x_des->position->y;
-    gx_des(2) = tf.getYaw(x_des->orientation);
+    gx_des(0) = x_des->position.x;
+    gx_des(1) = x_des->position.y;
+    gx_des[2] = tf::getYaw(x_des->orientation);
 }
 
 void cmdTorqXdRecvCallback(const geometry_msgs::Twist::ConstPtr& xd_des)
 {
-    gxd_des(0) = xd_des->linear->x;
-    gxd_des(1) = xd_des->linear->y;
-    gxd_des(2) = xd_des->angular->z;
+    gxd_des(0) = xd_des->linear.x;
+    gxd_des(1) = xd_des->linear.y;
+    gxd_des(2) = xd_des->angular.z;
 }
 
 void cmdTorqXddRecvCallback(const geometry_msgs::Accel::ConstPtr& xdd_des)
 {
-    gxdd_des(0) = xdd_des->linear->x;
-    gxdd_des(1) = xdd_des->linear->y;
-    gxdd_des(2) = xdd_des->angular->z;
+    gxdd_des(0) = xdd_des->linear.x;
+    gxdd_des(1) = xdd_des->linear.y;
+    gxdd_des(2) = xdd_des->angular.z;
 }
 
 void ctrlModeRecvCallback(const std_msgs::Byte::ConstPtr& ctrlMode)
@@ -134,7 +137,7 @@ void ctrlModeRecvCallback(const std_msgs::Byte::ConstPtr& ctrlMode)
                 vehicle->disable();
             break;
         case 1:
-            if (vehicel->getCtrlMode()!=VELOCITY){      // CtrlMode == Torque
+            if (vehicle->getCtrlMode()!=VELOCITY){      // CtrlMode == Torque
                 if (vehicle->isEnabled())               // Vehicle Enabled
                     vehicle->disable();                 // First disable vehicle
                 vehicle->setCtrlMode(VELOCITY);         // Set CtrlMode to Velocity
@@ -144,7 +147,7 @@ void ctrlModeRecvCallback(const std_msgs::Byte::ConstPtr& ctrlMode)
                 vehicle->enable();                      // Enables vehicle
             break;
         case 2:
-            if (vehicel->getCtrlMode()!=TORQUE){        // CtrlMode == VELOCITY
+            if (vehicle->getCtrlMode()!=TORQUE){        // CtrlMode == VELOCITY
                 if (vehicle->isEnabled())               // Vehicle Enabled
                     vehicle->disable();                 // First disable vehicle
                 vehicle->setCtrlMode(TORQUE);           // Set CtrlMode to TORQUE
@@ -154,7 +157,7 @@ void ctrlModeRecvCallback(const std_msgs::Byte::ConstPtr& ctrlMode)
                 vehicle->enable();                      // Enables vehicle
             break;
         default:
-            ROSERROR("Unknown Control Mode!");
+            ROS_ERROR("Unknown Control Mode!");
             break;
     }
 }
@@ -280,7 +283,7 @@ main (int argc, char *argv[])
             Publish rate = 50Hz.
      */
     ros::init(argc, argv, "PCV_Base");
-    ros::nodeHandle rosNH;
+    ros::NodeHandle rosNH;
     ros::Publisher odomPub = rosNH.advertise<nav_msgs::Odometry>("odom", 10);
     //ros::Publisher statusPub = rosNH.advertise<std_msgs::Float64MultiArray>("dump",10);
     ros::Rate pub_rate(50);
@@ -290,7 +293,7 @@ main (int argc, char *argv[])
     ros::Subscriber cmdSubTxdd = rosNH.subscribe("/mobile_base_controller/cmd_torq_xdd", 10, cmdTorqXddRecvCallback);
     ros::Subscriber ctrlModeSub = rosNH.subscribe("/mobile_base_controller/control_mode", 10, ctrlModeRecvCallback);
     
-    tf::TransformBroadcaster odom_broadcaster;
+    tf::TransformBroadcaster odomBroadcaster;
     geometry_msgs::TransformStamped odom_trans;
     nav_msgs::Odometry odom;
     ros::Time current_time;
@@ -325,22 +328,22 @@ main (int argc, char *argv[])
         odom_trans.header.stamp = current_time;
         odom_trans.header.frame_id = "odom";
         odom_trans.child_frame_id = "base_link";
-        odom_trans.transform.translation.x = g(0);
-        odom_trans.transform.translation.y = g(1);
+        odom_trans.transform.translation.x = gx(0);
+        odom_trans.transform.translation.y = gx(1);
         odom_trans.transform.rotation = odom_quat;
-        odom_broadcaster.sendTransform(odom_trans);
+        odomBroadcaster.sendTransform(odom_trans);
         
         odom.header.stamp = current_time;
         odom.header.frame_id = "odom";
         odom.child_frame_id = "base_link";
-        odom.pose.pose.position.x = g(0);
-        odom.pose.pose.position.y = g(1);
+        odom.pose.pose.position.x = gx(0);
+        odom.pose.pose.position.y = gx(1);
         odom.pose.pose.orientation = odom_quat;
         odom.twist.twist.linear.x = gxd(0);
         odom.twist.twist.linear.y = gxd(1);
         odom.twist.twist.angular.z = gxd(2);
         
-        odom_pub.publish(odom);
+        odomPub.publish(odom);
         pub_rate.sleep();
     
     /*

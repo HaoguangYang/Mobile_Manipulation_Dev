@@ -1,0 +1,8 @@
+prefix=/mnt/Workspace/Dev/Mobile_Manipulation_Dev/devel
+
+Name: pcv_base
+Description: Description of pcv_base
+Version: 0.0.1
+Cflags: -I/mnt/Workspace/Dev/Mobile_Manipulation_Dev/src/pcv_base/include
+Libs: -L${prefix}/lib 
+Requires: geometry_msgs nav_msgs roscpp rospy std_msgs tf
