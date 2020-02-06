@@ -106,6 +106,7 @@ motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
 
 	/* initialize the motor struct member */
 	pthread_mutex_init (&m->lock, NULL);
+
 	m->no = motor_no;
 	m->cm = cm;
 	m->mt = mt;
@@ -117,33 +118,47 @@ motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
     
 	/* open a CAN socket for this motor no */
 	m->s = create_can_socket (m->no, 0xF); 
-	if (m->s < 0)
+	if (m->s < 0){
+		printf("CAN socket creation FAILED!\r\n");
 		goto done;
+	}
 
 	/* initialize timers */
-	if (init_rt_timer (&m->msg_timer, msg_timer_handler, m))
+	if (init_rt_timer (&m->msg_timer, msg_timer_handler, m)){
+		printf("Init RT MSG timer FAILED!\r\n");
 		goto done;
+	}
 
-	if (init_rt_timer (&m->heartbeat_timer, heartbeat_timer_handler, m))
+	if (init_rt_timer (&m->heartbeat_timer, heartbeat_timer_handler, m)){
+		printf("Init RT HeartBeat timer FAILED!\r\n");		
 		goto done;
+	}
 
 	/* initialize the message queue for this motor */
-	if (init_mQueue (m))
+	if (init_mQueue (m)){
+		printf("Init mQueue FAILED!\r\n");
 		goto done;
+	}
 
 	/* launch the listening thread */
-	if (launch_rt_thread (listener, &m->listener, m, MAX_PRIO - 1))
+	if (launch_rt_thread (listener, &m->listener, m, MAX_PRIO - 1)){
+		printf("Launch RT thread FAILED!\r\n");
 		goto done;
+	}
 
 	/* now perform the initialization for the particular drive mode */
-	if (init_motor (m))
+	if (init_motor (m)){
+		printf("Init motor drive FAILED!\r\n");
 		goto done;
+	}
 
 	/* home the motor if STEERING motor */
 	if (m->mt == STEERING)
 	{
-		if (home_motor (m))
+		if (home_motor (m)){
+			printf("Motor homing FAILED!\r\n");
 			goto done;
+		}
 	}
 	success = true;
 
@@ -154,7 +169,6 @@ motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
 			motor_destroy (m);
 			m = NULL;
 		}
-	
 	return m;
 }
 

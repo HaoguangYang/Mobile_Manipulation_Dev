@@ -13,7 +13,7 @@ Development repo for the mobile manipulation platforms
 
 #### Setup Linux System
 
-- Initialize Linux CAN bus:
+- Initialize Linux CAN bus (Needs to be done on every reboot):
 ```sh
 sudo ip link set can0 up type can bitrate 1000000
 ```
@@ -21,6 +21,17 @@ sudo ip link set can0 up type can bitrate 1000000
 ```sh
 sudo apt-get install can-utils
 candump -ax can0
+```
+
+- Alternatively, add the following lines to `/etc/rc.local` (**before** `exit 0`) to make system bring up `can0` and `can1` automatically during booting process:
+```sh
+sudo ip link set can0 up type can bitrate 1000000
+sudo ip link set can1 up type can bitrate 1000000
+``` 
+
+- The robot has an LVDS built-in display interface for some reason, and it is never used. To disable it such that the external display becomes primary display, edit `/etc/default/grub` at **line 10** to be:
+```sh
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash video=LVDS-1:d"
 ```
 
 ### System environments:
@@ -58,6 +69,12 @@ sudo apt-get install librealsense2-dev
 ### Steps to run the code: 
 ```sh
 catkin_make
+```
+
+Setup passwordless sudo for the current user: add the following line to `/etc/sudoers` **second line before ending**
+
+```sh
+username  ALL = (ALL) NOPASSWD: ALL
 ```
 Then run the ros package `pcv_base`.
 

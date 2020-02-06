@@ -45,12 +45,12 @@
 #define THETA_freq              (0.05)      /* [hz] */
 
 // #define JOYSTICK 
-#define CAMERA
+// #define CAMERA
 #define MANUAL_ZERO
 
 // Trajectory modes 
 // #define SPIN
-#define LINE
+// #define LINE
 // #define SQUARE
 
 using std::cout;
@@ -85,8 +85,8 @@ static Eigen::Vector3d gxdd_des = Eigen::Vector3d::Zero();  // Acceleration desi
 static bool dumpData = true;
 static std::ofstream file;
 
-// enum ctrl_mode control_mode = VELOCITY;
-enum ctrl_mode control_mode = TORQUE;
+enum ctrl_mode control_mode = VELOCITY;
+// enum ctrl_mode control_mode = TORQUE;
 
 static mqd_t mq_joystick;
 static mqd_t mq_tracking;
