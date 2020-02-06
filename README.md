@@ -1,6 +1,28 @@
 # Mobile_Manipulation_Dev
 Development repo for the mobile manipulation platforms
 
+### Robot configuration
+
+#### Preliminaries
+
+- Remove top panel and rear panel.
+- Remove UPS: (To be filled)
+- Change wiring harness (charging related) at battery terminal (behind battery bay): remove 06331R (Black), 06331Q (Black), 06021B (Red), 06021C (Red). Insulate separately and tie away.
+- Check main terminal box (DIN main) behind the switch panel, the wiring order should be as followed: (To be filled).
+- Set servo motor IDs: (To be filled)
+
+#### Setup Linux System
+
+- Initialize Linux CAN bus:
+```sh
+sudo ip link set can0 up type can bitrate 1000000
+```
+- For debugging, use candump:
+```sh
+sudo apt-get install can-utils
+candump -ax can0
+```
+
 ### System environments:
 
 Ubuntu 16.04 or newer.
@@ -32,20 +54,6 @@ sudo apt-get install librealsense2-dev
 ```
 
 - Install ROS: refer to online instructions ([Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu) or [Melodic](http://wiki.ros.org/melodic/Installation/Ubuntu)).
-
-### Robot configuration
-
-- Set servo motor IDs: (To be filled)
-
-- Initialize Linux CAN bus:
-```sh
-sudo ip link set can0 up type can bitrate 1000000
-```
-- For debugging, use candump:
-```sh
-sudo apt-get install can-utils
-candump -ax can0
-```
 
 ### Steps to run the code: 
 ```sh
