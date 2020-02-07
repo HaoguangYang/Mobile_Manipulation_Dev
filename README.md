@@ -22,6 +22,7 @@ sudo ip link set can0 up type can bitrate 1000000
 sudo apt-get install can-utils
 candump -ax can0
 ```
+The documentation for the iPOS motor controller CAN protocol can be found [HERE](http://www.technosoft.ro/KB/index.php?/getAttach/46/AA-15445/P091.063.CANopen.iPOS.UM.pdf).
 
 - Alternatively, add the following lines to `/etc/rc.local` (**before** `exit 0`) to make system bring up `can0` and `can1` automatically during booting process:
 ```sh
