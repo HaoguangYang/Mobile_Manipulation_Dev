@@ -415,7 +415,7 @@ main (int argc, char *argv[])
 	#endif
     */
 	}
-	raise (SIGINT);
+
 	delete vehicle;
 	cout << "Exiting main thread" << endl;
 	return 0;
