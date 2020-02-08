@@ -106,13 +106,16 @@ void cmdVelRecvCallback(const geometry_msgs::Twist::ConstPtr& cmdVel)
     cur_x_dot = cmdVel->linear.x;
     cur_y_dot = cmdVel->linear.y;
     cur_theta_dot = cmdVel->angular.z;
+    //cout<<vel_commands<<endl;
+    //if (control_mode == VELOCITY)
+        //vehicle->setGlobalVelocity(vel_commands);
 }
 
 void cmdTorqXRecvCallback(const geometry_msgs::Pose::ConstPtr& x_des)
 {
     gx_des(0) = x_des->position.x;
     gx_des(1) = x_des->position.y;
-    gx_des[2] = tf::getYaw(x_des->orientation);
+    gx_des(2) = tf::getYaw(x_des->orientation);
 }
 
 void cmdTorqXdRecvCallback(const geometry_msgs::Twist::ConstPtr& xd_des)
@@ -208,6 +211,7 @@ main (int argc, char *argv[])
 
 	/* Construct the vehicle object */
 	vehicle = new Vehicle ();
+	pthread_t control;
 
 	/* Initialize vehicle and if successful, launch control thread*/
 	if (vehicle->init()){
@@ -273,7 +277,6 @@ main (int argc, char *argv[])
 		#endif
 
 		/*Launch control thread */
-		pthread_t control;
 		launch_rt_thread (control_thread, &control, NULL, MAX_PRIO);
 	}
 
@@ -344,6 +347,8 @@ main (int argc, char *argv[])
         odom.twist.twist.angular.z = gxd(2);
         
         odomPub.publish(odom);
+	
+        ros::spinOnce();
         pub_rate.sleep();
     
     /*
@@ -410,7 +415,7 @@ main (int argc, char *argv[])
 	#endif
     */
 	}
-
+	raise (SIGINT);
 	delete vehicle;
 	cout << "Exiting main thread" << endl;
 	return 0;
@@ -439,6 +444,7 @@ control_thread (void *aux)
 	unsigned long ticks = 0;
 
 	/* Initialize variables */
+	Eigen::Vector3d vel_commands;
 	Eigen::Vector3d gx       = Eigen::Vector3d::Zero(); 
 	Eigen::Vector3d gxd      = Eigen::Vector3d::Zero(); 
 	Eigen::Vector3d x_local  = Eigen::Vector3d::Zero(); 
@@ -451,7 +457,6 @@ control_thread (void *aux)
 	Eigen::Matrix3d lambda; 
 	Eigen::MatrixXd C_pinv;
 	Eigen::Matrix<double, NUM_CASTERS, 1> q_steer; 
-	Eigen::Vector3d vel_commands;
 	Eigen::Vector3d gx_cam = Eigen::Vector3d::Zero(); 
 	float th_cam = 0.0; 
 
@@ -689,6 +694,7 @@ control_thread (void *aux)
 			case VELOCITY:
 			{  
 				vehicle->setGlobalVelocity(vel_commands);
+				//printf("%f, %f, %f\r\n", vel_commands(0), vel_commands(1), vel_commands(2));
 				break;
 			}
 

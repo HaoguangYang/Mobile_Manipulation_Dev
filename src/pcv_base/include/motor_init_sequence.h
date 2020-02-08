@@ -18,7 +18,7 @@ extern "C" {
 #define NUM_ENABLE_STEPS	(sizeof (enable_sequence) / sizeof (enable_sequence[0]))
 
 /* Heartbeat */
-#define HEARTBEAT_INTERVAL_ms	(1000)
+#define HEARTBEAT_INTERVAL_ms	(50)
 
 /* Homing */
 #define HOME_SPEED_FAST			(0x100000)

@@ -3,7 +3,7 @@
 
 /********************************** MOTOR ******************************************/
 #define NUM_MOTORS					(8)
-#define QUEUE_SIZE					(16)
+#define QUEUE_SIZE					(32)
 #define MAX_NAME_LEN				(25)
 
 /* Constants for unit conversion */

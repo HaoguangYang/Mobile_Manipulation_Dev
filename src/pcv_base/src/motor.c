@@ -496,7 +496,7 @@ msg_timer_handler (union sigval val)
 static void
 heartbeat_timer_handler (union sigval val)
 {
-	puts ("heartbeat timeout, killing the process");
+	puts ("Motor controller heartbeat timeout, killing the process");
 	raise (SIGINT);
 }
 
@@ -624,6 +624,7 @@ listener (void *aux)
 	struct can_frame f;
 	struct itimerspec itmr = {{0}};
 	itmr.it_value.tv_sec = HEARTBEAT_TIMEOUT;	
+	printf("Motor listener thread launched!\r\n");
 
 	/* listen for messages forever, thread gets cancelled on motor_destroy call */
 	while (1)
@@ -657,6 +658,8 @@ listener (void *aux)
 	  		e.type = STATUS_WRD_REC;
 	  		e.param = data[0];
 	  		mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
+			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	  	}
 	  	else if (f.can_id == COB_ID_TPDO (m->no, 2)) /* TPDO2 - {pos, vel/trq}*/
 	  	{
@@ -672,6 +675,8 @@ listener (void *aux)
 		    m->stale_vel = false;
 			pthread_mutex_unlock (&m->lock);
 			/* end of critical section */
+			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	  	}
 	    else if (f.can_id == COB_ID_TPDO (m->no, 3)) /* TPD03 - {current, modes of operation */
 	    {
@@ -681,6 +686,8 @@ listener (void *aux)
 	        m->cur_trq = filter (m->cur_trq, torque_IU_to_SI (data[0]), LP_TRQ_FILTER_COEFF);
 	        m->stale_trq = false;
 	        pthread_mutex_unlock (&m->lock);
+			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	    }
 	    else if (f.can_id == COB_ID_TPDO (m->no, 4)) /* TPD04 - digital inputs */
 	    {
@@ -691,6 +698,8 @@ listener (void *aux)
 	  		m->inputs = data[0]; 
 	  		pthread_mutex_unlock (&m->lock); 
 	  		/* end of critical section */
+			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	    }
 	  	else if (f.can_id == COB_ID_SDO_TX (m->no)) /* SDO */
 	  	{
@@ -701,6 +710,8 @@ listener (void *aux)
 	  			e.param = *(uint16_t *)&(f.data[1]);
 	  			mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
 	  		}
+			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	  	}
 	    else if (f.can_id == COB_ID_EMCY_TX (m->no)) /* Emergency message */ 
 	    {
@@ -711,12 +722,12 @@ listener (void *aux)
 			} else if ((f.data[0] == 0x00) && (f.data[1] == 0x00)) {
 				printf("Error reset or no error \n");
 				m->enable_pin_active = true; 
-			} else {
-	    		printf("Data 1: %u \n", f.data[0]);
-	    		printf("Data 2: %u \n", f.data[1]);
-		        printf("Error message received\n");
-		        while(1) {}
-	    	}
+			}// else {
+	    		//printf("Data 1: %u \n", f.data[0]);
+	    		//printf("Data 2: %u \n", f.data[1]);
+		        //printf("Error message received\n");
+		        //while(1) {}
+	    	//}
 		}
 	}	
 }
