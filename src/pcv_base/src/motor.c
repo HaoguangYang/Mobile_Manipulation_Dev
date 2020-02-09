@@ -722,12 +722,12 @@ listener (void *aux)
 			} else if ((f.data[0] == 0x00) && (f.data[1] == 0x00)) {
 				printf("Error reset or no error \n");
 				m->enable_pin_active = true; 
-			}// else {
+			}else {
 	    		//printf("Data 1: %u \n", f.data[0]);
 	    		//printf("Data 2: %u \n", f.data[1]);
 		        //printf("Error message received\n");
 		        //while(1) {}
-	    	//}
+	    	}
 		}
 	}	
 }

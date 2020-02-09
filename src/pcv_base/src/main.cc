@@ -307,7 +307,9 @@ main (int argc, char *argv[])
     odom.twist.twist.angular.y = 0.0;
     
     Eigen::Vector3d gx       = Eigen::Vector3d::Zero(); 
-	Eigen::Vector3d gxd      = Eigen::Vector3d::Zero(); 
+    Eigen::Vector3d gxd      = Eigen::Vector3d::Zero();
+    const float sin_PI_4      = -sqrt(2.)*0.5;
+    const float cos_PI_4      = sqrt(2.)*0.5;
     
 	/* main loop - receive events from controller */
 	while (ros::ok())
@@ -331,16 +333,16 @@ main (int argc, char *argv[])
         odom_trans.header.stamp = current_time;
         odom_trans.header.frame_id = "odom";
         odom_trans.child_frame_id = "base_link";
-        odom_trans.transform.translation.x = gx(0);
-        odom_trans.transform.translation.y = gx(1);
+        odom_trans.transform.translation.x = gx(0);//*cos_PI_4 + gx(1)*sin_PI_4;
+        odom_trans.transform.translation.y = gx(1);//*sin_PI_4 + gx(1)*cos_PI_4;
         odom_trans.transform.rotation = odom_quat;
         odomBroadcaster.sendTransform(odom_trans);
         
         odom.header.stamp = current_time;
         odom.header.frame_id = "odom";
         odom.child_frame_id = "base_link";
-        odom.pose.pose.position.x = gx(0);
-        odom.pose.pose.position.y = gx(1);
+        odom.pose.pose.position.x = gx(0);//*cos_PI_4 + gx(1)*sin_PI_4;
+        odom.pose.pose.position.y = gx(1);//*sin_PI_4 + gx(1)*cos_PI_4;
         odom.pose.pose.orientation = odom_quat;
         odom.twist.twist.linear.x = gxd(0);
         odom.twist.twist.linear.y = gxd(1);
@@ -514,6 +516,8 @@ control_thread (void *aux)
 	auto t_start = std::chrono::high_resolution_clock::now(); 
 	auto t_previous_loop_start = t_start; 
 
+	//ros::start();
+	//ros::Rate rate((int)(2./CONTROL_PERIOD_s));
 	while (ros::ok()) 
 	{
 		/* ---------- first half of control loop ---------- */
@@ -533,6 +537,7 @@ control_thread (void *aux)
 	  	/* send sync message */
 		CO_send_message (vehicle->s, 0, &msg);
 		usleep (3500);
+		//rate.sleep();
 
 		vel_commands << cur_x_dot, cur_y_dot, cur_theta_dot;
 
@@ -706,6 +711,7 @@ control_thread (void *aux)
 			}
 		}
 
+		//rate.sleep();
 		sleep_until (&next, CONTROL_PERIOD_ns/2); 
 /* --------- second half of control loop --------- */
 	  /* send sync message */
@@ -720,6 +726,7 @@ control_thread (void *aux)
 
 	  /* do nothing in this half */
 		sleep_until (&next, CONTROL_PERIOD_ns/2);
+		//rate.sleep();
 	}
 
 }

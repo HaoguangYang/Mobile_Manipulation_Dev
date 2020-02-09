@@ -7,7 +7,7 @@
 #define MAX_NAME_LEN				(25)
 
 /* Constants for unit conversion */
-#define ENCODER_TICKS 				(8192.0)
+#define ENCODER_TICKS 				(4096.0)
 #define SLOW_LOOP_SAMP_PERIOD  		(1.0/2000.0)  		// [s] 
 #define TORQUE_CONSTANT 			(0.16171) 			// [Nm/A]
 #define CURRENT_PEAK				(20.0)    			// [A] 
@@ -26,10 +26,10 @@
 /* motor home offsets */
 #define PI                      	(M_PI)
 #define TWO_PI                  	(2 * PI) 
-#define HOME_OFFSET_MTR_1       	(-3 * PI / 4)
-#define HOME_OFFSET_MTR_3       	(3 * PI / 4)
-#define HOME_OFFSET_MTR_5       	(PI / 4)
-#define HOME_OFFSET_MTR_7       	(-PI/ 4)
+#define HOME_OFFSET_MTR_1       	(-3.*PI/4.-0.13)//(-3 *PI / 4)
+#define HOME_OFFSET_MTR_3       	(3.*PI/4.-0.18)//(3 * PI / 4)
+#define HOME_OFFSET_MTR_5       	(PI/4.-0.16)//(PI / 4)
+#define HOME_OFFSET_MTR_7       	(-PI/4.-0.15)//(-PI/ 4)
 
 /* velocity and torque filter coeffecients */
 #define LP_VEL_FILTER_COEFF			(0.75)
@@ -86,8 +86,8 @@
 
 
 // Control loop times for vehicle
-#define CONTROL_PERIOD_ns 			(8000000)
-#define CONTROL_PERIOD_s 			(0.008)
+#define CONTROL_PERIOD_ns 			(10000000)
+#define CONTROL_PERIOD_s 			(0.010)
 
 #define UNUSED_NODE_ID				(0xF)
 #define MAX_ACCEL_TRANS     		(1.0)								// [m/s^2]
