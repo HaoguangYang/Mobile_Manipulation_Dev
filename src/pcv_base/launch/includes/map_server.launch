@@ -1,5 +1,5 @@
 <launch>
     <!-- Load a map  -->
-    <arg name="map_file" default="$(find map_follower)/resources/map/hallmap.yaml"/>
+    <arg name="map_file" default="$(find pcv_base)/resources/map/IMI.yaml"/>
     <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
 </launch>
