@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import roslib; roslib.load_manifest('teleop_twist_keyboard')
 import rospy
+import os
 
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Byte
@@ -83,9 +84,9 @@ if __name__=="__main__":
     pub = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 1)
     rospy.init_node('teleop_twist_keyboard')
     pub2 = rospy.Publisher('/mobile_base_controller/control_mode', Byte, queue_size = 1)
-    mode = Byte()
-    mode.data = 1
-    pub2.publish(mode)
+    #mode = Byte(1)
+    #pub2.publish(mode)
+    os.system('rostopic pub --once /mobile_base_controller/control_mode std_msgs/Byte 1')
 
     speed = rospy.get_param("~speed", 0.5)
     turn = rospy.get_param("~turn", 1.0)
@@ -134,7 +135,7 @@ if __name__=="__main__":
         twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
         twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
         pub.publish(twist)
-        mode.data = 0
-        pub2.publish(mode)
-
+        #mode.data = 0
+        #pub2.publish(mode)
+        os.system('rostopic pub --once /mobile_base_controller/control_mode std_msgs/Byte 0')
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)

@@ -46,7 +46,7 @@
 
 // #define JOYSTICK 
 // #define CAMERA
-#define MANUAL_ZERO
+// #define MANUAL_ZERO
 
 // Trajectory modes 
 // #define SPIN
@@ -535,8 +535,8 @@ control_thread (void *aux)
 	#endif
 
 	  	/* send sync message */
-		CO_send_message (vehicle->s, 0, &msg);
-		usleep (3500);
+		//CO_send_message (vehicle->s, 0, &msg);
+		//usleep (3500);
 		//rate.sleep();
 
 		vel_commands << cur_x_dot, cur_y_dot, cur_theta_dot;
@@ -712,9 +712,10 @@ control_thread (void *aux)
 		}
 
 		//rate.sleep();
-		sleep_until (&next, CONTROL_PERIOD_ns/2); 
+		//sleep_until (&next, CONTROL_PERIOD_ns/2); 
 /* --------- second half of control loop --------- */
 	  /* send sync message */
+		//usleep(1500);
 		CO_send_message (vehicle->s, 0, &msg);
 
 		ticks++;
@@ -725,7 +726,7 @@ control_thread (void *aux)
 		}
 
 	  /* do nothing in this half */
-		sleep_until (&next, CONTROL_PERIOD_ns/2);
+		sleep_until (&next, CONTROL_PERIOD_ns);
 		//rate.sleep();
 	}
 
