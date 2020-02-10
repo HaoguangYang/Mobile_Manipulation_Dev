@@ -505,9 +505,15 @@ control_thread (void *aux)
 	otg->reInitialize(gx);
 #endif
 
+	// Disable HB since we are receiving synced status update.
+	struct CO_message msg_hb_disable;
+	msg_hb_disable.type = SDO_Rx;
+	msg_hb_disable.m.SDO = {0x1017, 0x00, 0, 2};
+	CO_send_message (vehicle->s, sizeof(msg_hb_disable), &msg_hb_disable);
+
 	/* initial sync message */
 	CO_send_message (vehicle->s, 0, &msg);
-	sleep_until (&next, CONTROL_PERIOD_ns/2);
+	sleep_until (&next, CONTROL_PERIOD_ns);
 
 	static bool vehicle_spinning = false;
 	static unsigned long start_time = 0;
