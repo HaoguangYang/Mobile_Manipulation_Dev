@@ -62,7 +62,7 @@ const struct CO_message init_sequence[] = {
 
 	{SDO_Rx, .m.SDO = {TPDO1_COMM, 0x01, COB_ID_TPDO (0,1) | (1 << 31), 4}}, 	/* Disable TPDO1 */
 	{SDO_Rx, .m.SDO = {TPDO1_COMM, 0x02, 255, 1}},								/* Set TPDO1 transmission type to asynchronous (drive responds immediately on change of state) */
-	{SDO_Rx, .m.SDO = {TPDO1_COMM, 0x03, 500, 2}},								/* Set TPDO1 Inhibit time to 50 ms (can only send 1 message per inhibit time) */
+	{SDO_Rx, .m.SDO = {TPDO1_COMM, 0x03, 300, 2}},								/* Set TPDO1 Inhibit time to 30 ms (can only send 1 message per inhibit time) */
 	{SDO_Rx, .m.SDO = {TPDO1_COMM, 0x05, 0, 2}},								/* Disable TPDO1 Event timer (timer for regular transmission) */
 	{SDO_Rx, .m.SDO = {TPDO1_MAPPING, 0x00, 0, 1}},								/* Disable TPDO1 mapping */
 	{SDO_Rx, .m.SDO = {TPDO1_MAPPING, 0x01, 0x60410010, 4}},					/* Map statusword to TPDO1 */
@@ -70,7 +70,7 @@ const struct CO_message init_sequence[] = {
 	{SDO_Rx, .m.SDO = {TPDO1_COMM, 0x01, COB_ID_TPDO (0,1), 4}}, 				/* Enable TPDO1 */
 
 	{SDO_Rx, .m.SDO = {TPDO2_COMM, 0x01, COB_ID_TPDO (0,2) | (1 << 31), 4}}, 	/* Disable TPDO2 */
-	{SDO_Rx, .m.SDO = {TPDO2_COMM, 0x02, 2, 1}},								/* Set TPDO2 transmission type to 2 (send on every 2nd SYNC message) */
+	{SDO_Rx, .m.SDO = {TPDO2_COMM, 0x02, 1, 1}},								/* Set TPDO2 transmission type to 2 (send on every 1st SYNC message) */
 	{SDO_Rx, .m.SDO = {TPDO2_MAPPING, 0x00, 0, 1}},								/* Disable TPDO2 mapping */
 	{SDO_Rx, .m.SDO = {TPDO2_MAPPING, 0x01, 0x60640020, 4}},					/* Map Position Actual Value to TPDO2 */
 	{SDO_Rx, .m.SDO = {TPDO2_MAPPING, 0x02, 0x606C0020, 4}},					/* Map Velocity Actual Value to TPDO2 */
@@ -78,7 +78,7 @@ const struct CO_message init_sequence[] = {
 	{SDO_Rx, .m.SDO = {TPDO2_COMM, 0x01, COB_ID_TPDO (0,2), 4}}, 				/* Enable TPDO2 */
 
 	{SDO_Rx, .m.SDO = {TPDO3_COMM, 0x01, COB_ID_TPDO (0,3) | (1 << 31), 4}},    /* Disable TPDO3 */
-    {SDO_Rx, .m.SDO = {TPDO3_COMM, 0x02, 2, 1}},								/* Set TPD03 transmission type to 2 (send on every 2nd SYNC message) */
+    {SDO_Rx, .m.SDO = {TPDO3_COMM, 0x02, 1, 1}},								/* Set TPD03 transmission type to 2 (send on every 1st SYNC message) */
     {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x00, 0, 1}},								/* Disable TPD03 mapping */
     {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x01, 0x207E0010, 4}},					/* Map current actual value to TPD03 */
     {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x02, 0x60610008, 4}},					/* Map modes of operation display to TPD03 */ // Check this
@@ -102,7 +102,7 @@ const struct CO_message init_sequence[] = {
 	{SDO_Rx, .m.SDO = {HOMING_SPEEDS, 0x02, HOME_SPEED_SLOW, 4}},				/* Set fast homing speed (search for switch) to 0.096 rad/s */
 	{SDO_Rx, .m.SDO = {HOMING_ACCEL, 0x00, HOME_ACCEL, 4}},						/* Set homing acceleration to 6.74 rad/s^2 */
 	{NMT, 	 .m.NMT = 0x01},													/* Set NMT State machine to Operational */
-	{SDO_Rx, .m.SDO = {PROD_HEARTBEAT_TIME, 0x00, HEARTBEAT_INTERVAL_ms, 2}}};	/* Set maximum time between drive heartbeats to 50ms */
+	{SDO_Rx, .m.SDO = {PROD_HEARTBEAT_TIME, 0x00, HEARTBEAT_INTERVAL_ms, 2}}};	/* Set maximum time between drive heartbeats to 50 ms */
 
 /* expected responses from motor driver during initialization */
 const struct event init_responses[] = {
@@ -199,3 +199,4 @@ const struct event enable_responses[] = {
 #endif
 
 #endif
+

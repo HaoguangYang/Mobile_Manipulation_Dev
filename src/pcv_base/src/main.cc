@@ -46,7 +46,7 @@
 
 // #define JOYSTICK
 // #define CAMERA
-//#define MANUAL_ZERO
+// #define MANUAL_ZERO
 
 // Trajectory modes
 // #define SPIN
@@ -512,9 +512,17 @@ control_thread (void *aux)
 	otg->reInitialize(gx);
 #endif
 
+	// Disable HB since we are receiving synced status update.
+	struct CO_message msg_hb_disable;
+	msg_hb_disable.type = SDO_Rx;
+	msg_hb_disable.m.SDO = {0x1017, 0x00, 0, 2};
+	for (int k = 1; k < 9; k++)
+		CO_send_message (vehicle->s, k, &msg_hb_disable);
+	usleep(1000);
+
 	/* initial sync message */
 	CO_send_message (vehicle->s, 0, &msg);
-	sleep_until (&next, CONTROL_PERIOD_ns/2);
+	sleep_until (&next, CONTROL_PERIOD_ns);
 
 	static bool vehicle_spinning = false;
 	static unsigned long start_time = 0;
@@ -542,8 +550,8 @@ control_thread (void *aux)
 	#endif
 
 	  	/* send sync message */
-		CO_send_message (vehicle->s, 0, &msg);
-		usleep (3500);
+		//CO_send_message (vehicle->s, 0, &msg);
+		//usleep (3500);
 		//rate.sleep();
 
 		vel_commands << cur_x_dot, cur_y_dot, cur_theta_dot;
@@ -719,9 +727,10 @@ control_thread (void *aux)
 		}
 
 		//rate.sleep();
-		sleep_until (&next, CONTROL_PERIOD_ns/2);
+		//sleep_until (&next, CONTROL_PERIOD_ns/2); 
 /* --------- second half of control loop --------- */
 	  /* send sync message */
+		//usleep(1500);
 		CO_send_message (vehicle->s, 0, &msg);
 
 		ticks++;
@@ -732,7 +741,7 @@ control_thread (void *aux)
 		}
 
 	  /* do nothing in this half */
-		sleep_until (&next, CONTROL_PERIOD_ns/2);
+		sleep_until (&next, CONTROL_PERIOD_ns);
 		//rate.sleep();
 	}
   printf("Exiting control thread ... ");
