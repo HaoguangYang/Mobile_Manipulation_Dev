@@ -15,8 +15,8 @@
         <param name="controller_frequency" value="5.0" />
         <param name="controller_patience" value="15.0" />
 
-        <!-- Our carlike robot is not able to rotate in place -->
-        <param name="clearing_rotation_allowed" value="false" />
+        <!-- Our omniveyor is able to rotate in place -->
+        <param name="clearing_rotation_allowed" value="true" />
     </node>
 
     <!-- <node pkg="map_follower" type="mapFollower.py" output="screen" name="map_follower" /> -->
