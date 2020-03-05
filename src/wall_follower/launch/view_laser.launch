@@ -1,0 +1,16 @@
+<launch>
+<!-- LIDAR scan init -->
+	<node name="urg_node" pkg="urg_node" type="urg_node" >
+	    <param name="ip_address" value="128.46.112.200"/>
+	</node> 
+    
+    <!-- the map_follower script launch -->
+    <!-- Change to run you file instead -->
+    <!--<node name="map_follower" pkg="map_follower" type="map_follower.py" output="screen">
+    </node>-->
+		
+	<!-- Visualisation RVIZ -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d /home/nvidia/wsps/ui_ws/src/wall_follower/resources/laser_conf.rviz"/>
+
+	
+</launch>

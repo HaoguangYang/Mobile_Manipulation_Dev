@@ -1,0 +1,24 @@
+<launch>	
+    
+    <!-- LIDAR scan init -->
+	<node pkg="urg_node" type="urg_node" >
+	    <param name="_ip_address" value="128.46.112.200"/>
+	</node>        
+    
+	<!-- Load a Map  -->
+	<arg name="map_file" default="$(find wall_follower)/resources/map/hallway.yaml"/>
+	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+
+	<node pkg="tf" type="static_transform_publisher" name="map_2_laser" args="0 0 0 0 0 0 /map /laser 100"/> 
+    
+    <!-- the map_follower script launch -->
+    <node name="map_follower" pkg="map_follower" type="map_follower.py" output="screen">
+    </node>
+	
+	<!-- Visualisation RVIZ -->
+	<node pkg="rviz" type="rviz" name="rviz" />
+
+	<!-- python script: fetch way points and display on map -->
+	<node pkg="demo" type="waypoint.py" output="screen" name="waypoint" />
+	
+</launch>
