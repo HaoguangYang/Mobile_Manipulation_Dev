@@ -1,25 +1,25 @@
 <?xml version="1.0"?>
 <launch>
 	<!-- static transform -->
-	<include file="$(find map_follower)/launch/includes/static_tf.launch" />
+	<include file="$(find pcv_base)/launch/includes/static_tf.launch" />
 
 	<!-- map server -->
-	<include file="$(find map_follower)/launch/includes/map_server.launch" />
+	<include file="$(find pcv_base)/launch/includes/map_server.launch" />
 	
 	<!-- Laser scanner -->
-	<include file="$(find map_follower)/launch/includes/laser.launch" />
+	<include file="$(find pcv_base)/launch/includes/laser.launch" />
 
 	<!-- Odometry (IMU, odom, ekf) -->
-	<include file="$(find map_follower)/launch/includes/odom.launch" />
+	<!--include file="$(find pcv_base)/launch/includes/odom.launch" /-->
 
 	<!-- Robot localization (amcl) -->
-	<include file="$(find map_follower)/launch/includes/localization.launch" />
+	<include file="$(find pcv_base)/launch/includes/localization.launch" />
 	
 	<!-- navigation (move_base) -->
-	<include file="$(find map_follower)/launch/includes/navigation.launch" />
+	<include file="$(find pcv_base)/launch/includes/navigation.launch" />
 
 	<!-- Visualization -->
-    <!-- node pkg="rviz" type="rviz" name="rviz"/-->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find pcv_base)/resources/cfg/default.rviz"/>
     
 	<!-- Other control scripts -->
     

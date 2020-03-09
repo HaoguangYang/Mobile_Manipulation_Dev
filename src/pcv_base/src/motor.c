@@ -51,7 +51,7 @@ struct motor
 	bool stale_pos;
 	bool stale_vel;
 	bool stale_trq;
-	int32_t inputs; 
+	int32_t inputs;
 };
 
 /*------------------------static function declarations------------------------*/
@@ -83,9 +83,9 @@ static const double home_offsets[] = {HOME_OFFSET_MTR_1,
 
 /*---------------------------public functions---------------------------------*/
 
-/* 
- * This function initializes motor_no and sets it up for control mode cm, 
- * given its particular type. Returns NULL pointer if any part fails  
+/*
+ * This function initializes motor_no and sets it up for control mode cm,
+ * given its particular type. Returns NULL pointer if any part fails
  */
 struct motor *
 motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
@@ -93,9 +93,9 @@ motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
     printf("motor_no: %d\n", motor_no);
     printf("cm: %d\n", cm);
     printf("mt: %d\n", mt);
-    
+
 	assert (0 < motor_no && motor_no <= NUM_MOTORS);
-	struct motor *m; 
+	struct motor *m;
 	bool success = false;
 
 	/* malloc the struct */
@@ -111,13 +111,13 @@ motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
 	m->cm = cm;
 	m->mt = mt;
 	m->enabled = false;
-	m->enable_pin_active = true; 
+	m->enable_pin_active = true;
 	m->stale_pos = true;
 	m->stale_vel = true;
 	m->stale_trq = true;
-    
+
 	/* open a CAN socket for this motor no */
-	m->s = create_can_socket (m->no, 0xF); 
+	m->s = create_can_socket (m->no, 0xF);
 	if (m->s < 0){
 		printf("CAN socket creation FAILED!\r\n");
 		goto done;
@@ -130,7 +130,7 @@ motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
 	}
 
 	if (init_rt_timer (&m->heartbeat_timer, heartbeat_timer_handler, m)){
-		printf("Init RT HeartBeat timer FAILED!\r\n");		
+		printf("Init RT HeartBeat timer FAILED!\r\n");
 		goto done;
 	}
 
@@ -164,7 +164,7 @@ motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
 
 	done:
 		/* perform cleanup if any step failed */
-		if (!success)		
+		if (!success)
 		{
 			motor_destroy (m);
 			m = NULL;
@@ -173,11 +173,11 @@ motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
 }
 
 
-/* 
- * Sends out RPDO2 with the given velocity data (rad/s) to control a 
+/*
+ * Sends out RPDO2 with the given velocity data (rad/s) to control a
  * new velocity
  */
-void 
+void
 motor_set_velocity (struct motor *m, double velocity)
 {
 	assert (m != NULL);
@@ -186,7 +186,7 @@ motor_set_velocity (struct motor *m, double velocity)
 	{
 		/* ignore call if the motor is not in VELOCITY mode*/
 		if (m->cm == VELOCITY)
-		{		
+		{
 			uint32_t ui_vel = (uint32_t)velocity_SI_to_IU (velocity);
 			struct CO_message msg = {RPDO, .m.PDO = {2, ui_vel, 4}};
 			CO_send_message (m->s, m->no, &msg);
@@ -195,12 +195,12 @@ motor_set_velocity (struct motor *m, double velocity)
 }
 
 
-/* 
+/*
  * Returns the most recently received velocity value in SI units (rad/s). If
- * no new update received since the last call to motor_get_velocity, the 
- * function returns -1 
+ * no new update received since the last call to motor_get_velocity, the
+ * function returns -1
  */
-int 
+int
 motor_get_velocity (struct motor *m, double *velocity)
 {
 	assert (m != NULL);
@@ -215,17 +215,17 @@ motor_get_velocity (struct motor *m, double *velocity)
 		retVal = 0;
 	}
 	pthread_mutex_unlock (&m->lock);
-	
+
 	return retVal;
 }
 
 
-/* 
+/*
  * Returns the most recently received position value in SI units (rad). If
- * no new update received since the last call to motor_get_position, the 
- * function returns -1 
+ * no new update received since the last call to motor_get_position, the
+ * function returns -1
  */
-int 
+int
 motor_get_position (struct motor *m, double *position)
 {
 	assert (m != NULL);
@@ -240,36 +240,36 @@ motor_get_position (struct motor *m, double *position)
 		retVal = 0;
 	}
 	pthread_mutex_unlock (&m->lock);
-	
+
 	return retVal;
 }
 
 
 /*
- * Returns true if the bumper next to the motor is hit. 
+ * Returns true if the bumper next to the motor is hit.
  */
 bool
 motor_get_inputs(struct motor *m)
 {
-	assert(m != NULL); 
-	pthread_mutex_lock(&m->lock); 
-	int32_t inputs = m->inputs; 
-	bool retVal = inputs & BIT21HI; 
-	pthread_mutex_unlock(&m->lock); 
-	return retVal; 
+	assert(m != NULL);
+	pthread_mutex_lock(&m->lock);
+	int32_t inputs = m->inputs;
+	bool retVal = inputs & BIT21HI;
+	pthread_mutex_unlock(&m->lock);
+	return retVal;
 }
 
 
-/* 
- * Enables a motor, returns 0 on success and -1 on failure 
+/*
+ * Enables a motor, returns 0 on success and -1 on failure
  */
-int 
+int
 motor_enable (struct motor *m)
 {
 	assert (m != NULL);
 	struct event e;
 	struct itimerspec itmr = {{0}};
-	itmr.it_value.tv_sec = HOME_TIMEOUT;	
+	itmr.it_value.tv_sec = HOME_TIMEOUT;
 
 	/* send the proper mode in the first message of enable sequence */
 	struct CO_message msg = enable_sequence[0];
@@ -293,7 +293,7 @@ motor_enable (struct motor *m)
             printf("Value: %hhd\n", msg.m.SDO.data);
 			break;
 	}
-	
+
 	/* send first message to kick off enable sequence */
 	unsigned i = 0;
 	CO_send_message (m->s, m->no, &msg);
@@ -313,7 +313,7 @@ motor_enable (struct motor *m)
 			CO_send_message (m->s, m->no, &enable_sequence[++i]);
 			timer_settime (m->msg_timer, 0, &itmr, NULL);
 		}
-		else if (e.type == STATUS_WRD_REC && 
+		else if (e.type == STATUS_WRD_REC &&
 							(e.param & ENABLE_Rx_MASK) == enable_responses[i].param)
 		{
 			if (++i < NUM_ENABLE_STEPS)
@@ -334,8 +334,8 @@ motor_enable (struct motor *m)
 }
 
 
-/* 
- * Interface for disabling the motor 
+/*
+ * Interface for disabling the motor
  */
 void
 motor_disable (struct motor *m)
@@ -347,26 +347,26 @@ motor_disable (struct motor *m)
 }
 
 
-/* 
- * Sends out RPDO2 with the given torque data (n/m) to control a 
+/*
+ * Sends out RPDO2 with the given torque data (n/m) to control a
  * new torque
  */
 void
 motor_set_torque (struct motor *m, double torque)
 {
-	assert (m != NULL); 
+	assert (m != NULL);
 
 	/* ignore call if the motor is not in torque mode*/
-    if (m->enabled) {	
+    if (m->enabled) {
         if (m->cm == TORQUE)
 	    {
-      	//printf("Motor torque: %f \r\n", torque);	
+      	//printf("Motor torque: %f \r\n", torque);
 	    // if(abs(torque) > TORQUE_CONT){
 	    // 	printf( "Motor torque too high!");
      //    	torque = ( (torque > 0) - (torque < 0) ) * TORQUE_CONT;
      //    	printf("New torque: %f", torque);
 
-     //  	}	
+     //  	}
 	    uint16_t ui_trq = (uint16_t)torque_SI_to_IU (torque);
 	    //printf("UI torque: %u \r\n", ui_trq);
         struct CO_message msg = {RPDO, .m.PDO = {2, (ui_trq<<16), 4}};
@@ -376,10 +376,10 @@ motor_set_torque (struct motor *m, double torque)
 }
 
 
-/* 
+/*
  * Returns the most recently received torque value in SI units (n/m). If
- * no new update received since the last call to motor_get_torque, the 
- * function returns -1 
+ * no new update received since the last call to motor_get_torque, the
+ * function returns -1
  */
 int
 motor_get_torque (struct motor *m, double *torque)
@@ -396,7 +396,7 @@ motor_get_torque (struct motor *m, double *torque)
 		retVal = 0;
 	}
 	pthread_mutex_unlock (&m->lock);
-	
+
 	return retVal;
 }
 
@@ -411,7 +411,7 @@ motor_set_ctrl_mode (struct motor *m, enum ctrl_mode cm)
 }
 
 
-/* 
+/*
  * Query function for the control mode of the motor (VELOCITY or TORQUE)
  */
 enum ctrl_mode
@@ -422,7 +422,7 @@ motor_get_ctrl_mode (struct motor *m)
 }
 
 
-/* 
+/*
  * Query function for the motor type (ROLLING or STEERING)
  */
 enum motor_type
@@ -433,8 +433,8 @@ motor_get_type (struct motor *m)
 }
 
 
-/* 
- * Stop the motor 
+/*
+ * Stop the motor
  */
 void
 motor_stop (struct motor *m)
@@ -451,8 +451,8 @@ motor_stop (struct motor *m)
 }
 
 
-/* 
- * Destroy the motor object 
+/*
+ * Destroy the motor object
  */
 void motor_destroy (struct motor *m)
 {
@@ -469,17 +469,17 @@ void motor_destroy (struct motor *m)
 	free (m);
 }
 
-bool 
+bool
 is_motor_enable_pin_active(struct motor *m){
 	return m->enable_pin_active;
 }
 
 /*------------------------------static functions------------------------------*/
-/* 
- * The timer handler for the msg timer, sends a timeout event to the message 
- * queue 
+/*
+ * The timer handler for the msg timer, sends a timeout event to the message
+ * queue
  */
-static void 
+static void
 msg_timer_handler (union sigval val)
 {
 	struct motor *m = val.sival_ptr;
@@ -487,23 +487,24 @@ msg_timer_handler (union sigval val)
 	e.type = TIMEOUT;
 	e.param = (uintptr_t)m->msg_timer;
 	mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
+	printf("TIMEEEE/r/n");
 }
 
-/* 
- * The timer handler for the msg timer, raises a SIGINT signal to signal 
+/*
+ * The timer handler for the msg timer, raises a SIGINT signal to signal
  * shutdown
  */
 static void
 heartbeat_timer_handler (union sigval val)
 {
-	puts ("heartbeat timeout, killing the process");
+	puts ("Motor controller heartbeat timeout, killing the process");
 	raise (SIGINT);
 }
 
 
-/* 
- * Functions for unit conversion. These output values at the motor shaft. 
- * Gear ratios included at caster level. 
+/*
+ * Functions for unit conversion. These output values at the motor shaft.
+ * Gear ratios included at caster level.
  * Position SI = rad
  * Position IU = encoder ticks
  * Velocity SI = rad/s
@@ -514,65 +515,65 @@ heartbeat_timer_handler (union sigval val)
 static inline int32_t
 position_SI_to_IU (double position_SI)
 {
-	return (int32_t) (position_SI * POS_MULTIPLIER * 
+	return (int32_t) (position_SI * POS_MULTIPLIER *
 		(Ns * ENCODER_TICKS / TWO_PI));
 }
 
 static inline double
 position_IU_to_SI (int32_t position_IU)
 {
-	return (double) (position_IU * 
+	return (double) (position_IU *
 		(TWO_PI / (Ns * ENCODER_TICKS)) / POS_MULTIPLIER);
 }
 
 static inline int32_t
 velocity_SI_to_IU (double velocity_SI)
 {
-	return (int32_t) (velocity_SI * VEL_MULTIPLIER * 
+	return (int32_t) (velocity_SI * VEL_MULTIPLIER *
 		(Ns * ENCODER_TICKS * SLOW_LOOP_SAMP_PERIOD / TWO_PI));
 }
 
 static inline double
 velocity_IU_to_SI (int32_t velocity_IU)
 {
-	return  (double) velocity_IU * (TWO_PI / (Ns * ENCODER_TICKS * 
+	return  (double) velocity_IU * (TWO_PI / (Ns * ENCODER_TICKS *
 		SLOW_LOOP_SAMP_PERIOD)) / VEL_MULTIPLIER;
 }
 
 static inline int32_t
 accel_SI_to_IU (double accel_SI)
 {
-	return (int32_t) (accel_SI * ACCEL_MULTIPLIER * (Ns * 
+	return (int32_t) (accel_SI * ACCEL_MULTIPLIER * (Ns *
 		ENCODER_TICKS * SLOW_LOOP_SAMP_PERIOD * SLOW_LOOP_SAMP_PERIOD / TWO_PI));
 }
 
 static inline double
 accel_IU_to_SI (int32_t accel_IU)
 {
-	return (double) (accel_IU * (TWO_PI / (Ns * ENCODER_TICKS * 
+	return (double) (accel_IU * (TWO_PI / (Ns * ENCODER_TICKS *
 		SLOW_LOOP_SAMP_PERIOD * SLOW_LOOP_SAMP_PERIOD)) / ACCEL_MULTIPLIER);
 }
 
 static inline int16_t
 torque_SI_to_IU (double torque_SI)
 {
-	return (int16_t) (torque_SI * CURRENT_DENOM / 
+	return (int16_t) (torque_SI * CURRENT_DENOM /
 		(TORQUE_CONSTANT * CURRENT_NUM * CURRENT_PEAK));
 }
 
 static inline double
 torque_IU_to_SI (int16_t torque_IU)
 {
-	return (double) (torque_IU * TORQUE_CONSTANT * CURRENT_NUM * 
+	return (double) (torque_IU * TORQUE_CONSTANT * CURRENT_NUM *
 		CURRENT_PEAK / CURRENT_DENOM);
 }
 
 
-/* 
- * Initialize the message queue that is used for communication between the 
- * listening thread and the thread that calls the motor API 
+/*
+ * Initialize the message queue that is used for communication between the
+ * listening thread and the thread that calls the motor API
  */
-static int 
+static int
 init_mQueue (struct motor *m)
 {
 	m->mQueue_name = malloc (MAX_NAME_LEN);
@@ -581,7 +582,7 @@ init_mQueue (struct motor *m)
 		perror ("call to malloc failed in init_mQueue\n");
 		return -1;
 	}
-	
+
 	sprintf(m->mQueue_name, "/motor %u message queue", m->no);
 	mq_unlink (m->mQueue_name);
 	struct mq_attr attr;
@@ -600,9 +601,9 @@ init_mQueue (struct motor *m)
 }
 
 
-/* 
- * Implementation of an exponential moving average filter for the motor 
- * velocity or torque measurement 
+/*
+ * Implementation of an exponential moving average filter for the motor
+ * velocity or torque measurement
  */
 static double
 filter (double old_vel, double new_sample, double coefficient)
@@ -611,10 +612,10 @@ filter (double old_vel, double new_sample, double coefficient)
 }
 
 
-/* 
+/*
  * This is the listener thread, it constantly reads from the CAN socket and
- * translates the frames into events that it sends to the message queue to 
- * other threads that might be interested in the events 
+ * translates the frames into events that it sends to the message queue to
+ * other threads that might be interested in the events
  */
 static void *
 listener (void *aux)
@@ -623,7 +624,8 @@ listener (void *aux)
 	struct event e;
 	struct can_frame f;
 	struct itimerspec itmr = {{0}};
-	itmr.it_value.tv_sec = HEARTBEAT_TIMEOUT;	
+	itmr.it_value.tv_sec = HEARTBEAT_TIMEOUT;
+	printf("Motor listener thread launched!\r\n");
 
 	/* listen for messages forever, thread gets cancelled on motor_destroy call */
 	while (1)
@@ -653,7 +655,9 @@ listener (void *aux)
 	  	}
 	  	else if (f.can_id == COB_ID_TPDO (m->no, 1)) /* TPDO1 - status word*/
 	  	{
-	  		uint16_t *data = (uint16_t *)&f.data;
+	  		/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
+			uint16_t *data = (uint16_t *)&f.data;
 	  		e.type = STATUS_WRD_REC;
 	  		e.param = data[0];
 	  		mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
@@ -661,7 +665,8 @@ listener (void *aux)
 	  	else if (f.can_id == COB_ID_TPDO (m->no, 2)) /* TPDO2 - {pos, vel/trq}*/
 	  	{
 	  		int32_t *data = (int32_t *)&f.data; // why not uint32_t
-	  		
+	  		/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	  		/* critical section */
 	  		pthread_mutex_lock (&m->lock);
 	  		m->cur_pos = position_IU_to_SI (data[0]);
@@ -675,8 +680,10 @@ listener (void *aux)
 	  	}
 	    else if (f.can_id == COB_ID_TPDO (m->no, 3)) /* TPD03 - {current, modes of operation */
 	    {
-	        int32_t *data = (int32_t *)&f.data; // why not uint16_t? 
-	        //printf("data[0]: %X\ndata[1]: %X\n\n",data[0],data[1]); 
+	        int32_t *data = (int32_t *)&f.data; // why not uint16_t?
+			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
+	        //printf("data[0]: %X\ndata[1]: %X\n\n",data[0],data[1]);
 	        pthread_mutex_lock (&m->lock);
 	        m->cur_trq = filter (m->cur_trq, torque_IU_to_SI (data[0]), LP_TRQ_FILTER_COEFF);
 	        m->stale_trq = false;
@@ -684,12 +691,13 @@ listener (void *aux)
 	    }
 	    else if (f.can_id == COB_ID_TPDO (m->no, 4)) /* TPD04 - digital inputs */
 	    {
-	    	int32_t *data = (int32_t *)&f.data; // why not uint32_t? 
-
+	    	int32_t *data = (int32_t *)&f.data; // why not uint32_t?
+			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	    	/* critical section */
 	  		pthread_mutex_lock (&m->lock);
-	  		m->inputs = data[0]; 
-	  		pthread_mutex_unlock (&m->lock); 
+	  		m->inputs = data[0];
+	  		pthread_mutex_unlock (&m->lock);
 	  		/* end of critical section */
 	    }
 	  	else if (f.can_id == COB_ID_SDO_TX (m->no)) /* SDO */
@@ -701,32 +709,36 @@ listener (void *aux)
 	  			e.param = *(uint16_t *)&(f.data[1]);
 	  			mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
 	  		}
+			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	  	}
-	    else if (f.can_id == COB_ID_EMCY_TX (m->no)) /* Emergency message */ 
+	    else if (f.can_id == COB_ID_EMCY_TX (m->no)) /* Emergency message */
 	    {
+			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	    	if ((f.data[0] == 0x41) && (f.data[1] == 0x54))
 	    	{
-	    		m->enable_pin_active = false; 
+	    		m->enable_pin_active = false;
 	    		printf("Motor %d enable pin DISABLED\n", m->no);
 			} else if ((f.data[0] == 0x00) && (f.data[1] == 0x00)) {
 				printf("Error reset or no error \n");
-				m->enable_pin_active = true; 
-			} else {
-	    		printf("Data 1: %u \n", f.data[0]);
-	    		printf("Data 2: %u \n", f.data[1]);
-		        printf("Error message received\n");
-		        while(1) {}
+				m->enable_pin_active = true;
+			}else {
+	    		//printf("Data 1: %u \n", f.data[0]);
+	    		//printf("Data 2: %u \n", f.data[1]);
+		        //printf("Error message received\n");
+		        //while(1) {}
 	    	}
 		}
-	}	
+	}
 }
 
 
-/* 
- * Initializes the motor, this function steps through the array of messages 
- * inside of motor_init_sequence.h. It sends a message and then waits for 
- * an event verifying success of that transmission. If at any point a timeout 
- * occurs, this is translated as an error and the function returns -1 
+/*
+ * Initializes the motor, this function steps through the array of messages
+ * inside of motor_init_sequence.h. It sends a message and then waits for
+ * an event verifying success of that transmission. If at any point a timeout
+ * occurs, this is translated as an error and the function returns -1
  */
 static int
 init_motor (struct motor *m)
@@ -744,7 +756,7 @@ init_motor (struct motor *m)
 	{
 		mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
 		if (e.type == TIMEOUT)
-		{	
+		{
 			printf("init timer timeout, init_motor failed");
 			return -1;
 		}
@@ -754,7 +766,7 @@ init_motor (struct motor *m)
 			{
 				struct CO_message cur = init_sequence[i];
 
-				/* make sure to add the motor number to the data field for PDO inits 
+				/* make sure to add the motor number to the data field for PDO inits
 				   and home offsets */
 				if (cur.type == SDO_Rx)
 				{
@@ -768,7 +780,7 @@ init_motor (struct motor *m)
 						case TPDO1_COMM:
 						case TPDO2_COMM:
 						case TPDO3_COMM:
-						case TPDO4_COMM: 
+						case TPDO4_COMM:
 							if (cur.m.SDO.subindex == 0x01)
 								cur.m.SDO.data += m->no;
 							break;
@@ -801,9 +813,9 @@ init_motor (struct motor *m)
 }
 
 
-/* 
- * Homes the motor by setting the control mode field to HOMING and calling 
- * enable, then waits for a STATUS_WORD with data 0xD637 signaling that 
+/*
+ * Homes the motor by setting the control mode field to HOMING and calling
+ * enable, then waits for a STATUS_WORD with data 0xD637 signaling that
  * homing is finished
  */
 static int
@@ -814,11 +826,11 @@ home_motor (struct motor *m)
 	m->cm = HOMING;
 	motor_enable (m);
 	m->cm = old;
-							
-	/* perform the homing sequence */		
+
+	/* perform the homing sequence */
 	struct event e;
 	struct itimerspec itmr = {{0}};
-	itmr.it_value.tv_sec = HOME_TIMEOUT;	
+	itmr.it_value.tv_sec = HOME_TIMEOUT;
 
 	while (1)
 	{
@@ -843,12 +855,12 @@ home_motor (struct motor *m)
 }
 
 
-/* 
- * Returns the proper home offset to write during motor initialization. 
+/*
+ * Returns the proper home offset to write during motor initialization.
  * If the calibration routine was run and the file exists with the offsets,
- * those are factored in to the value 
+ * those are factored in to the value
 */
-static int32_t 
+static int32_t
 get_cal_offset (struct motor *m)
 {
 	double retVal, calVal, difference;
@@ -866,7 +878,7 @@ get_cal_offset (struct motor *m)
 	fp = fopen ("./.motor_cal.txt", "r");
 	if (fp != NULL)
 	{
-		/* cal value is positioned by line in .motor_cal 
+		/* cal value is positioned by line in .motor_cal
 			 i.e. cal of motor 1 = line 1
 			      cal of motor 3 = line 2
 			      cal of motor 5 = line 3 .... */
@@ -875,7 +887,7 @@ get_cal_offset (struct motor *m)
 			getline (&buffer, &n, fp);
 
 		calVal = atof (buffer);
-		
+
 		free (buffer);
 		fclose (fp);
 
@@ -901,14 +913,14 @@ get_cal_offset (struct motor *m)
 
 static void * control_thread (void *aux);
 static bool done = false;
-static int test_mode = 0; 
+static int test_mode = 0;
 
 #ifdef LOG_COUPLED_MOTOR
 static void * log_thread (void *aux);
 #endif
 
-void 
-main(char argc, char *argv[]) 
+void
+main(char argc, char *argv[])
 {
 	if (argc < 4)
 	{
@@ -951,7 +963,7 @@ main(char argc, char *argv[])
 	int motor_no = atoi (argv[1]);
   test_mode = atoi (argv[2]);
   int duration = atoi (argv[3]);
-  
+
   if(duration <= 0) {
       puts ("Test duration must be a positive value");
       exit(0);
@@ -959,13 +971,13 @@ main(char argc, char *argv[])
 
     #ifdef TEST_VELOCITY
     struct motor *m = motor_init (motor_no, VELOCITY, motor_no % 2);
-    home_motor(m); 
+    home_motor(m);
     m->cm = VELOCITY;  // Home motor changes command mode to HOMING, must be changed back to VELOCITY
     #endif
-   
+
     #ifdef TEST_TORQUE
-    struct motor *m = motor_init (motor_no, TORQUE, motor_no % 2); 
-    // home_motor(m); 
+    struct motor *m = motor_init (motor_no, TORQUE, motor_no % 2);
+    // home_motor(m);
     m->cm = TORQUE;  // Home motor changes command mode to HOMING, must be changed back to TORQUE
     #endif
 
@@ -976,32 +988,32 @@ main(char argc, char *argv[])
 	}
 
     #ifdef LOG_COUPLED_MOTOR
-    int log_motor_no = 4 * ((motor_no + 1) / 2) - 1 - motor_no; 
+    int log_motor_no = 4 * ((motor_no + 1) / 2) - 1 - motor_no;
     struct motor *m_log = motor_init(log_motor_no, VELOCITY, log_motor_no % 2);
-    
+
     if(m_log == NULL) {
         puts("motor_init failed for log motor");
         goto done;
     }
     #endif
-    
+
     if(motor_enable (m))
 	{
 		puts ("motor_enable failed");
 		goto done;
 	}
 
-    #ifdef LOG_COUPLED_MOTOR 
+    #ifdef LOG_COUPLED_MOTOR
     if(motor_enable(m_log)) {
         puts("motor_enable failed for log motor");
         goto done;
     }
     #endif
- 
+
 	/* Launch control thread */
 	pthread_t control;
 	launch_rt_thread (control_thread, &control, m, MAX_PRIO);
-   
+
     #ifdef LOG_COUPLED_MOTOR
     pthread_t log;
     launch_rt_thread(log_thread, &log, m_log, MAX_PRIO);
@@ -1025,7 +1037,7 @@ done:
 	puts("End motor test harness");
 }
 
-static void 
+static void
 sleep_until (struct timespec *ts, long delay)
 {
 	ts->tv_nsec += delay;
@@ -1037,7 +1049,7 @@ sleep_until (struct timespec *ts, long delay)
 	clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, ts,  NULL);
 }
 
-static void * 
+static void *
 control_thread (void *aux)
 {
     printf("control thread launched with success\n");
@@ -1045,14 +1057,14 @@ control_thread (void *aux)
 	int s = create_can_socket (0xF, 0xF);
 	struct CO_message msg;
 	msg.type = SYNC;
-     
+
 	struct timespec next;
 	clock_gettime(CLOCK_MONOTONIC, &next);
-     
+
 	/* open dump file */
 	FILE *fp;
 	fp = fopen("./traces/trace.csv", "w");
-	fprintf(fp, "t,vel-command,tor-command,pos-actual,vel-actual,tor-actual\n"); 
+	fprintf(fp, "t,vel-command,tor-command,pos-actual,vel-actual,tor-actual\n");
 
   if (fp == NULL){
     printf("file could not be opened");
@@ -1068,7 +1080,7 @@ control_thread (void *aux)
 	CO_send_message (s, 0, &msg);
 	sleep_until(&next, CONTROL_PERIOD_ns/2);
 
-	while (!done) 
+	while (!done)
 	{
 /* ---------- first half of control loop ---------- */
 	  /* send sync message */
@@ -1094,7 +1106,7 @@ control_thread (void *aux)
 
 	 	/* write to file */
 	 	fprintf(fp, "%f,%f,%f,%f,%f,%f\n", (ticks*(CONTROL_PERIOD_s/2)), vel_command, tor_command, pos_actual, vel_actual, tor_actual);
-    
+
         vel_command = 1;
         tor_command = 1;
 	 	/* calculate next */
@@ -1110,7 +1122,7 @@ control_thread (void *aux)
             vel_command = MAX_VEL;
         case 3: // Low speed sine wave
             vel_command *= -sin(2*PI*X_freq*(ticks*CONTROL_PERIOD_s));
-            break;	 	
+            break;
         case 4: // Full speed square wave
             vel_command = MAX_VEL;
         case 5: // Low speed square wave
@@ -1134,19 +1146,19 @@ control_thread (void *aux)
             puts("illegal test mode");
             vel_command = 0;
             break;
-        } 
+        }
 
         if(vel_command > MAX_VEL) {
             vel_command = MAX_VEL;
         } else if(vel_command < -MAX_VEL) {
             vel_command = -MAX_VEL;
-        }       
+        }
 
         if(tor_command > MAX_TOR) {
             tor_command = MAX_TOR;
         } else if(tor_command < -MAX_TOR) {
             tor_command = -MAX_TOR;
-        }       
+        }
 
         ticks++;
 
@@ -1163,7 +1175,7 @@ log_thread (void *aux) {
     int s = create_can_socket(0xF, 0xF);
     struct CO_message msg;
     msg.type = SYNC;
-    
+
     struct timespec next;
     clock_gettime(CLOCK_MONOTONIC, &next);
 
@@ -1185,10 +1197,10 @@ log_thread (void *aux) {
 
         motor_get_velocity(m_log, &vel_actual);
         motor_get_position(m_log, &pos_actual);
-       
+
         fprintf(fp, "%f,%f,%f\n", (ticks*CONTROL_PERIOD_s), vel_actual, pos_actual);
         ticks++;
- 
+
         sleep_until(&next, CONTROL_PERIOD_ns/2);
      }
 }

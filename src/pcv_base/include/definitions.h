@@ -3,14 +3,14 @@
 
 /********************************** MOTOR ******************************************/
 #define NUM_MOTORS					(8)
-#define QUEUE_SIZE					(16)
+#define QUEUE_SIZE					(32)
 #define MAX_NAME_LEN				(25)
 
 /* Constants for unit conversion */
-#define ENCODER_TICKS 				(8192.0)
-#define SLOW_LOOP_SAMP_PERIOD  		(1.0/2000.0)  		// [s] 
+#define ENCODER_TICKS 				(4096.0)
+#define SLOW_LOOP_SAMP_PERIOD  		(1.0/2000.0)  		// [s]
 #define TORQUE_CONSTANT 			(0.16171) 			// [Nm/A]
-#define CURRENT_PEAK				(20.0)    			// [A] 
+#define CURRENT_PEAK				(20.0)    			// [A]
 #define CURRENT_CONT				(3.0)
 #define CURRENT_NUM					(2.0)
 #define CURRENT_DENOM				(65472.0) //(65520.0)
@@ -19,17 +19,17 @@
 
 /* timer */
 #define MS_TO_NS(a)					((a)*1000*1000)
-#define MSG_TIMEOUT					(1)  				// [s] 
-#define HOME_TIMEOUT				(20)				// [s] 
-#define HEARTBEAT_TIMEOUT			(2)					// [s] 
+#define MSG_TIMEOUT					(1)  				// [s]
+#define HOME_TIMEOUT				(20)				// [s]
+#define HEARTBEAT_TIMEOUT			(2)					// [s]
 
 /* motor home offsets */
 #define PI                      	(M_PI)
-#define TWO_PI                  	(2 * PI) 
-#define HOME_OFFSET_MTR_1       	(-3 * PI / 4)
-#define HOME_OFFSET_MTR_3       	(3 * PI / 4)
-#define HOME_OFFSET_MTR_5       	(PI / 4)
-#define HOME_OFFSET_MTR_7       	(-PI/ 4)
+#define TWO_PI                  	(2 * PI)
+#define HOME_OFFSET_MTR_1       	(-3.*PI/4.-0.13)//(-3 *PI / 4)
+#define HOME_OFFSET_MTR_3       	(3.*PI/4.-0.18)//(3 * PI / 4)
+#define HOME_OFFSET_MTR_5       	(PI/4.-0.16)//(PI / 4)
+#define HOME_OFFSET_MTR_7       	(-PI/4.-0.15)//(-PI/ 4)
 
 /* velocity and torque filter coeffecients */
 #define LP_VEL_FILTER_COEFF			(0.75)
@@ -66,7 +66,7 @@
 #define PC_If 						(3.32e-3)      		// [kg m2] -- Steering Inertia of fork at CoM
 
 #define PC_Ih 						(4.78e-4)     		// [kg m2] -- Inertia of cluster gear
-#define PC_Ii 						(1.74e-5)     		// [kg m2] -- Inertia of idle shaft & gearing 
+#define PC_Ii 						(1.74e-5)     		// [kg m2] -- Inertia of idle shaft & gearing
 #define PC_Is 						(7.11e-5)     		// [kg m2] -- Inertia of steering motor rotor
 #define PC_It 						(8.53e-5)     		// [kg m2] -- Inertia of traction motor rotor
 #define PC_Ij 						(4.00e-4)     		// [kg m2] -- Rolling Inertia of wheel
@@ -78,7 +78,7 @@
 
 // Vehicle CONSTANTS.  Change these for CM (x,y) Mass and Inertia
 #define PC_length					(0.60)              // [m]     -- length of vehicle along the x and y directions. Originally 0.465
-#define PC_height 					(0.35)              // [m]     -- height of vehicle 
+#define PC_height 					(0.35)              // [m]     -- height of vehicle
 #define PC_Vx 						(0.0)      			// [m]     -- Vehicle CoM x-coord
 #define PC_Vy 						(0.0)      			// [m]     -- Vehicle CoM y-coord
 #define PC_Mv 						(61.5 - 4.0 * (PC_Mp + PC_Mf))           // [kg]  -- Vehicle Mass
@@ -86,8 +86,8 @@
 
 
 // Control loop times for vehicle
-#define CONTROL_PERIOD_ns 			(8000000)
-#define CONTROL_PERIOD_s 			(0.008)
+#define CONTROL_PERIOD_ns 			(10000000)
+#define CONTROL_PERIOD_s 			(0.01)
 
 #define UNUSED_NODE_ID				(0xF)
 #define MAX_ACCEL_TRANS     		(1.0)								// [m/s^2]

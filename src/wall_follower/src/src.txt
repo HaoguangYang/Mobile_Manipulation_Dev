@@ -1,0 +1,12 @@
+Sample source text file
+
+
+Edit locations in :
+
+rallyUI.launch 
+    -map location
+    -rviz conf location
+rally_ui.py
+    -wptfile
+map_follower.py
+    -watpy_buf

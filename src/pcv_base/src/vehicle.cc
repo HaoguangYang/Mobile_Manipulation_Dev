@@ -858,7 +858,7 @@ static double casterPosYSign(int casterNum)
 		case 2:
 		case 3:
 			return 1.0;
-		case 1:
+		case 1:		
 		case 4:
 			return -1.0;
 		default:

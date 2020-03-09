@@ -1,9 +1,9 @@
 <launch>
     <node pkg="urg_node" type="urg_node" name="run_hokuyo_10lx"  output="screen" >
-        <param name="ip_address" value="192.168.0.10"/>
-        <!--param name="angle_min" value="-2.26892802759"/>
-        <param name="angle_max" value="2.26166156499"/>
-        <remap from="scan" to="/temp_scan"/-->
+        <param name="ip_address" value="128.46.112.250"/>
+        <param name="angle_min" value="-1.2"/>
+        <param name="angle_max" value="1.3"/>
+        <!--remap from="scan" to="/temp_scan"/-->
     </node>
     <!--node pkg="laser_validation" type="node" name="laser_validation"  output="screen">
         <param name="input_laser_scan_topic" value="/temp_scan"/>

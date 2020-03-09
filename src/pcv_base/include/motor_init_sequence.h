@@ -18,7 +18,7 @@ extern "C" {
 #define NUM_ENABLE_STEPS	(sizeof (enable_sequence) / sizeof (enable_sequence[0]))
 
 /* Heartbeat */
-#define HEARTBEAT_INTERVAL_ms	(1000)
+#define HEARTBEAT_INTERVAL_ms	(50)
 
 /* Homing */
 #define HOME_SPEED_FAST			(0x100000)
@@ -70,7 +70,7 @@ const struct CO_message init_sequence[] = {
 	{SDO_Rx, .m.SDO = {TPDO1_COMM, 0x01, COB_ID_TPDO (0,1), 4}}, 				/* Enable TPDO1 */
 
 	{SDO_Rx, .m.SDO = {TPDO2_COMM, 0x01, COB_ID_TPDO (0,2) | (1 << 31), 4}}, 	/* Disable TPDO2 */
-	{SDO_Rx, .m.SDO = {TPDO2_COMM, 0x02, 2, 1}},								/* Set TPDO2 transmission type to 2 (send on every 2nd SYNC message) */
+	{SDO_Rx, .m.SDO = {TPDO2_COMM, 0x02, 1, 1}},								/* Set TPDO2 transmission type to 2 (send on every 1st SYNC message) */
 	{SDO_Rx, .m.SDO = {TPDO2_MAPPING, 0x00, 0, 1}},								/* Disable TPDO2 mapping */
 	{SDO_Rx, .m.SDO = {TPDO2_MAPPING, 0x01, 0x60640020, 4}},					/* Map Position Actual Value to TPDO2 */
 	{SDO_Rx, .m.SDO = {TPDO2_MAPPING, 0x02, 0x606C0020, 4}},					/* Map Velocity Actual Value to TPDO2 */
@@ -78,7 +78,7 @@ const struct CO_message init_sequence[] = {
 	{SDO_Rx, .m.SDO = {TPDO2_COMM, 0x01, COB_ID_TPDO (0,2), 4}}, 				/* Enable TPDO2 */
 
 	{SDO_Rx, .m.SDO = {TPDO3_COMM, 0x01, COB_ID_TPDO (0,3) | (1 << 31), 4}},    /* Disable TPDO3 */
-    {SDO_Rx, .m.SDO = {TPDO3_COMM, 0x02, 2, 1}},								/* Set TPD03 transmission type to 2 (send on every 2nd SYNC message) */
+    {SDO_Rx, .m.SDO = {TPDO3_COMM, 0x02, 1, 1}},								/* Set TPD03 transmission type to 2 (send on every 1st SYNC message) */
     {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x00, 0, 1}},								/* Disable TPD03 mapping */
     {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x01, 0x207E0010, 4}},					/* Map current actual value to TPD03 */
     {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x02, 0x60610008, 4}},					/* Map modes of operation display to TPD03 */ // Check this
@@ -199,3 +199,4 @@ const struct event enable_responses[] = {
 #endif
 
 #endif
+

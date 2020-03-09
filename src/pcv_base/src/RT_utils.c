@@ -4,10 +4,12 @@
 extern "C" {
 #endif
 
+//#define _GNU_SOURCE
 #include <assert.h>
 #include <pthread.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <sched.h>
 
 #include "../include/RT_utils.h"
 
@@ -24,7 +26,14 @@ launch_rt_thread (void *(*func)(void *), pthread_t *t, void *aux, int priority)
 {
 	assert (t != NULL);
 	pthread_attr_t attr;
+	cpu_set_t cpuset;
 	struct sched_param param;
+
+	// It could be desireable to run the thread on an isolated core.
+	//CPU_ZERO(&cpuset);
+	//unsigned short ncpu = get_nprocs();
+        //for (int j = 0; j < 1; j++)
+        //       CPU_SET(ncpu-1, &cpuset);
 
 	/* Lock memory */
 	if(mlockall(MCL_CURRENT | MCL_FUTURE) == -1) 
@@ -42,13 +51,17 @@ launch_rt_thread (void *(*func)(void *), pthread_t *t, void *aux, int priority)
 	if (pthread_attr_setschedpolicy (&attr, SCHED_FIFO))
     return -1;
 
-	param.sched_priority = priority;
+	param.sched_priority = priority; 
+	//printf("%i",sched_get_priority_max(SCHED_FIFO));
 	if (pthread_attr_setschedparam (&attr, &param))
     return -1;
 
 	/* Use scheduling parameters of attr */
 	if (pthread_attr_setinheritsched (&attr, PTHREAD_EXPLICIT_SCHED))
 	  return -1;
+
+	//if (pthread_attr_setaffinity_np (&attr, sizeof(cpuset), &cpuset))
+	//  return -1;
 
 	/* Create a pthread with specified attributes */
 	if (pthread_create(t, &attr, func, aux))

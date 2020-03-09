@@ -26,8 +26,8 @@ The documentation for the iPOS motor controller CAN protocol can be found [HERE]
 
 - Alternatively, add the following lines to `/etc/rc.local` (**before** `exit 0`) to make system bring up `can0` and `can1` automatically during booting process:
 ```sh
-sudo ip link set can0 up type can bitrate 1000000
-sudo ip link set can1 up type can bitrate 1000000
+sudo ip link set can0 up type can bitrate 1000000 triple-sampling on restart-ms 20
+sudo ip link set can1 up type can bitrate 1000000 triple-sampling on restart-ms 20
 ``` 
 
 - The robot has an LVDS built-in display interface for some reason, and it is never used. To disable it such that the external display becomes primary display, edit `/etc/default/grub` at **line 10** to be:
