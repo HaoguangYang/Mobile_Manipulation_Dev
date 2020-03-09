@@ -69,6 +69,7 @@ sudo apt-get install librealsense2-dev
 
 ### Steps to run the code: 
 ```sh
+sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping ros-kinetic-teb-local-planner ros-kinetic-urg-node ros-kinetic-map-server 
 catkin_make
 ```
 
