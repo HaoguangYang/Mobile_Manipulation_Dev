@@ -6,8 +6,8 @@
 #define COB_ID_SYNC				(0x080)
 #define COB_ID_EMCY_TX_BASE		(0x080) // Emergency 
 #define COB_ID_TIME				(0x100)
-#define COB_ID_TPDO_BASE		(0x180)
-#define COB_ID_RPDO_BASE		(0x200)
+#define COB_ID_TPDO_BASE		(0x080)
+#define COB_ID_RPDO_BASE		(0x100)
 #define COB_ID_SDO_TX_BASE		(0x580)
 #define COB_ID_SDO_RX_BASE		(0x600)
 #define COB_ID_NMT_EC_TX_BASE	(0x700) // Heartbeat 

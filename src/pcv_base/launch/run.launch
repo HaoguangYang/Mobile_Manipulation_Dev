@@ -5,7 +5,7 @@
 
 	<!-- map server -->
 	<include file="$(find pcv_base)/launch/includes/map_server.launch" />
-	
+
 	<!-- Laser scanner -->
 	<include file="$(find pcv_base)/launch/includes/laser.launch" />
 
@@ -14,13 +14,14 @@
 
 	<!-- Robot localization (amcl) -->
 	<include file="$(find pcv_base)/launch/includes/localization.launch" />
-	
+
 	<!-- navigation (move_base) -->
 	<include file="$(find pcv_base)/launch/includes/navigation.launch" />
 
 	<!-- Visualization -->
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find pcv_base)/resources/cfg/default.rviz"/>
-    
-	<!-- Other control scripts -->
-    
+
+	<!-- Main control for the base -->
+  <node pkg="pcv_base" type="pcv_base_node" name="pcv_base_node" launch-prefix="sudo -E" output="screen"/>
+	
 </launch>
