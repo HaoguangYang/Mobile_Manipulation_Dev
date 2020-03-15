@@ -85,8 +85,9 @@ if __name__=="__main__":
     rospy.init_node('teleop_twist_keyboard')
     pub2 = rospy.Publisher('/mobile_base_controller/control_mode', Byte, queue_size = 1)
     #mode = Byte(1)
-    #pub2.publish(mode)
-    os.system('rostopic pub --once /mobile_base_controller/control_mode std_msgs/Byte 1')
+    while not pub2.get_num_connections()    # hold there until the subsecribers are ready
+    pub2.publish(Byte(data=1))
+    #os.system('rostopic pub --once /mobile_base_controller/control_mode std_msgs/Byte 1')
 
     speed = rospy.get_param("~speed", 0.5)
     turn = rospy.get_param("~turn", 1.0)
@@ -136,7 +137,7 @@ if __name__=="__main__":
         twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
         pub.publish(twist)
         #mode.data = 0
-        #pub2.publish(mode)
-        os.system('rostopic pub --once /mobile_base_controller/control_mode std_msgs/Byte 0')
+        pub2.publish(Byte(data=0))
+        #os.system('rostopic pub --once /mobile_base_controller/control_mode std_msgs/Byte 0')
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
 

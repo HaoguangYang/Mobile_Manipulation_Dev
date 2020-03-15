@@ -72,14 +72,14 @@ static Vehicle *vehicle;
 static CameraT265 *cameraT265;
 
 /* variables for setting operation space velocities (x_dot, y_dot, theta_dot)*/
-static double cur_x_dot = 0;
-static double cur_y_dot = 0;
-static double cur_theta_dot = 0;
+static double cur_x_dot = 0.;
+static double cur_y_dot = 0.;
+static double cur_theta_dot = 0.;
 
 /* variables for torque control mode */
-static Eigen::Vector3d gx_des   = Eigen::Vector3d::Zero();  // Position desired
-static Eigen::Vector3d gxd_des  = Eigen::Vector3d::Zero();  // Velocity desired
-static Eigen::Vector3d gxdd_des = Eigen::Vector3d::Zero();  // Acceleration desired
+static double gx_des_g[3] = {0.};  	// Position desired, global var
+static double gxd_des_g[3] = {0.};  // Velocity desired, global var
+static double gxdd_des_g[3] = {0.}; // Acceleration desired, global var
 
 /* for recording data */
 static bool dumpData = true;
@@ -113,23 +113,23 @@ void cmdVelRecvCallback(const geometry_msgs::Twist::ConstPtr& cmdVel)
 
 void cmdTorqXRecvCallback(const geometry_msgs::Pose::ConstPtr& x_des)
 {
-    gx_des(0) = x_des->position.x;
-    gx_des(1) = x_des->position.y;
-    gx_des(2) = tf::getYaw(x_des->orientation);
+    gx_des_g[0] = x_des->position.x;
+    gx_des_g[1] = x_des->position.y;
+    gx_des_g[2] = tf::getYaw(x_des->orientation);
 }
 
 void cmdTorqXdRecvCallback(const geometry_msgs::Twist::ConstPtr& xd_des)
 {
-    gxd_des(0) = xd_des->linear.x;
-    gxd_des(1) = xd_des->linear.y;
-    gxd_des(2) = xd_des->angular.z;
+    gxd_des_g[0] = xd_des->linear.x;
+    gxd_des_g[1] = xd_des->linear.y;
+    gxd_des_g[2] = xd_des->angular.z;
 }
 
 void cmdTorqXddRecvCallback(const geometry_msgs::Accel::ConstPtr& xdd_des)
 {
-    gxdd_des(0) = xdd_des->linear.x;
-    gxdd_des(1) = xdd_des->linear.y;
-    gxdd_des(2) = xdd_des->angular.z;
+    gxdd_des_g[0] = xdd_des->linear.x;
+    gxdd_des_g[1] = xdd_des->linear.y;
+    gxdd_des_g[2] = xdd_des->angular.z;
 }
 
 void ctrlModeRecvCallback(const std_msgs::Byte::ConstPtr& ctrlMode)
@@ -453,7 +453,11 @@ control_thread (void *aux)
 	unsigned long ticks = 0;
 
 	/* Initialize variables */
-	Eigen::Vector3d vel_commands;
+	Eigen::Vector3d vel_commands = Eigen::Vector3d::Zero();
+	Eigen::Vector3d gx_des	 = Eigen::Vector3d::Zero();
+	Eigen::Vector3d gxd_des  = Eigen::Vector3d::Zero();
+	Eigen::Vector3d gxdd_des = Eigen::Vector3d::Zero();
+	
 	Eigen::Vector3d gx       = Eigen::Vector3d::Zero();
 	Eigen::Vector3d gxd      = Eigen::Vector3d::Zero();
 	Eigen::Vector3d x_local  = Eigen::Vector3d::Zero();
@@ -554,7 +558,7 @@ control_thread (void *aux)
 		//usleep (3500);
 		//rate.sleep();
 
-		vel_commands << cur_x_dot, cur_y_dot, cur_theta_dot;
+		
 
 		/***************** Write data to csv file *********************************/
 		if (dumpData)
@@ -701,6 +705,9 @@ control_thread (void *aux)
   				}
   			#endif
 
+			gx_des << gx_des_g[0], gx_des_g[1], gx_des_g[2];
+			gxd_des << gxd_des_g[0], gxd_des_g[1], gxd_des_g[2];
+			gxdd_des << gxdd_des_g[0], gxdd_des_g[1], gxdd_des_g[2];
 			#ifdef USING_OTG
 				otg->setGoalPositionAndVelocity(gx_des, gxd_des);
 				otg->computeNextState(step_desired_position, step_desired_velocity);
@@ -713,6 +720,7 @@ control_thread (void *aux)
 
 			case VELOCITY:
 			{
+				vel_commands << cur_x_dot, cur_y_dot, cur_theta_dot;
 				vehicle->setGlobalVelocity(vel_commands);
 				//printf("%f, %f, %f\r\n", vel_commands(0), vel_commands(1), vel_commands(2));
 				break;

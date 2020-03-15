@@ -466,6 +466,7 @@ void motor_destroy (struct motor *m)
 	mq_close (m->mQueue);
 	close (m->s);
 	pthread_cancel(m->listener);
+	printf("Cancelled thread for Motor %i\r\n", m->no);
 	free (m);
 }
 
