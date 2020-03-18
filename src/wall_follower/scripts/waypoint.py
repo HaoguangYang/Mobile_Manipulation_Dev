@@ -18,13 +18,15 @@ import numpy as np
 import tf
 import math
 import geometry_msgs.msg
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, PoseStamped
 from visualization_msgs.msg import Marker
+from nav_msgs.msg import Path
 from msgsrv.srv import waypt
 
 class waypoint(object):
     def __init__(self):
-        self.path = Marker()
+        self.path = Path()
+        self.pathViz = Marker()
         self.points = Marker()		
         self.marker_id = 1
         rospy.init_node('waypt_echoer')
@@ -39,17 +41,19 @@ class waypoint(object):
         if inp.req == 1:
             return self.path
         elif inp.req == 0:  #Reset waypoint
-            pts_len = len(self.path.points)
+            pts_len = len(self.path.poses)
             print(pts_len-1)
-            self.path.points = self.path.points[0:pts_len-1]
+            self.path.poses = self.path.poses[0:pts_len-1]
+            self.pathViz.points = self.pathViz.poses[0:pts_len-1]
             self.points.points = self.points.points[0:pts_len-1]
-            self.publisher.publish(self.path)
+            self.publisher.publish(self.pathViz)
             self.publisher.publish(self.points)
             return self.path
         elif inp.req == -1:  #Reset waypoint
-            self.path.points = self.path.points[0:0]
+            self.path.poses = self.path.poses[0:0]
+            self.pathViz.points = self.pathViz.points[0:0]
             self.points.points = self.points.points[0:0]
-            self.publisher.publish(self.path)
+            self.publisher.publish(self.pathViz)
             self.publisher.publish(self.points)
             return self.path
         else:
@@ -60,7 +64,7 @@ class waypoint(object):
     def get_way_point(self, msg):
 		# display way points and path on the map
         self.display_way_point(msg.pose.position.x,msg.pose.position.y)
-        self.display_path(msg.pose.position.x,msg.pose.position.y)
+        self.display_path(msg.pose.position.x,msg.pose.position.y, msg.pose.orientation)
 		# print picked way points in terminal
 		# print msg.pose.position.x, msg.pose.position.y
 
@@ -92,33 +96,40 @@ class waypoint(object):
         point = Point()
         point.x = x
         point.y = y
-        print(self.points.points)
+        #print(self.points.points)
         self.points.points.append(point)
         # Publish the MarkerArray
         self.publisher.publish(self.points)
 
-	# display path between way points on the map
-    def display_path(self,x,y):
-        self.path.header.frame_id = "/map"	# publish path in map frame
-        self.path.type = self.path.LINE_STRIP
-        self.path.action = self.path.ADD
-        self.path.lifetime = rospy.Duration(0)
-        self.path.id = 0
-        self.path.scale.x = 0.1
-        self.path.color.a = 0.5
-        self.path.color.r = 1.0
-        self.path.color.g = 0.0
-        self.path.color.b = 0.0
-        self.path.pose.orientation.w = 1.0
+    # display path between way points on the map
+    def display_path(self,x,y,Quat):
+        self.path.header.frame_id = "map"	# publish path in map frame
+        pose = PoseStamped()
+        pose.pose.position.x = x
+        pose.pose.position.y = y
+        pose.pose.orientation = Quat
+        print(pose.pose)
+        self.path.poses.append(pose)
+        
+        # Publish the path
+        self.pathViz.header.frame_id = "map"	# publish path in map frame
+        self.pathViz.type = self.pathViz.LINE_STRIP
+        self.pathViz.action = self.pathViz.ADD
+        self.pathViz.lifetime = rospy.Duration(0)
+        self.pathViz.id = 0
+        self.pathViz.scale.x = 0.1
+        self.pathViz.color.a = 0.5
+        self.pathViz.color.r = 1.0
+        self.pathViz.color.g = 0.0
+        self.pathViz.color.b = 0.0
+        self.pathViz.pose.orientation.w = 1.0
 
         point = Point()
         point.x = x
         point.y = y
-
-        self.path.points.append(point)
-        #print(self.path.points)    #for debug
-        # Publish the path
-        self.publisher.publish(self.path)
+        self.pathViz.points.append(point)
+        #print(self.pathViz.points)    #for debug
+        self.publisher.publish(self.pathViz)
 
     def run(self):
         # Setup service provider which returns the current points array on request

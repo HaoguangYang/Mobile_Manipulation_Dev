@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
   geometry_msgs
+  nav_msgs
   visualization_msgs
 )
 
@@ -65,7 +66,7 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(DEPENDENCIES std_msgs geometry_msgs visualization_msgs)
+ generate_messages(DEPENDENCIES std_msgs geometry_msgs visualization_msgs nav_msgs)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

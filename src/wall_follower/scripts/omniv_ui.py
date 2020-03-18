@@ -32,6 +32,8 @@ import os, signal
 from msgsrv.srv import waypt
 from msgsrv.msg import ctrlParams
 
+from rospkg import RosPack
+
 class rally_guictrl():
     def __init__(self, port):
     # Flags
@@ -104,12 +106,16 @@ class rally_guictrl():
                 #  if not proceed until selected waypt
                 # ................ Needs to be written
                 # Load the waypts
-                self.waypts = self.getwaypts(1).mrkr.points
+                mrkr_tmp = Marker()
+                for points in self.getwaypts(1).mrkr.poses:
+                    Marker.points.append(Point(x=points.pose.position.x, y=points.pose.position.y,
+                                               z=quaternion_to_euler(points.pose.orientation)[2]))
+                self.waypts = mrkr_tmp.points
                 #print('_'*50)
                 #print(str(self.waypts[1].x))    # For debug
                 #print(self.waypts)
                 # Write waypts to the file
-                wptfile = open('/home/cartman/Mobile_Manipulation_Dev/src/rallyUI/resources/ui_speedway.txt','w')
+                wptfile = open(RosPack().get_path('wall_follower')+'/resources/ui_speedway.txt','w')
                 # Write waypts to file
                 for i in range(0,len(self.waypts)):
                     wptfile.write(str(self.waypts[i].x) + ' ' + str(self.waypts[i].y) + ' ' + str(self.waypts[i].z) + '\n')
@@ -124,9 +130,9 @@ class rally_guictrl():
                 self.cnv.create_oval(0,0,100,100, width=0, fill='yellow')
                 self.clog.insert(0.0, 'Auto select waypts. \n')
 
-                auto_wpts = np.loadtxt('/home/cartman/Mobile_Manipulation_Dev/src/rallyUI/resources/ui_auto_demo.txt')
+                auto_wpts = np.loadtxt(RosPack().get_path('wall_follower')+'/resources/ui_auto_demo.txt')
                 # Write waypts to the file
-                wptfile = open('/home/cartman/Mobile_Manipulation_Dev/src/rallyUI/resources/ui_speedway.txt','w')
+                wptfile = open(RosPack().get_path('wall_follower')+'/resources/ui_speedway.txt','w')
                 # Write waypts to file
                 for i in range(0,len(auto_wpts)):
                     wptfile.write(str(auto_wpts[i][0]) + ' ' + str(auto_wpts[i][1]) + ' ' + str(auto_wpts[i][2]) + '\n')

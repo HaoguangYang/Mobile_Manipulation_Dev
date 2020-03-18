@@ -101,7 +101,7 @@ TebLocalPlannerROS:
     weight_obstacle: 100
     weight_dynamic_obstacle: 10
     weight_dynamic_obstacle_inflation: 0.2
-    weight_viapoint: 1
+    weight_viapoint: 2.0
     weight_adapt_factor: 2
     
     # Homotopy Class Planner
@@ -123,7 +123,7 @@ TebLocalPlannerROS:
     obstacle_keypoint_offset: 0.1
     obstacle_heading_threshold: 0.45
     switching_blocking_period: 0.0
-    viapoints_all_candidates: True
+    viapoints_all_candidates: False
     delete_detours_backwards: True
     max_ratio_detours_duration_best_duration: 3.0
     visualize_hc_graph: False

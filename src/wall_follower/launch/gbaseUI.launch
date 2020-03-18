@@ -34,7 +34,7 @@
 <!-- Motion controller script -->
     <param name="controller_file" type="string" value="map_follower_gbase.py"/>
 <!-- Run map_follower -->
-	<node name="rally_ui" pkg="wall_follower" type="rally_ui.py" output="screen" required="true"/> 
+	<node name="rally_ui" pkg="wall_follower" type="omniv_ui.py" output="screen" required="true"/> 
 
 <!-- python script: fetch way points and display on map -->
 	<node pkg="wall_follower" type="waypoint.py" output="screen" name="waypoint" />	
