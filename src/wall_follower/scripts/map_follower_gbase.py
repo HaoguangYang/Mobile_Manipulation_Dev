@@ -211,7 +211,8 @@ class map_follower:
         cmd_pub = rospy.Publisher("/mobile_base_controller/cmd_vel", Twist, queue_size = 1)
         mode_pub = rospy.Publisher('/mobile_base_controller/control_mode', Byte, queue_size = 1)
         # Set control mode 1- vel cont
-        while not mode_pub.get_num_connections()    # hold there until the subsecribers are ready
+        while not mode_pub.get_num_connections():    # hold there until the subsecribers are ready
+            pass
         mode_pub.publish(Byte(data=1))
 
         #rospy.Subscriber("scan",LaserScan,self.scanCallback)

@@ -27,7 +27,9 @@ from visualization_msgs.msg import Marker
 import serial, os, signal
 import tf
 
-from msgsrv.msg import ctrlParams
+#from msgsrv.msg import ctrlParams
+
+from rospkg import RosPack
 
 
 class map_follower:
@@ -97,13 +99,18 @@ class map_follower:
         self.viaPts = Path()
         self.pubVia = rospy.Publisher('via_points', Path, queue_size = 1)
         self.mode_pub = rospy.Publisher('/mobile_base_controller/control_mode', Byte, queue_size = 1)
+        self.scan_min_ang = -1.
+        self.scan_max_ang = 1.
+        self.scan_ang_inc = 0.25/180*np.pi
+        # barrier of the robot: intrusion within 30cm front of the laser center will induce an emergency shutdown.
+        self.shape = 0.3/np.cos(np.arange(self.scan_min_ang, self.scan_max_ang, self.scan_ang_inc))
 
 #---------------------------------------------------------------------#
 # The callback for laser scan data
     def scanCallback(self, data):
     	# detect if any obstacle within dist_lim range
-        min_angle = data.angle_min
-        angle_inc = data.angle_increment
+        #min_angle = data.angle_min
+        #angle_inc = data.angle_increment
         ranges = np.array(data.ranges)
         intrusion = np.sum(np.less(ranges, self.shape))
         if intrusion > 2:
@@ -127,7 +134,7 @@ class map_follower:
         '''
             load and parse waypoints from file
         '''
-        waypt_fname = '/home/cartman/Mobile_Manipulation_Dev/src/rallyUI/resources/ui_speedway.txt'
+        waypt_fname = RosPack().get_path('wall_follower')+'/resources/ui_speedway.txt'
         self.trajs = []
         waypt_buf = []
         with open(waypt_fname, 'r') as f:
@@ -169,7 +176,8 @@ class map_follower:
         # cmd_pub = rospy.Publisher("/mobile_base_controller/cmd_vel", Twist, queue_size = 1)
         
         # Set control mode 1- vel cont
-        while not self.mode_pub.get_num_connections()    # hold there until the subsecribers are ready
+        while not self.mode_pub.get_num_connections():    # hold there until the subsecribers are ready
+            pass
         self.mode_pub.publish(Byte(data=1))
 
         rospy.Subscriber("scan",LaserScan,self.scanCallback)
@@ -179,6 +187,7 @@ class map_follower:
         #rospy.Subscriber("control_params", ctrlParams, self.ctrlprm_update)
         rate = rospy.Rate(self.cmd_rate)
         # Run controller param
+        run_flag=1
         #run_flag = rospy.get_param('runPD_q')
         #print('Run Flag is', run_flag)
 
@@ -207,11 +216,10 @@ class map_follower:
         rospy.loginfo('************** Initialization complete ************')
         while not rospy.is_shutdown() and (run_flag==1):
             # compute distance between present pos estimate and latest waypt update
-            self.dis_err = np.sqrt(math.pow((self.car_ax-self.waypt_xd),2)+math.pow((self.car_ay-self.waypt_yd),2))
+            #self.dis_err = np.sqrt(math.pow((self.car_ax-self.waypt_xd),2)+math.pow((self.car_ay-self.waypt_yd),2))
             #rospy.loginfo(self.dis_err)
             # waypoint updates
-            if(rospy.get_time()-self.waypt_ptime  > 0.1 and\
-             self.dis_err < self.waypt_lim):
+            if(rospy.get_time()-self.waypt_ptime  > 0.1):
                 self.waypt_ptime = rospy.get_time()
                 self.waypt_xd =  self.waypt_buf[self.waypt_i,0]
                 self.waypt_yd =  self.waypt_buf[self.waypt_i,1]

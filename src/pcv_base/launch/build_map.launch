@@ -16,6 +16,7 @@
     <node pkg="rviz" type="rviz" name="rviz"/>
     
 	<!-- control scripts below -->
-    <!--node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen"/-->
+    <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen"/>
     <node pkg="pcv_base" type="pcv_base_node" name="pcv_base_node" launch-prefix="sudo -E" output="screen"/>
+
 </launch>

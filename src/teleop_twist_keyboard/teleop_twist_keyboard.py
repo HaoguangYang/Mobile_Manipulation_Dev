@@ -85,7 +85,9 @@ if __name__=="__main__":
     rospy.init_node('teleop_twist_keyboard')
     pub2 = rospy.Publisher('/mobile_base_controller/control_mode', Byte, queue_size = 1)
     #mode = Byte(1)
-    while not pub2.get_num_connections()    # hold there until the subsecribers are ready
+    # hold there until the subsecribers are ready
+    while not pub2.get_num_connections():
+        pass
     pub2.publish(Byte(data=1))
     #os.system('rostopic pub --once /mobile_base_controller/control_mode std_msgs/Byte 1')
 
