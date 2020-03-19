@@ -313,8 +313,8 @@ main (int argc, char *argv[])
 
   //test
 
-  ros::Duration(0.5).sleep();
-  ros::Duration(0.5).sleep();
+  ros::Duration(1.0).sleep();
+  
 	/* main loop - receive events from controller */
 	while (ros::ok())
 	{
@@ -743,10 +743,11 @@ control_thread (void *aux)
 
 		ticks++;
 
-		/* write to file */
+		/* write to file
 		if (dumpData)
 		{
 		}
+		*/
 
 	  /* do nothing in this half */
 		sleep_until (&next, CONTROL_PERIOD_ns);
