@@ -1,7 +1,14 @@
 <launch>
     <!--Static Transforms-->
-    <node pkg="tf" type="static_transform_publisher" name="base_to_laser" args="0.27 0.0 0.1 0.0 0.0 0.0 base_link laser 100" />
+    <!--node pkg="tf" type="static_transform_publisher" name="base_to_laser" args="0.27 0.0 0.1 0.0 0.0 0.0 base_link laser 100" /-->
     <!--node pkg="tf" type="static_transform_publisher" name="base_to_imu" args="0.27 0.05 0.14 0.0 0.0 0.0 base_link imu_frame 100" /-->
     <!--node pkg="tf" type="static_transform_publisher" name="base_to_real_sense"
         args="0.34 0.0 0.12 0.0 0.0 0.0 base_link camera_link 100" /-->
+        
+    <param name="robot_description"
+    	textfile="$(find pcv_base)/resources/cfg/omniveyor.urdf" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher"
+    	type="robot_state_publisher" />
+    	
 </launch>
