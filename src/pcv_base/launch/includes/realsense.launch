@@ -1,3 +1,4 @@
+<launch>
   <arg name="device_type_camera_t1"    		default="t265"/>
   <arg name="device_type_camera_d1"    		default="d4.5"/>		<!-- Note: using regular expression. match D435, D435i, D415... -->
   <arg name="device_type_camera_d2"    		default="d4.5"/>		<!-- Note: using regular expression. match D435, D435i, D415... -->
@@ -64,4 +65,5 @@
       <arg name="clip_distance"         value="$(arg clip_distance)"/>
     </include>
   </group>
-  
+</launch>
+

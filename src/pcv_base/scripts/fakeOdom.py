@@ -4,16 +4,7 @@ import rospy
 import tf
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Pose, Point, Quaternion, Twist, Vector3
-
-x = 0.
-y = 0.
-th = 0.
-vx = 0.
-vy = 0.
-vth = 0.
-mode = 0
-freq = 50.
-odom = Odometry()
+from std_msgs.msg import Byte
 
 def cmd_vel_cb(data):
     vx = data.linear.x
@@ -24,6 +15,15 @@ def ctrl_mode_cb(data):
     mode = data.data
 
 def main():
+    x = 0.
+    y = 0.
+    th = 0.
+    vx = 0.
+    vy = 0.
+    vth = 0.
+    mode = 0
+    freq = 50.
+    odom = Odometry()
     rospy.init_node('pcv_base_fake')
 
     odom_pub = rospy.Publisher("odom", Odometry, queue_size=10)
@@ -53,7 +53,7 @@ def main():
             "base_link")        # base name
         odom.header.stamp = curTime
         odom.header.frame_id = "odom"
-        odom.child.frame_id = "base_link"
+        odom.child_frame_id = "base_link"
         odom.pose.pose = Pose(Point(x, y, 0), Quaternion(*odom_quat))
         odom_pub.publish(odom)
         r.sleep()

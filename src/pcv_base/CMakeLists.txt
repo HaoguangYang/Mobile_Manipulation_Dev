@@ -25,7 +25,8 @@ set(MOBILE_MANIP_EXT_DIR ${PROJECT_SOURCE_DIR}/cmake)
 function(download_package PACKAGE_NAME)
     configure_file(${MOBILE_MANIP_CMAKE_DIR}/${PACKAGE_NAME}-CMakeLists.txt.in
         ${CMAKE_BINARY_DIR}/${PACKAGE_NAME}/CMakeLists.txt)
-    execute_process(COMMAND ${CMAKE_COMMAND} -G ${CMAKE_GENERATOR} .
+    # since ctrl_utils "hard-coded" the use of Unix Makefiles, we replace the ${CMAKE_GENERATOR} with "Unix Makefiles" here as a fix.
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "Unix Makefiles" .
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${PACKAGE_NAME})
     execute_process(COMMAND ${CMAKE_COMMAND} --build .
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${PACKAGE_NAME})
