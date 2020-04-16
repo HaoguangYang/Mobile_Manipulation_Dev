@@ -66,7 +66,7 @@ const struct CO_message init_sequence[] = {
 	{SDO_Rx, .m.SDO = {TPDO1_COMM, 0x05, 0, 2}},								/* Disable TPDO1 Event timer (timer for regular transmission) */
 	{SDO_Rx, .m.SDO = {TPDO1_MAPPING, 0x00, 0, 1}},								/* Disable TPDO1 mapping */
 	{SDO_Rx, .m.SDO = {TPDO1_MAPPING, 0x01, 0x60410010, 4}},					/* Map statusword to TPDO1 */
-	{SDO_Rx, .m.SDO = {TPDO1_MAPPING, 0x00, 1, 1}},							    /* Enable TPDO1 mapping (2 entries) */
+	{SDO_Rx, .m.SDO = {TPDO1_MAPPING, 0x00, 1, 1}},							    /* Enable TPDO1 mapping (1 entry) */
 	{SDO_Rx, .m.SDO = {TPDO1_COMM, 0x01, COB_ID_TPDO (0,1), 4}}, 				/* Enable TPDO1 */
 
 	{SDO_Rx, .m.SDO = {TPDO2_COMM, 0x01, COB_ID_TPDO (0,2) | (1 << 31), 4}}, 	/* Disable TPDO2 */
@@ -81,18 +81,18 @@ const struct CO_message init_sequence[] = {
     {SDO_Rx, .m.SDO = {TPDO3_COMM, 0x02, 1, 1}},								/* Set TPD03 transmission type to 2 (send on every 1st SYNC message) */
     {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x00, 0, 1}},								/* Disable TPD03 mapping */
     {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x01, 0x207E0010, 4}},					/* Map current actual value to TPD03 */
-    {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x02, 0x60610008, 4}},					/* Map modes of operation display to TPD03 */ // Check this
+    {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x02, 0x20550010, 4}},					/* Changed to DC voltage indicator since control mode is never read from the drivers. //Map modes of operation display to TPD03 */ // Check this
     {SDO_Rx, .m.SDO = {TPDO3_MAPPING, 0x00, 2, 1}},								/* Enable TPD03 mapping (2 entries) */
     {SDO_Rx, .m.SDO = {TPDO3_COMM, 0x01, COB_ID_TPDO (0,3) , 4}},				/* Enable TPD03 */
     
-    {SDO_Rx, .m.SDO = {TPDO4_COMM, 0x01, COB_ID_TPDO (0,4) | (1 << 31), 4}},    /* Disable TPD04 */ 
-	{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x02, 255, 1}},								/* Set TPDO4 transmission type to asynchronous (drive responds immediately on change of state) */
-	{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x03, 300, 2}},								/* Set TPDO4 Inhibit time to 30 ms (can only send 1 message per inhibit time) */
-	{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x05, 0, 2}},								/* Disable TPDO4 Event timer (timer for regular transmission) */
-    {SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x00, 0, 1}},								/* Disable TPD04 mapping */
-	{SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x01, 0x60FD0020, 4}},                    /* Map digit inputs to TPDO1 */
-    {SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x00, 1, 1}},								/* Enable TPD04 mapping (1 entry) */
-    {SDO_Rx, .m.SDO = {TPDO4_COMM, 0x01, COB_ID_TPDO (0,4), 4}},				/* Enable TPD04 */
+    {SDO_Rx, .m.SDO = {TPDO4_COMM, 0x01, COB_ID_TPDO (0,4) | (1 << 31), 4}},    /* Disable TPD04 */  /*Since there is no bumper attached to digital inputs let's disable tpdo4 for now.*/
+	//{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x02, 255, 1}},								/* Set TPDO4 transmission type to asynchronous (drive responds immediately on change of state) */
+	//{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x03, 300, 2}},								/* Set TPDO4 Inhibit time to 30 ms (can only send 1 message per inhibit time) */
+	//{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x05, 0, 2}},								/* Disable TPDO4 Event timer (timer for regular transmission) */
+    //{SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x00, 0, 1}},								/* Disable TPD04 mapping */
+	//{SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x01, 0x60FD0020, 4}},                    /* Map digit inputs to TPDO4 */
+    //{SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x00, 1, 1}},								/* Enable TPD04 mapping (1 entry) */
+    //{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x01, COB_ID_TPDO (0,4), 4}},				/* Enable TPD04 */
 
     {SDO_Rx, .m.SDO = {EXT_REF_TYPE, 0x00, 1, 2}},								/* Set to external reference to on-line */
 	{SDO_Rx, .m.SDO = {EXT_ONLINE_REF, 0x00, 0, 4}},							/* Set external reference to 0 */

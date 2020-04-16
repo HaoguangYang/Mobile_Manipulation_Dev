@@ -9,9 +9,10 @@
 /* Constants for unit conversion */
 #define ENCODER_TICKS 				(4096.0)
 #define SLOW_LOOP_SAMP_PERIOD  		(1.0/2000.0)  		// [s]
-#define TORQUE_CONSTANT 			(0.16171) 			// [Nm/A]
-#define CURRENT_PEAK				(20.0)    			// [A]
-#define CURRENT_CONT				(3.0)
+// Magmotor S28-E-200X
+#define TORQUE_CONSTANT 			(0.12357715708333275) 			// [Nm/A]
+#define CURRENT_PEAK				(20.0)    			// [A], limited by the controller.
+#define CURRENT_CONT				(8.0)               // [A], limited by the controller.
 #define CURRENT_NUM					(2.0)
 #define CURRENT_DENOM				(65472.0) //(65520.0)
 #define TORQUE_PEAK					(TORQUE_CONSTANT * CURRENT_PEAK)

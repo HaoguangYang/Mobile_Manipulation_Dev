@@ -42,6 +42,7 @@ struct motor
 	double cur_pos;						/* most recent position received */
 	double cur_vel;						/* most recent velocity received */
 	double cur_trq;						/* most recent torque received */
+	double cur_voltage;					/* most recent DC supplied voltage of the motor */
 	timer_t msg_timer;					/* timer for handling tx timeouts */
 	timer_t heartbeat_timer;			/* timer for tracking heartbeat */
 	enum ctrl_mode cm;					/* control mode (velocity or torque) */
@@ -51,7 +52,7 @@ struct motor
 	bool stale_pos;
 	bool stale_vel;
 	bool stale_trq;
-	int32_t inputs;
+	int32_t inputs;						/* digital inputs on the motor controller*/
 };
 
 /*------------------------static function declarations------------------------*/
@@ -681,13 +682,14 @@ listener (void *aux)
 	  	}
 	    else if (f.can_id == COB_ID_TPDO (m->no, 3)) /* TPD03 - {current, modes of operation */
 	    {
-	        int32_t *data = (int32_t *)&f.data; // why not uint16_t?
+	        int16_t *data = (int16_t *)&f.data; // why not uint16_t?
 			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
   			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	        //printf("data[0]: %X\ndata[1]: %X\n\n",data[0],data[1]);
 	        pthread_mutex_lock (&m->lock);
 	        m->cur_trq = filter (m->cur_trq, torque_IU_to_SI (data[0]), LP_TRQ_FILTER_COEFF);
 	        m->stale_trq = false;
+			m->cur_voltage = (double)data[2]*48.0/65520;
 	        pthread_mutex_unlock (&m->lock);
 	    }
 	    else if (f.can_id == COB_ID_TPDO (m->no, 4)) /* TPD04 - digital inputs */

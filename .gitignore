@@ -43,6 +43,8 @@ qtcreator-*
 
 *~
 
+.vscode/
+
 # Emacs
 .#*
 
