@@ -14,6 +14,7 @@
 
 	<!-- Robot localization (amcl) -->
 	<include file="$(find pcv_base)/launch/includes/localization.launch" />
+	<include file="$(find pcv_base)/launch/includes/realsense.launch" />
 
 	<!-- navigation (move_base) -->
 	<include file="$(find pcv_base)/launch/includes/navigation.launch" />
