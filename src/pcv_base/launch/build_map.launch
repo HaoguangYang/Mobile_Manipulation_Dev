@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <launch>
+	<include file="$(find pcv_base)/launch/pcv_node.launch"/>
+	
 	<!-- static transform -->
 	<include file="$(find pcv_base)/launch/includes/static_tf.launch" />
 
@@ -11,13 +13,13 @@
 
     <!-- SLAM -->
     <include file="$(find pcv_base)/launch/includes/slam.launch" />
-    <include file="$(find pcv_base)/launch/includes/realsense.launch" />
+    <!--include file="$(find pcv_base)/launch/includes/realsense.launch" /-->
 	
     <!-- Visualization -->
     <node pkg="rviz" type="rviz" name="rviz"/>
     
 	<!-- control scripts below -->
     <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen"/>
+    
     <!--include file="$(find pcv_base)/launch/pcv_node_sim.launch"/-->
-    <include file="$(find pcv_base)/launch/pcv_node_sim.launch"/>
 </launch>

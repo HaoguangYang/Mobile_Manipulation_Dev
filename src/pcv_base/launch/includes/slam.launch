@@ -1,17 +1,5 @@
 <launch>
-  <!--node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
-  </node-->
-	
-  <node name="cartographer_node" pkg="cartographer_ros"
-      type="cartographer_node" args="
-          -configuration_directory $(find pcv_base)/resources/cfg
-          -configuration_basename omniveyor_cartographer_mapping.lua"
-      output="screen">
-    <remap from="points2_1" to="camera_d1/depth/color/points" />
-    <remap from="points2_2" to="camera_d2/depth/color/points" />
+  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
   </node>
-
-  <node name="cartographer_occupancy_grid_node" pkg="cartographer_ros"
-      type="cartographer_occupancy_grid_node" args="-resolution 0.05" />
-      
+  
 </launch>

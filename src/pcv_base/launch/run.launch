@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
 <launch>
+	<!-- Main control for the base -->
+	<!--include file="$(find pcv_base)/launch/pcv_node_sim.launch"/-->
+    <include file="$(find pcv_base)/launch/pcv_node.launch"/>
+
 	<!-- static transform -->
 	<include file="$(find pcv_base)/launch/includes/static_tf.launch" />
 
@@ -14,7 +18,7 @@
 
 	<!-- Robot localization (amcl) -->
 	<include file="$(find pcv_base)/launch/includes/localization.launch" />
-	<include file="$(find pcv_base)/launch/includes/realsense.launch" />
+	<!--include file="$(find pcv_base)/launch/includes/realsense.launch" /-->
 
 	<!-- navigation (move_base) -->
 	<include file="$(find pcv_base)/launch/includes/navigation.launch" />
@@ -22,7 +26,4 @@
 	<!-- Visualization -->
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find pcv_base)/resources/cfg/default.rviz"/>
 
-	<!-- Main control for the base -->
-	<!--include file="$(find pcv_base)/launch/pcv_node_sim.launch"/-->
-    <include file="$(find pcv_base)/launch/pcv_node.launch"/>
 </launch>
