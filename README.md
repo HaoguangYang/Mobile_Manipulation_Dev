@@ -30,10 +30,9 @@ sudo ip link set can0 up type can bitrate 1000000 triple-sampling on restart-ms 
 sudo ip link set can1 up type can bitrate 1000000 triple-sampling on restart-ms 20
 ``` 
 
-- The robot has an LVDS built-in display interface for headless boot, and it is not used with an external display present. To disable it such that the external display becomes primary display, edit `/etc/default/grub` at **line 10** to be:
-```sh
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash video=LVDS-1:d"
-```
+- ~~The robot has an LVDS built-in display interface for headless boot, and it is not used with an external display present. To disable it such that the external display becomes primary display, edit `/etc/default/grub` at **line 10** to be:~~
+~~GRUB_CMDLINE_LINUX_DEFAULT="quiet splash video=LVDS-1:d"~~
+
 **Note:** If the internal display is disabled, Ubuntu desktop may not boot properly without an external monitor plugged in. To reenable the internal display, revert the changes by deleting `video=...` section, and spesify the LVDS resolution in BIOS.
 
 - This repository includes a bootup script, such that the SSH and VNC ports of the cart are mapped to a Virtual Private Server with static IP. To enable the automatic bootup sequence, add the following line in `crontab -e`:
@@ -75,7 +74,7 @@ sudo apt-get install librealsense2-dev
 
 ### Steps to run the code: 
 ```sh
-sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping ros-kinetic-teb-local-planner ros-kinetic-urg-node ros-kinetic-map-server ros-kinetic-realsense-camera ros-kinetic-global-planner
+sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping ros-kinetic-teb-local-planner ros-kinetic-dwa-local-planner ros-kinetic-urg-node ros-kinetic-map-server ros-kinetic-realsense-camera ros-kinetic-global-planner
 catkin_make
 ```
 
