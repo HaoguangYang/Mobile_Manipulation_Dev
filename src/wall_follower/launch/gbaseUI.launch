@@ -45,4 +45,6 @@
 <!-- Visualisation RVIZ -->
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find wall_follower)/resources/rally_ui.rviz"/>
 
+<!-- Button reader -->
+	<node pkg="pcv_base type="button.py" output="screen" name="traj_button"/>
 </launch>
