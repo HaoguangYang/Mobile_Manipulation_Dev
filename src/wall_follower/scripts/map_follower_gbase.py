@@ -118,10 +118,10 @@ class map_follower:
  # distance between present pos and desired pos
         self.dis_err = 0
  # limit for waypoint update
-        self.waypt_lim = 0.5  #2m limit, if dist between des and present is > waypt_lim then do not update
+        self.waypt_lim = 0.3  #2m limit, if dist between des and present is > waypt_lim then do not update
 # Trajectory index
         self.traj_idx = -1
-        self.running = False # flag for command publishing or not
+        self.running = True # flag for command publishing or not
 
 
 #---------------------------------------------------------------------#
@@ -181,7 +181,7 @@ class map_follower:
         '''
             load and parse waypoints from file
         '''
-        waypt_fname = '/home/cartman/Mobile_Manipulation_Dev/src/rallyUI/resources/ui_speedway.txt'
+        waypt_fname = '/home/cartman/Dev/Mobile_Manipulation_Dev/src/wall_follower/resources/ui_speedway.txt'
         self.trajs = []
         waypt_buf = []
         with open(waypt_fname, 'r') as f:
@@ -191,7 +191,8 @@ class map_follower:
                     waypt_buf=[]
                 else:
                     # print(float(line[:-1]))
-                    waypt_buf.append([float(x) for x in (line[:-1]).split()])
+                    waypt_buf.append([float(x) for x in (line[:-1]).split()])   
+        self.trajs = waypt_buf
         rospy.loginfo('The waypoints are loaded')
         rospy.loginfo(self.trajs)
 
@@ -226,7 +227,9 @@ class map_follower:
         print('Run Flag is', run_flag)
 
         self.parse_waypts()
-
+        self.waypt_buf = self.trajs
+        self.waypt_i = 0
+        self.running = True
         # for showing waypts on rviz
         wpt_marker = Marker()
         wpt_marker.header.frame_id = "/map"
@@ -255,12 +258,16 @@ class map_follower:
             if(rospy.get_time()-self.waypt_ptime  > 0.1 and\
              self.dis_err < self.waypt_lim):
                 self.waypt_ptime = rospy.get_time()
-                self.waypt_xd =  self.waypt_buf[self.waypt_i,0]
-                self.waypt_yd =  self.waypt_buf[self.waypt_i,1]
+                self.waypt_xd =  self.waypt_buf[self.waypt_i][0]
+                self.waypt_yd =  self.waypt_buf[self.waypt_i][1]
+                
+                                
                 #rospy.loginfo([self.waypt_xd,self.waypt_yd, 'wpt'])
+                print(self.waypt_i, len(self.waypt_buf))                
                 if(self.waypt_i < (len(self.waypt_buf) - 1)):
                     self.waypt_i += 1
                 else:
+                    print('End')
                     self.running = False
                     cmd_pub.publish(Twist())
                  # waypt publishing
@@ -318,9 +325,11 @@ class map_follower:
                 self.ser_write.angular.z = self.steer
                 #print(self.vlim)
                 #print(self.ser_write)
+            
             if self.running:
                 #print('Running')
                 cmd_pub.publish(self.ser_write)
+                #print(self.ser_write)
             else:
                 cmd_pub.publish(Twist())
             rt.sleep()

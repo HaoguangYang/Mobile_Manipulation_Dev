@@ -27,11 +27,12 @@ from std_msgs.msg import String
 import math
 import geometry_msgs.msg
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
 import os, signal
 # custom imports
 from msgsrv.srv import waypt
 from msgsrv.msg import ctrlParams
-
+import tf
 from rospkg import RosPack
 
 class rally_guictrl():
@@ -108,8 +109,10 @@ class rally_guictrl():
                 # Load the waypts
                 mrkr_tmp = Marker()
                 for points in self.getwaypts(1).mrkr.poses:
-                    Marker.points.append(Point(x=points.pose.position.x, y=points.pose.position.y,
-                                               z=quaternion_to_euler(points.pose.orientation)[2]))
+                    print(points.pose.orientation)
+                    ori = [points.pose.orientation.x, points.pose.orientation.y, points.pose.orientation.z, points.pose.orientation.w]
+                    mrkr_tmp.points.append(Point(x=points.pose.position.x, y=points.pose.position.y,
+                                               z=(tf.transformations.euler_from_quaternion(ori))[2]))
                 self.waypts = mrkr_tmp.points
                 #print('_'*50)
                 #print(str(self.waypts[1].x))    # For debug

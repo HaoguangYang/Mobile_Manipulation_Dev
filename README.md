@@ -74,9 +74,9 @@ sudo apt-get install librealsense2-dev
 
 - Enable Desktop Sharing (from launcher find "Desktop Sharing")
 
-- Optional: enable access of VNC through Windows machines:
+- Optional: enable access of VNC through Windows machines （**NO sudo**):
 ```sh
-sudo gsettings set org.gnome.Vino require-encryption false
+gsettings set org.gnome.Vino require-encryption false
 ```
 
 ### Steps to run the code: 
