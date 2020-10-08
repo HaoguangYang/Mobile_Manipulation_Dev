@@ -37,7 +37,7 @@ sudo ip link set can1 up type can bitrate 1000000 triple-sampling on restart-ms 
 
 - This repository includes a bootup script, such that the SSH and VNC ports of the cart are mapped to a Virtual Private Server with static IP. To enable the automatic bootup sequence, add the following line in `crontab -e`:
 ```sh
-@reboot sleep 30 && /path_to_repo/Mobile_Manipulation_Dev/src/pcv_base/scripts/onBoot.sh
+@reboot sleep 30 && sh /path_to_repo/Mobile_Manipulation_Dev/src/pcv_base/scripts/onBoot.sh
 ```
 
 ### System environments:
@@ -71,6 +71,11 @@ sudo apt-get install librealsense2-dev
 ```
 
 - Install ROS: refer to online instructions ([Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu) or [Melodic](http://wiki.ros.org/melodic/Installation/Ubuntu)).
+
+- Optional: enable access of VNC through Windows machines:
+```sh
+sudo gsettings set org.gnome.Vino require-encryption false
+```
 
 ### Steps to run the code: 
 ```sh
