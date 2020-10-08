@@ -47,7 +47,7 @@ Ubuntu 16.04 or newer.
 - Install prerequisites:
 ```sh
 sudo apt-get update
-sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget doxygen
+sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget doxygen openssh-server
 ```
 
 - Install CMake 3.6+:
@@ -72,6 +72,8 @@ sudo apt-get install librealsense2-dev
 
 - Install ROS: refer to online instructions ([Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu) or [Melodic](http://wiki.ros.org/melodic/Installation/Ubuntu)).
 
+- Enable Desktop Sharing (from launcher find "Desktop Sharing")
+
 - Optional: enable access of VNC through Windows machines:
 ```sh
 sudo gsettings set org.gnome.Vino require-encryption false
@@ -80,7 +82,7 @@ sudo gsettings set org.gnome.Vino require-encryption false
 ### Steps to run the code: 
 ```sh
 sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping ros-kinetic-teb-local-planner ros-kinetic-dwa-local-planner ros-kinetic-urg-node ros-kinetic-map-server ros-kinetic-realsense-camera ros-kinetic-global-planner
-catkin_make
+catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
 
 Setup passwordless sudo for the current user: add the following line to `/etc/sudoers` **second line before ending**
