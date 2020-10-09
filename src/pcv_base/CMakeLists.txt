@@ -34,11 +34,11 @@ endfunction()
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(ctrl_utils 1.0.0 QUIET)
-if(NOT ctrl_utils_FOUND)
-    download_package(ctrl_utils)
-    find_package(ctrl_utils 1.0.0 REQUIRED)
-endif()
+#find_package(ctrl_utils 1.0.0 QUIET)
+#if(NOT ctrl_utils_FOUND)
+#    download_package(ctrl_utils)
+#    find_package(ctrl_utils 1.0.0 REQUIRED)
+#endif()
 
 find_package(realsense2 HINTS /usr/local/include/librealsense2)
 set (LIB_REALSENSE_LIBRARIES 
@@ -206,7 +206,7 @@ target_link_libraries(${PROJECT_NAME}_node
   ${LIB_REALSENSE_LIBRARIES}
   rt
   pthread
-  ctrl_utils::ctrl_utils
+  #ctrl_utils::ctrl_utils
 )
 
 #############

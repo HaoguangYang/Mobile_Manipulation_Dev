@@ -461,13 +461,17 @@ void motor_destroy (struct motor *m)
 		return;
 
 	motor_disable (m);
+	raise (SIGINT);
 	free (m->mQueue_name);
 	timer_delete (m->msg_timer);
 	timer_delete (m->heartbeat_timer);
 	mq_close (m->mQueue);
 	close (m->s);
-	pthread_cancel(m->listener);
-	printf("Cancelled thread for Motor %i\r\n", m->no);
+	int status = pthread_kill(m->listener);
+	if (status < 0)
+		perror("pthread_kill motor thread failed");
+	else
+		printf("Stopped thread for Motor %i\r\n", m->no);
 	free (m);
 }
 
@@ -1065,6 +1069,7 @@ control_thread (void *aux)
 	clock_gettime(CLOCK_MONOTONIC, &next);
 
 	/* open dump file */
+	
 	FILE *fp;
 	fp = fopen("./traces/trace.csv", "w");
 	fprintf(fp, "t,vel-command,tor-command,pos-actual,vel-actual,tor-actual\n");

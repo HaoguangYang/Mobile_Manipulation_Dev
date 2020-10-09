@@ -82,7 +82,7 @@ static double gxd_des_g[3] = {0.};  // Velocity desired, global var
 static double gxdd_des_g[3] = {0.}; // Acceleration desired, global var
 
 /* for recording data */
-static bool dumpData = true;
+static bool dumpData = false;
 static std::ofstream file;
 
 enum ctrl_mode control_mode = VELOCITY;
@@ -421,12 +421,13 @@ main (int argc, char *argv[])
 	#endif
     */
 	}
+
 	delete vehicle;
-  raise (SIGINT);
-  int status = pthread_kill( control , SIGTERM);
-  if ( status <  0)
-    perror("pthread_kill control thread failed");
-  cout << "Exiting main thread" << endl;
+	raise (SIGINT);
+	int status = pthread_kill( control , SIGTERM);
+	if ( status <  0)
+    	perror("pthread_kill control thread failed");
+	cout << "Exiting main thread" << endl;
 	return 0;
 }
 
@@ -844,6 +845,7 @@ sig_handler (int)
  * Registers keystrokes and returns 1 if a key has been hit. Note, this function
  * only works on Linux
  */
+/*
 static int kbhit(void)
 {
   struct termios oldt, newt;
@@ -870,3 +872,4 @@ static int kbhit(void)
 
   return 0;
 }
+*/
