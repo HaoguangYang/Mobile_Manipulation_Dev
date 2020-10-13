@@ -78,6 +78,6 @@
   <!--rear depth camera connector from bottom (on-ground) center of omniveyor-->
     <parent link="base_link" />
     <child link="cam_d2_link" />
-    <origin xyz="-0.4 0. 0.4" rpy="0. 0. 3.1416" />
+    <origin xyz="-0.4 -0.08 0.4" rpy="0. 0. 3.1416" />
   </joint>
 </robot>
