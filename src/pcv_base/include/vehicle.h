@@ -18,6 +18,13 @@
 #include <Eigen/Geometry>
 #include "definitions.h"
 
+typedef struct robotElectrical_T{
+	double steerMotorCurrent [NUM_CASTERS];
+	double steerMotorVoltage [NUM_CASTERS];
+	double rollMotorCurrent [NUM_CASTERS];
+	double rollMotorVoltage [NUM_CASTERS];
+} robotElectrical_T;
+
 class Vehicle 
 {
 	public:
@@ -53,7 +60,7 @@ class Vehicle
 		int setGlobalVelocity(Eigen::Vector3d xd_com_in);
 
 		/* Set desired vehicle global position, velocity, and acceleration for torque controller */
-		int setTargets(Eigen::Array3d gx_des, Eigen::Array3d gxd_des, Eigen::Array3d gxdd_des);
+		void setTargets(Eigen::Array3d gx_des, Eigen::Array3d gxd_des, Eigen::Array3d gxdd_des);
 		
 		/* set Kp gains */
 		void setKp(Eigen::Array3d Kp_des);
@@ -111,6 +118,8 @@ class Vehicle
 		bool isStopped() const;
 
 		bool reachedTarget(Eigen::Vector3d curr_pos, Eigen::Vector3d curr_target, double max_linear_dist, double max_rot_dist) const;
+		
+		void getElectricalStatus (robotElectrical_T *status);
 
 	private:
 		bool _initialized;

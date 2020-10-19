@@ -69,6 +69,10 @@ void motor_disable (struct motor *m);
 void motor_set_torque (struct motor *m, double torque);
 int motor_get_torque (struct motor *m, double *torque);
 
+/* Interface to motor electrical status : current and voltage */
+void motor_get_amp (struct motor *m, double *amp);
+void motor_get_volt (struct motor *m, double *volt);
+
 /* Interface to the motor control mode */
 void motor_set_ctrl_mode (struct motor *m, enum ctrl_mode cm);
 enum ctrl_mode motor_get_ctrl_mode (struct motor *m);

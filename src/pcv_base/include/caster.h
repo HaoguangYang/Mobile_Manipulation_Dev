@@ -74,6 +74,9 @@ class Caster
  		 */
 		std::pair<double,double> getTorques();
 
+		void getAmps(double *steerMotorAmp, double *rollMotorAmp);
+		void getVolts(double *steerMotorVolt, double *rollMotorVolt);
+
 		/* Returns true if the bumper is hit */
 		bool getBumperState();
 

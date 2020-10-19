@@ -8,17 +8,6 @@
 #include <unistd.h>
 #include <mqueue.h>
 #include <map>
-#include "../include/motor.h"
-#include "../include/CO_message.h"
-#include "../include/CAN_utils.h"
-#include "../include/RT_utils.h"
-#include "../include/vehicle.h"
-#include "../include/event.h"
-#include "../include/buttons.h"
-#include "../include/OTG.h"
-#include "../include/pose_t265.h"
-#include "../lib/Eigen/Core"
-#include "../include/definitions.h"
 #include <ctime>
 #include <chrono>
 #include <stdio.h>
@@ -35,7 +24,28 @@
 #include "nav_msgs/Odometry.h"
 #include "tf/transform_broadcaster.h"
 #include "tf/transform_datatypes.h"
+#include "pcv_base/electricalStatus.h"
 
+// Alternative software solver for torque control
+// #define USING_OTG
+#include "../include/hardware.h"
+#include "../include/motor.h"
+#include "../include/CO_message.h"
+#include "../include/CAN_utils.h"
+#include "../include/RT_utils.h"
+#include "../include/vehicle.h"
+#include "../include/event.h"
+#include "../lib/Eigen/Core"
+#include "../include/definitions.h"
+#ifdef USING_OTG
+#include "../include/OTG.h"
+#endif
+#ifdef CAMERA
+#include "../include/pose_t265.h"
+#endif
+#ifdef JOYSTICK
+#include "../include/buttons.h"
+#endif
 
 /* these parameters were for testing sine wave inputs, uncomment next line
    to run the platform in a circular motion and ignore controller inputs */
@@ -43,10 +53,6 @@
 #define X_freq                  (0.1)       /* [hz] */
 #define Y_freq                  (0.1)       /* [hz] */
 #define THETA_freq              (0.05)      /* [hz] */
-
-// #define JOYSTICK
-// #define CAMERA
-// #define MANUAL_ZERO
 
 // Trajectory modes
 // #define SPIN
@@ -69,7 +75,6 @@ static void sleep_until (struct timespec *ts, long delay);
 static int kbhit(void);
 /*------------------------static variable declarations------------------------*/
 static Vehicle *vehicle;
-static CameraT265 *cameraT265;
 
 /* variables for setting operation space velocities (x_dot, y_dot, theta_dot)*/
 static double cur_x_dot = 0.;
@@ -88,10 +93,13 @@ static std::ofstream file;
 enum ctrl_mode control_mode = VELOCITY;
 // enum ctrl_mode control_mode = TORQUE;
 
+#ifdef JOYSTICK
 static mqd_t mq_joystick;
-static mqd_t mq_tracking;
-
 static const char *mq_name = "/joystick message queue";
+#endif
+#ifdef CAMERA
+static CameraT265 *cameraT265;
+#endif
 
 /*---------------------------public functions---------------------------------*/
 /*
@@ -254,12 +262,12 @@ main (int argc, char *argv[])
 		cout << "Kp: " << Kp << endl;
 		cout << "Kv: " << Kv << endl;
 
-		#ifdef MANUAL_ZERO
+#ifdef MANUAL_ZERO
 			cout << "Press ENTER once the vehicle is at the desired origin." << endl;
 			int c;
 			c = getchar();
 
-			#ifdef CAMERA
+	#ifdef CAMERA
 				/* Construct the camera object*/
 				cameraT265 = new CameraT265();
 
@@ -269,15 +277,13 @@ main (int argc, char *argv[])
 				} else {
 					cout << "Camera initialization failed!" << endl;
 				}
-			#endif
-			// #ifdef CAMERA
-			// 	cameraT265->setOrigin();
-			// 	cout << "X offset is: " << cameraT265->getXOffset() << ", Y offset is: " << cameraT265->getYOffset() << endl;
-			// #endif
-		#endif
+			 	cameraT265->setOrigin();
+			 	cout << "X offset is: " << cameraT265->getXOffset() << ", Y offset is: " << cameraT265->getYOffset() << endl;
+	#endif
+#endif
 
 		/*Launch control thread */
-		launch_rt_thread (control_thread, &control, NULL, MAX_PRIO);
+		launch_rt_thread (control_thread, &control, NULL, MAX_PRIO-1);
 	}
 
     /* Initialize ROS node:
@@ -288,6 +294,7 @@ main (int argc, char *argv[])
     ros::init(argc, argv, "PCV_Base");
     ros::NodeHandle rosNH;
     ros::Publisher odomPub = rosNH.advertise<nav_msgs::Odometry>("odom", 10);
+    ros::Publisher eStatusPub = rosNH.advertise<pcv_base::electricalStatus>("electricalStatus",1);
     //ros::Publisher statusPub = rosNH.advertise<std_msgs::Float64MultiArray>("dump",10);
     ros::Rate pub_rate(50);
     ros::Subscriber cmdSubV = rosNH.subscribe("/mobile_base_controller/cmd_vel", 10, cmdVelRecvCallback);
@@ -300,6 +307,8 @@ main (int argc, char *argv[])
     geometry_msgs::TransformStamped odom_trans;
     nav_msgs::Odometry odom;
     ros::Time current_time;
+    robotElectrical_T eStatus_tmp;
+    pcv_base::electricalStatus eStatus;
     odom_trans.transform.translation.z = 0.0;
     odom.pose.pose.position.z = 0.0;
     odom.twist.twist.linear.z = 0.0;
@@ -311,15 +320,14 @@ main (int argc, char *argv[])
     const float sin_PI_4      = -sqrt(2.)*0.5;
     const float cos_PI_4      = sqrt(2.)*0.5;
 
-  //test
-
-  ros::Duration(1.0).sleep();
+    //test
+    //ros::Duration(1.0).sleep();
   
 	/* main loop - receive events from controller */
 	while (ros::ok())
 	{
 
-    #ifdef BUMPER_SENSORS
+#ifdef BUMPER_SENSORS
 		if (vehicle->isInitialized()){
 			//"SAFETY" -- stop vehicle and program if bumper is hit
 			if (vehicle->isBumperHit()) {
@@ -327,13 +335,15 @@ main (int argc, char *argv[])
 				sig_handler(0);
 			}
 		}
-    #endif
+#endif
 
         // ROS Code Goes Here.
         current_time = ros::Time::now();
         gx = vehicle->getGlobalPosition();
         gxd = vehicle->getGlobalVelocity();
         geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(gx(2));
+        vehicle->getElectricalStatus(&eStatus_tmp);
+        
         odom_trans.header.stamp = current_time;
         odom_trans.header.frame_id = "odom";
         odom_trans.child_frame_id = "base_link";
@@ -353,12 +363,31 @@ main (int argc, char *argv[])
         odom.twist.twist.angular.z = gxd(2);
 
         odomPub.publish(odom);
+        
+        eStatus.stamp = current_time;
+        eStatus.steer_1_Volt = eStatus_tmp.steerMotorVoltage[0];
+        eStatus.steer_2_Volt = eStatus_tmp.steerMotorVoltage[1];
+        eStatus.steer_3_Volt = eStatus_tmp.steerMotorVoltage[2];
+        eStatus.steer_4_Volt = eStatus_tmp.steerMotorVoltage[3];
+        eStatus.steer_1_Amp = eStatus_tmp.steerMotorCurrent[0];
+        eStatus.steer_2_Amp = eStatus_tmp.steerMotorCurrent[1];
+        eStatus.steer_3_Amp = eStatus_tmp.steerMotorCurrent[2];
+        eStatus.steer_4_Amp = eStatus_tmp.steerMotorCurrent[3];
+        eStatus.roll_1_Volt = eStatus_tmp.rollMotorVoltage[0];
+        eStatus.roll_2_Volt = eStatus_tmp.rollMotorVoltage[1];
+        eStatus.roll_3_Volt = eStatus_tmp.rollMotorVoltage[2];
+        eStatus.roll_4_Volt = eStatus_tmp.rollMotorVoltage[3];
+        eStatus.roll_1_Amp = eStatus_tmp.rollMotorCurrent[0];
+        eStatus.roll_2_Amp = eStatus_tmp.rollMotorCurrent[1];
+        eStatus.roll_3_Amp = eStatus_tmp.rollMotorCurrent[2];
+        eStatus.roll_4_Amp = eStatus_tmp.rollMotorCurrent[3];
+        
+        eStatusPub.publish(eStatus);
 
         ros::spinOnce();
         pub_rate.sleep();
 
-    /*
-	#ifdef JOYSTICK
+#ifdef JOYSTICK
 		struct event e;
 		mq_receive (mq_joystick, (char *)&e, sizeof (e), NULL);
 		switch (e.type)
@@ -412,14 +441,13 @@ main (int argc, char *argv[])
 			default:
 				break;
 		}
-	#else
+#elif defined KEYBOARD
 		// "SAFETY" -- convenience stop!
 		if (kbhit()) {
 			cout << "Key is hit" << endl; // Todo: remove print statement - not safe
 			sig_handler(0);
 		}
-	#endif
-    */
+#endif
 	}
 
 	delete vehicle;
@@ -845,7 +873,7 @@ sig_handler (int)
  * Registers keystrokes and returns 1 if a key has been hit. Note, this function
  * only works on Linux
  */
-/*
+#ifdef KEYBOARD
 static int kbhit(void)
 {
   struct termios oldt, newt;
@@ -872,4 +900,4 @@ static int kbhit(void)
 
   return 0;
 }
-*/
+#endif

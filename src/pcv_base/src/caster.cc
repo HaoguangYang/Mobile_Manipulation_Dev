@@ -165,6 +165,8 @@ int Caster::setVelocities(double steerVel, double rollVel)
   // Set motor velocities
   motor_set_velocity(steerMotor, steerMotorVel);
   motor_set_velocity(rollMotor, rollMotorVel);
+  
+  return 0;
 }
 
 
@@ -188,6 +190,8 @@ int Caster::setTorques(double steerTorque, double rollTorque)
   // Set motor torque
   motor_set_torque(steerMotor, steerMotorTorque);
   motor_set_torque(rollMotor, rollMotorTorque);
+  
+  return 0;
 }
 
 
@@ -328,6 +332,18 @@ pair<double,double> Caster::getTorques()
   return make_pair(steerTorque,rollTorque);
 }
 
+
+void Caster::getAmps(double *steerMotorAmp, double *rollMotorAmp)
+{
+	motor_get_amp(steerMotor, steerMotorAmp);
+  	motor_get_amp(rollMotor, rollMotorAmp);
+}
+
+void Caster::getVolts(double *steerMotorVolt, double *rollMotorVolt)
+{
+	motor_get_volt(steerMotor, steerMotorVolt);
+  	motor_get_volt(rollMotor, rollMotorVolt);
+}
 
 /* Returns true if bumper is hit */
 bool Caster::getBumperState() 

@@ -280,7 +280,7 @@ int Vehicle::setGlobalVelocity(Eigen::Vector3d xd_com_in)
 
 /* Set desired vehicle position, velocity, and acceleration for torque controller */
 // (6.4)
-int Vehicle::setTargets(Eigen::Array3d gx_des_in, Eigen::Array3d gxd_des_in, Eigen::Array3d gxdd_des_in) 
+void Vehicle::setTargets(Eigen::Array3d gx_des_in, Eigen::Array3d gxd_des_in, Eigen::Array3d gxdd_des_in) 
 {
 	// update _lambda and mu
 	updateDynamics();
@@ -447,6 +447,14 @@ Eigen::Vector4d Vehicle::getBumperState() const
 double Vehicle::getHeading() const 
 {
 	return _heading; 
+}
+
+void Vehicle::getElectricalStatus (robotElectrical_T *status)
+{
+	for (int i=0; i<NUM_CASTERS; i++){
+		casters[i]->getAmps(&(status->steerMotorCurrent[i]), &(status->rollMotorCurrent[i]));
+		casters[i]->getVolts(&(status->steerMotorVoltage[i]), &(status->rollMotorVoltage[i]));
+	}
 }
 
 bool Vehicle::reachedTarget(Eigen::Vector3d curr_pos, Eigen::Vector3d curr_target, double max_linear_dist, double max_rot_dist) const

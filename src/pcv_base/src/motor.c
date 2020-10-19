@@ -43,6 +43,7 @@ struct motor
 	double cur_vel;						/* most recent velocity received */
 	double cur_trq;						/* most recent torque received */
 	double cur_voltage;					/* most recent DC supplied voltage of the motor */
+	double cur_amp;						/* most recent DC current flowing through the motor */
 	timer_t msg_timer;					/* timer for handling tx timeouts */
 	timer_t heartbeat_timer;			/* timer for tracking heartbeat */
 	enum ctrl_mode cm;					/* control mode (velocity or torque) */
@@ -73,8 +74,9 @@ static double velocity_IU_to_SI (int32_t velocity_IU);
 static int32_t accel_SI_to_IU (double velocity_SI);
 static double accel_IU_to_SI (int32_t velocity_IU);
 static int16_t torque_SI_to_IU (double torque_SI);
-static double torque_IU_to_SI (int16_t torque_IU);
-
+static double amp_to_torque_SI (double amp_SI);
+static double amp_IU_to_SI (int16_t amp_IU);
+static double volt_IU_to_SI (int16_t volt_IU);
 
 /*------------------------static variable declarations------------------------*/
 static const double home_offsets[] = {HOME_OFFSET_MTR_1,
@@ -142,7 +144,7 @@ motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
 	}
 
 	/* launch the listening thread */
-	if (launch_rt_thread (listener, &m->listener, m, MAX_PRIO - 1)){
+	if (launch_rt_thread (listener, &m->listener, m, MAX_PRIO)){	// Communication thread has higher priority than control thread.
 		printf("Launch RT thread FAILED!\r\n");
 		goto done;
 	}
@@ -402,6 +404,32 @@ motor_get_torque (struct motor *m, double *torque)
 }
 
 
+/*
+ * Returns the most recently received Current and Voltage value in SI units (A) (V).
+ */
+void
+motor_get_amp (struct motor *m, double *amp)
+{
+	assert (m != NULL);
+	assert (amp != NULL);
+	
+	pthread_mutex_lock (&m->lock);
+	*amp = m->cur_amp;
+	pthread_mutex_unlock (&m->lock);
+}
+
+void
+motor_get_volt (struct motor *m, double *volt)
+{
+	assert (m != NULL);
+	assert (volt != NULL);
+	
+	pthread_mutex_lock (&m->lock);
+	*volt = m->cur_voltage;
+	pthread_mutex_unlock (&m->lock);
+}
+
+
 /* interface to the motor control mode */
 void
 motor_set_ctrl_mode (struct motor *m, enum ctrl_mode cm)
@@ -467,7 +495,7 @@ void motor_destroy (struct motor *m)
 	timer_delete (m->heartbeat_timer);
 	mq_close (m->mQueue);
 	close (m->s);
-	int status = pthread_kill(m->listener);
+	int status = pthread_kill(m->listener, SIGTERM);
 	if (status < 0)
 		perror("pthread_kill motor thread failed");
 	else
@@ -568,12 +596,22 @@ torque_SI_to_IU (double torque_SI)
 }
 
 static inline double
-torque_IU_to_SI (int16_t torque_IU)
+amp_to_torque_SI (double amp_SI)
 {
-	return (double) (torque_IU * TORQUE_CONSTANT * CURRENT_NUM *
-		CURRENT_PEAK / CURRENT_DENOM);
+	return (double) (amp_SI * TORQUE_CONSTANT);
 }
 
+static inline double
+amp_IU_to_SI (int16_t amp_IU)
+{
+	return (double) (amp_IU * CURRENT_NUM * CURRENT_PEAK / CURRENT_DENOM);
+}
+
+static inline double
+volt_IU_to_SI (int16_t volt_IU)
+{
+	return (double) (volt_IU * VOLTAGE_NUM / VOLTAGE_DENOM);
+}
 
 /*
  * Initialize the message queue that is used for communication between the
@@ -691,9 +729,10 @@ listener (void *aux)
   			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	        //printf("data[0]: %X\ndata[1]: %X\n\n",data[0],data[1]);
 	        pthread_mutex_lock (&m->lock);
-	        m->cur_trq = filter (m->cur_trq, torque_IU_to_SI (data[0]), LP_TRQ_FILTER_COEFF);
+	        m->cur_amp = amp_IU_to_SI (data[0]);
+	        m->cur_voltage = volt_IU_to_SI (data[2]);
+	        m->cur_trq = filter (m->cur_trq, amp_to_torque_SI (m->cur_amp), LP_TRQ_FILTER_COEFF);
 	        m->stale_trq = false;
-			m->cur_voltage = (double)data[2]*48.0/65520;
 	        pthread_mutex_unlock (&m->lock);
 	    }
 	    else if (f.can_id == COB_ID_TPDO (m->no, 4)) /* TPD04 - digital inputs */

@@ -13,6 +13,7 @@ extern "C" {
 #include "./COB_ID.h"
 #include "./CO_objects.h"
 #include "./event.h"
+#include "./hardware.h"
 
 #define NUM_INIT_STEPS		(sizeof (init_sequence) / sizeof (init_sequence[0]))
 #define NUM_ENABLE_STEPS	(sizeof (enable_sequence) / sizeof (enable_sequence[0]))
@@ -86,13 +87,15 @@ const struct CO_message init_sequence[] = {
     {SDO_Rx, .m.SDO = {TPDO3_COMM, 0x01, COB_ID_TPDO (0,3) , 4}},				/* Enable TPD03 */
     
     {SDO_Rx, .m.SDO = {TPDO4_COMM, 0x01, COB_ID_TPDO (0,4) | (1 << 31), 4}},    /* Disable TPD04 */  /*Since there is no bumper attached to digital inputs let's disable tpdo4 for now.*/
-	//{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x02, 255, 1}},								/* Set TPDO4 transmission type to asynchronous (drive responds immediately on change of state) */
-	//{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x03, 300, 2}},								/* Set TPDO4 Inhibit time to 30 ms (can only send 1 message per inhibit time) */
-	//{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x05, 0, 2}},								/* Disable TPDO4 Event timer (timer for regular transmission) */
-    //{SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x00, 0, 1}},								/* Disable TPD04 mapping */
-	//{SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x01, 0x60FD0020, 4}},                    /* Map digit inputs to TPDO4 */
-    //{SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x00, 1, 1}},								/* Enable TPD04 mapping (1 entry) */
-    //{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x01, COB_ID_TPDO (0,4), 4}},				/* Enable TPD04 */
+#ifdef BUMPER_SENSORS
+	{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x02, 255, 1}},								/* Set TPDO4 transmission type to asynchronous (drive responds immediately on change of state) */
+	{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x03, 300, 2}},								/* Set TPDO4 Inhibit time to 30 ms (can only send 1 message per inhibit time) */
+	{SDO_Rx, .m.SDO = {TPDO4_COMM, 0x05, 0, 2}},								/* Disable TPDO4 Event timer (timer for regular transmission) */
+    {SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x00, 0, 1}},								/* Disable TPD04 mapping */
+	{SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x01, 0x60FD0020, 4}},                    /* Map digit inputs to TPDO4 */
+    {SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x00, 1, 1}},								/* Enable TPD04 mapping (1 entry) */
+    {SDO_Rx, .m.SDO = {TPDO4_COMM, 0x01, COB_ID_TPDO (0,4), 4}},				/* Enable TPD04 */
+#endif
 
     {SDO_Rx, .m.SDO = {EXT_REF_TYPE, 0x00, 1, 2}},								/* Set to external reference to on-line */
 	{SDO_Rx, .m.SDO = {EXT_ONLINE_REF, 0x00, 0, 4}},							/* Set external reference to 0 */
@@ -154,13 +157,15 @@ const struct event init_responses[] = {
     {SDO_WR_ACK, TPDO3_COMM},
 
     {SDO_WR_ACK, TPDO4_COMM},
-    //{SDO_WR_ACK, TPDO4_COMM},
-    //{SDO_WR_ACK, TPDO4_COMM},
-    //{SDO_WR_ACK, TPDO4_COMM},
-	//{SDO_WR_ACK, TPDO4_MAPPING},
-    //{SDO_WR_ACK, TPDO4_MAPPING},
-    //{SDO_WR_ACK, TPDO4_MAPPING},
-    //{SDO_WR_ACK, TPDO4_COMM},
+# ifdef BUMPER_SENSORS
+    {SDO_WR_ACK, TPDO4_COMM},
+    {SDO_WR_ACK, TPDO4_COMM},
+    {SDO_WR_ACK, TPDO4_COMM},
+	{SDO_WR_ACK, TPDO4_MAPPING},
+    {SDO_WR_ACK, TPDO4_MAPPING},
+    {SDO_WR_ACK, TPDO4_MAPPING},
+    {SDO_WR_ACK, TPDO4_COMM},
+#endif
 
     {SDO_WR_ACK, EXT_REF_TYPE},
 	{SDO_WR_ACK, EXT_ONLINE_REF},

@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  message_generation
   tf
 )
 
@@ -89,11 +90,11 @@ endif()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
+add_message_files(
+    FILES
+    electricalStatus.msg
 #   Message2.msg
-# )
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -110,10 +111,10 @@ endif()
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   nav_msgs#   std_msgs
-# )
+generate_messages(
+    DEPENDENCIES
+    std_msgs#   nav_msgs#   std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -147,7 +148,7 @@ endif()
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES pcv_base
-  CATKIN_DEPENDS geometry_msgs nav_msgs roscpp rospy std_msgs tf
+  CATKIN_DEPENDS message_runtime geometry_msgs nav_msgs roscpp rospy std_msgs tf
 #  DEPENDS system_lib
 )
 
@@ -183,7 +184,7 @@ add_executable(${PROJECT_NAME}_node
   src/vehicle.cc
   src/motor.c
   src/OTG.cc
-  src/pose_t265.cc
+  #src/pose_t265.cc
   src/CAN_utils.c
   src/CO_message.c
   src/RT_utils.c
