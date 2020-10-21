@@ -15,6 +15,13 @@ echo "Mapped local SSH port to 34.221.135.10:$NODE_SSH_REMOTE_PORT."
 SSH_AUTH_SOCK=0 ssh -fNT -R $NODE_VNC_REMOTE_PORT:localhost:5900 ubuntu@34.221.135.10
 echo "Mapped local VNC port to 34.221.135.10:$NODE_VNC_REMOTE_PORT."
 
+scriptdir=`pwd`
+cd ../../../
+setupdir=`find . -type d -iname "devel*" | head -1`
+source $setupdir/setup.sh
+#screen -dm -S robotAutorun $scriptdir/autorun.py
+
+# in case the network drops offline
 while true; do
     # if not connected to PAL3.0
     if [ ! -z "`nmcli g | grep "(local only)"`" ]; then

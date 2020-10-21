@@ -37,7 +37,7 @@ sudo ip link set can1 up type can bitrate 1000000 triple-sampling on restart-ms 
 
 - This repository includes a bootup script, such that the SSH and VNC ports of the cart are mapped to a Virtual Private Server with static IP. To enable the automatic bootup sequence, add the following line in `crontab -e`:
 ```sh
-@reboot sleep 30 && sh /path_to_repo/Mobile_Manipulation_Dev/src/pcv_base/scripts/onBoot.sh
+@reboot sleep 30 && cd /path_to_repo/Mobile_Manipulation_Dev/src/pcv_base/scripts/ && sh ./onBoot.sh
 ```
 
 ### System environments:
@@ -81,7 +81,7 @@ gsettings set org.gnome.Vino require-encryption false
 
 ### Steps to run the code: 
 ```sh
-sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping ros-kinetic-teb-local-planner ros-kinetic-dwa-local-planner ros-kinetic-urg-node ros-kinetic-map-server ros-kinetic-realsense-camera ros-kinetic-global-planner
+sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping ros-kinetic-teb-local-planner ros-kinetic-dwa-local-planner ros-kinetic-urg-node ros-kinetic-map-server ros-kinetic-realsense-camera ros-kinetic-global-planner screen
 catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
 
