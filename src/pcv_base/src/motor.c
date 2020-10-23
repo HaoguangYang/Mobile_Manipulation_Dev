@@ -54,6 +54,7 @@ struct motor
 	bool stale_vel;
 	bool stale_trq;
 	int32_t inputs;						/* digital inputs on the motor controller*/
+	bool ok;							/* Quit indicator */
 };
 
 /*------------------------static function declarations------------------------*/
@@ -118,6 +119,7 @@ motor_init (uint8_t motor_no, enum ctrl_mode cm, enum motor_type mt)
 	m->stale_pos = true;
 	m->stale_vel = true;
 	m->stale_trq = true;
+	m->ok = true;
 
 	/* open a CAN socket for this motor no */
 	m->s = create_can_socket (m->no, 0xF);
@@ -489,6 +491,7 @@ void motor_destroy (struct motor *m)
 		return;
 
 	motor_disable (m);
+	m->ok = false;
 	raise (SIGINT);
 	free (m->mQueue_name);
 	timer_delete (m->msg_timer);
@@ -633,7 +636,7 @@ init_mQueue (struct motor *m)
 	attr.mq_maxmsg = QUEUE_SIZE;
 	attr.mq_msgsize = sizeof (struct event);
 	attr.mq_flags = 0;
-	m->mQueue = mq_open (m->mQueue_name, O_RDWR | O_CREAT, 0664, &attr);
+	m->mQueue = mq_open (m->mQueue_name, O_RDWR | O_CREAT | O_CLOEXEC, 0664, &attr);	// Added O_CLOEXEC to prevebt race conditions
 
 	if (m->mQueue == -1)
 	{
@@ -672,7 +675,7 @@ listener (void *aux)
 	printf("Motor listener thread launched!\r\n");
 
 	/* listen for messages forever, thread gets cancelled on motor_destroy call */
-	while (1)
+	while (m->ok)
 	{
 	  	int nbytes = read(m->s, &f, sizeof(struct can_frame));
 
@@ -730,7 +733,7 @@ listener (void *aux)
 	        //printf("data[0]: %X\ndata[1]: %X\n\n",data[0],data[1]);
 	        pthread_mutex_lock (&m->lock);
 	        m->cur_amp = amp_IU_to_SI (data[0]);
-	        m->cur_voltage = volt_IU_to_SI (data[2]);
+	        m->cur_voltage = volt_IU_to_SI (data[1]);
 	        m->cur_trq = filter (m->cur_trq, amp_to_torque_SI (m->cur_amp), LP_TRQ_FILTER_COEFF);
 	        m->stale_trq = false;
 	        pthread_mutex_unlock (&m->lock);
