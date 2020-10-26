@@ -28,6 +28,8 @@ The documentation for the iPOS motor controller CAN protocol can be found [HERE]
 ```sh
 sudo ip link set can0 up type can bitrate 1000000 triple-sampling on restart-ms 20
 sudo ip link set can1 up type can bitrate 1000000 triple-sampling on restart-ms 20
+# change congestion control method for CAN0 to ensure data packets are not stale under congestion.
+sudo tc qdisc add dev can0 root handle 1: pfifo_head_drop limit 9
 ``` 
 
 - ~~The robot has an LVDS built-in display interface for headless boot, and it is not used with an external display present. To disable it such that the external display becomes primary display, edit `/etc/default/grub` at **line 10** to be:~~

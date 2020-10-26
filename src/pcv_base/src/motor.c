@@ -524,7 +524,7 @@ msg_timer_handler (union sigval val)
 	e.type = TIMEOUT;
 	e.param = (uintptr_t)m->msg_timer;
 	mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
-	printf("TIMEEEE/r/n");
+	printf("TIMEEEE\r\n");
 }
 
 /*
