@@ -1,3 +1,4 @@
 <launch>
-	<node pkg="pcv_base" type="pcv_base_node" name="pcv_base_node" launch-prefix="sudo -E" output="screen"/>
+	<!--node pkg="pcv_base" type="pcv_base_node" name="pcv_base_node" launch-prefix="sudo -E" output="screen"/-->
+    <node pkg="pcv_base" type="node_wrapper.sh" name="node_wrapper" output="screen"/>
 </launch>
