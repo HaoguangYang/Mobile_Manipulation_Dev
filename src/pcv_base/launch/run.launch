@@ -4,8 +4,6 @@
 	<!--include file="$(find pcv_base)/launch/pcv_node_sim.launch"/-->
     <include file="$(find pcv_base)/launch/pcv_node.launch"/>
 
-	<!-- static transform -->
-	<include file="$(find pcv_base)/launch/includes/static_tf.launch" />
 
 	<!-- map server -->
 	<include file="$(find pcv_base)/launch/includes/map_server.launch" />
@@ -13,6 +11,8 @@
 	<!-- Laser scanner -->
 	<include file="$(find pcv_base)/launch/includes/laser.launch" />
 
+	<!-- static transform -->
+	<include file="$(find pcv_base)/launch/includes/static_tf.launch" />
 	<!-- Odometry (IMU, odom, ekf) -->
 	<!--include file="$(find pcv_base)/launch/includes/odom.launch" /-->
 
@@ -21,9 +21,12 @@
 	<!--include file="$(find pcv_base)/launch/includes/realsense.launch" /-->
 
 	<!-- navigation (move_base) -->
-	<include file="$(find pcv_base)/launch/includes/navigation.launch" />
+	<include file="$(find pcv_base)/launch/includes/navigation_narrow.launch" />
 
 	<!-- Visualization -->
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find pcv_base)/resources/cfg/default.rviz"/>
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find pcv_base)/resources/movebase.rviz"/>
+
+    <!-- Keyboard Teleop -->
+    <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop" output="screen"/>
 
 </launch>

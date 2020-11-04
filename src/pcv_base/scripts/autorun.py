@@ -1,24 +1,25 @@
 #!/usr/bin/env python
 
-import os, pickle, time
+import os, pickle, time, multiprocessing
 import rospy
 from move_base_msgs.msg import MoveBaseActionResult
 from geometry_msgs.msg import Twist
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from std_msgs.msg import Byte
-from sensor_msgs.msg import Scan
+from sensor_msgs.msg import LaserScan
+from payload import *
 
 def status_cb(data):
     status = data.status.status
-    if status == 3
-        susp_time = calc_disinfection_time(scan_cur)
+    if status == 3:
+        #susp_time = calc_disinfection_time(scan_cur)
         auto_susp_cmd = 'sudo rtcwake -u -s '+ str(susp_time) +' -m mem'
         os.system(auto_susp_cmd)
         # program resumes here after waking up
         # turn off lamp command to be added
         i = i+1
-        pub_goal.Publish(goals_list[i])
-    elif status == 4
+        #pub_goal.Publish(goals_list[i])
+    elif status == 4:
         # call for help procedures
         manual_control = 1
 
@@ -33,21 +34,96 @@ def scan_cb(data):
 
 if __name__=="__main__":
     # start ROS core
-    os.system('roscore &')
-    pub_cmd = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 1)
-    pub_goal = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size = 1)
-    sub_cmd = rospy.Subscriber('/cmd_vel', Twist, cmd_vel_cb)
-    sub_cmd_tele = rospy.Subscriber('/cmd_vel_tele', Twist, cmd_vel_tele_cb)
-    sub_stat = rospy.Subscriber('/move_base/result', MoveBaseActionResult, status_cb)
-    sub_scan = rospy.Subscriber('/scan',Scan, scan_cb)
-    rospy.init_node('admin')
+    #os.system('roscore &')
+    #pub_cmd = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 1)
+    #pub_goal = rospy.Publisher('move_base_simple/goal', PoseStamped, queue_size = 1)
+    #sub_cmd = rospy.Subscriber('/cmd_vel', Twist, cmd_vel_cb)
+    #sub_cmd_tele = rospy.Subscriber('/cmd_vel_tele', Twist, cmd_vel_tele_cb)
+    #sub_stat = rospy.Subscriber('/move_base/result', MoveBaseActionResult, status_cb)
+    #sub_scan = rospy.Subscriber('/scan',Scan, scan_cb)
+    os.system('. devel/setup.sh')
     # launch the stack of stuff
-    os.system('roslaunch pcv_node run.launch &')
-    time.sleep(10)      # wait for the stack to start up
-    rate = rospy.rate(50)
+    nav_thread = multiprocessing.Process(target=os.system, args=('roslaunch pcv_base run_nav_only.launch',))
+    nav_thread.daemon = True
+    nav_thread.start()
+    #time.sleep(30)      # wait for the stack to start up
+    
+    while not (payload.isReady()):
+        pass
+    
+    time.sleep(3)
+    robot_thread = multiprocessing.Process(target=os.system, args=('roslaunch pcv_base pcv_node.launch',))
+    robot_thread.daemon = True
+    robot_thread.start()
+    time.sleep(20)           # robot startup
+    
+    rospy.init_node('admin')
+
+    pose_pub = rospy.Publisher('/initialpose',PoseWithCovarianceStamped, queue_size=10)
+    init_pose = [ 0.0453101396561, 0.00364243984222, 0.0, 0.0, 0.0, -0.032842760778, 0.999460531019]
+    
+    # reads keyboard input. considers changing to read button status.
+    #ret = input('Is robot in position? (1-Yes, 0-NO)')
+    #if ret==0:
+    #    rospy.signal_shutdown('Exit')
+    
+    # initialize position in the map.
+    ipose = PoseWithCovarianceStamped()
+    ipose.pose.pose.position.x = init_pose[0]
+    ipose.pose.pose.position.y = init_pose[1]
+    ipose.pose.pose.orientation.z = init_pose[5]
+    ipose.pose.pose.orientation.w = init_pose[6]
+    pose_pub.publish(ipose)
+    time.sleep(1)
+    
+    s = os.system('rosrun pcv_base pubgoal.py _location:=livingroom')
+    
+    if (s == 0):
+        s = os.system('rosrun pcv_base door_servo.py _location:=bedroom1door _direction:=0')
+    
+    if (s == 0):
+        s = os.system('rosrun pcv_base pubgoal.py _location:=bedroom1Clean')
+    
+    if (s == 0):
+        s = os.system('rosrun pcv_base pubgoal.py _location:=bedroom1post')
+    
+    if (s == 0):
+        s = os.system('rosrun pcv_base door_servo.py _location:=bedroom1door _direction:=1')
+
+    if (s == 0):
+        s = os.system('rosrun pcv_base pubgoal.py _location:=bedroom1tobedroom2')
+    
+    if (s == 0):
+        s = os.system('rosrun pcv_base door_servo.py _location:=bedroom2door _direction:=0')
+
+    if (s == 0):
+        s = os.system('rosrun pcv_base pubgoal.py _location:=bedroom2Clean')
+        s = -1
+
+    if (s == 0):
+        s = os.system('rosrun pcv_base pubgoal.py _location:=bedroom2post')
+    
+    if (s == 0):
+        s = os.system('rosrun pcv_base door_servo.py _location:=bedroom2door _direction:=1')
+
+    if (s == 0):
+        s = os.system('rosrun pcv_base pubgoal.py _location:=return')
+    
+    if (s == 0):
+        print('Done!')
+        payload.setDoneStatus()
+    else:
+        print('HELP NEEDED!')
+        # help code...
+    
+    nav_thread.terminate()
+    robot_thread.terminate()
+    payload.ser_thread.terminate()
+    
+    #rate = rospy.rate(50)
     # Admin node functionalities:
     #   subscribes to: (move_base)-->cmd_vel, (teleop)-->cmd_vel_tele
-    #   publishes to:  mobile_base_controller/cmd_vel-->(pcv_base_node)
+    #   publishes to:  mobile_base_controller/cmd_vel-->(pcv_base_base)
     #   subscribes to: (move_base)-->move_base/result: 2 - goal updated; 3 - goal reached; 4 - failed
     #   publishes to:  teleop interface
     #   publishes to:  move_base_simple/goal -->(movebase)
@@ -55,14 +131,14 @@ if __name__=="__main__":
     # if failed, call for help.
     # if goal reached, compute disinfection time from scan (maybe we should use the localization data instead, since scan only covers a small area), then compose a suspend command and sent through os.system to suspend the machine for that long.
     
-    i = 0
+    #i = 0
     
-    pub_goal.Publish(goals_list[i])
+    #pub_goal.Publish(goals_list[i])
     
-    while (1)       # while end of goal list is not reached
-        if (not manual_control)
-            pub_cmd.Publish(cmd_vel_cur)
-        else
-            pub_cmd.Publish(cmd_vel_tele_cur)
+    #while (1)       # while end of goal list is not reached
+    #    if (not manual_control)
+    #        pub_cmd.Publish(cmd_vel_cur)
+    #    else
+    #        pub_cmd.Publish(cmd_vel_tele_cur)
         # else do nothing
-        rate.sleep()
+    #    rate.sleep()

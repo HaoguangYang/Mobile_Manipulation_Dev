@@ -57,7 +57,7 @@
   <!--laser connector from bottom (on-ground) center of omniveyor-->
     <parent link="base_link" />
     <child link="laser" />
-    <origin xyz="0.27 0 0.15" rpy="0 0 0" />
+    <origin xyz="0.28 0 0.15" rpy="0 0 0" />
   </joint>
 
   <joint name="front_t265_joint" type="fixed">
@@ -78,6 +78,6 @@
   <!--rear depth camera connector from bottom (on-ground) center of omniveyor-->
     <parent link="base_link" />
     <child link="cam_d2_link" />
-    <origin xyz="-0.4 -0.08 0.4" rpy="0. 0. 3.1416" />
+    <origin xyz="-0.4 0. 0.4" rpy="0. 0. 3.1416" />
   </joint>
 </robot>

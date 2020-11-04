@@ -1,0 +1,15 @@
+<launch>
+        <!-- Load a map  -->
+    <arg name="map_file" default="$(find pcv_base)/resources/map/pvil_small.yaml"/>
+    <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+    
+    <!-- Trajectory reader-->
+    <node pkg="pcv_base" type="create_trajectory.py" name="trajectory_writer" output="screen"/>    
+    
+    <!-- Laser scanner -->
+	<include file="$(find pcv_base)/launch/includes/laser.launch" />
+
+    <!-- Visualization -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find pcv_base)/resources/mapview.rviz"/>
+    
+</launch>

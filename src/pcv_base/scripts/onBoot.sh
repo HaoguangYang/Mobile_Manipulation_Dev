@@ -1,38 +1,38 @@
 #!/bin/bash
 
-NODE_NO=3
+NODE_NO=5
 NODE_SSH_REMOTE_PORT=`expr 50000 + $NODE_NO`
 NODE_VNC_REMOTE_PORT=`expr 50020 + $NODE_NO`
 
 if [ ! -z "`nmcli g | grep "(local only)"`" ]; then
-    nmcli c up PAL3.0
+    nmcli c up URWintek
 fi
 # initial connection
 # runs ssh connection in the background.
 # Forwarding localhost:22 to 134.209.53.144:50000+NODE_NUM
+
 SSH_AUTH_SOCK=0 ssh -fNT -R $NODE_SSH_REMOTE_PORT:localhost:22 ubuntu@34.221.135.10
 echo "Mapped local SSH port to 34.221.135.10:$NODE_SSH_REMOTE_PORT."
 SSH_AUTH_SOCK=0 ssh -fNT -R $NODE_VNC_REMOTE_PORT:localhost:5900 ubuntu@34.221.135.10
 echo "Mapped local VNC port to 34.221.135.10:$NODE_VNC_REMOTE_PORT."
 
-scriptdir=`pwd`
-cd ../../../
-setupdir=`find . -type d -iname "devel*" | head -1`
-source $setupdir/setup.sh
-#screen -dm -S robotAutorun $scriptdir/autorun.py
-
-# in case the network drops offline
 while true; do
     # if not connected to PAL3.0
+    #nc -v -z -w 3 34.221.135.10 22 &>/dev/null
+    #status=$( echo $? ) 
     if [ ! -z "`nmcli g | grep "(local only)"`" ]; then
-    # connects to PAL3.0
-        nmcli c up PAL3.0
+        #echo $status
+        # connects to PAL3.0
+        nmcli c down URWintek
+        nmcli c up URWintek
         # fix broken pipe
         # runs ssh connection in the background.
         # Forwarding localhost:22 to 134.209.53.144:50003
+        sudo kill $(ps aux | grep "ubuntu@34.221.135.10" | awk '{print $2}')
+        sudo service ssh restart
         SSH_AUTH_SOCK=0 ssh -fNT -R $NODE_SSH_REMOTE_PORT:localhost:22 ubuntu@34.221.135.10
         echo "Mapped local SSH port to 34.221.135.10:$NODE_SSH_REMOTE_PORT."
-        SSH_AUTH_SOCK=0 ssh -fNT -R $NODE_VNC_REMOTE_PORT:localhost:5901 ubuntu@34.221.135.10
+        SSH_AUTH_SOCK=0 ssh -fNT -R $NODE_VNC_REMOTE_PORT:localhost:5900 ubuntu@34.221.135.10
         echo "Mapped local VNC port to 34.221.135.10:$NODE_VNC_REMOTE_PORT."
     fi
     sleep 20
