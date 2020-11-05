@@ -60,6 +60,7 @@ class disinfectionPayload():
                 timeNow = time.time()
                 if timeNow - sms_time > sms_timeout :
                     # send text msg
+                    print('message sent!')
                     sms_time = timeNow
 
     def turnOnUVC(self):

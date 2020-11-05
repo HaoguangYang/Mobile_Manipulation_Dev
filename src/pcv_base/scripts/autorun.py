@@ -76,38 +76,38 @@ if __name__=="__main__":
     pose_pub.publish(ipose)
     time.sleep(1)
     
-    s = os.system('rosrun pcv_base pubgoal.py _location:=livingroom')
+    s = os.system('rosrun pcv_base pubgoal.py _location:=LivingRoomClean')
     
     if (s == 0):
-        s = os.system('rosrun pcv_base door_servo.py _location:=bedroom1door _direction:=0')
+        s = os.system('rosrun pcv_base door_servo.py _location:=Bedroom1Door _direction:=0')
     
     if (s == 0):
-        s = os.system('rosrun pcv_base pubgoal.py _location:=bedroom1Clean')
+        s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom1Clean')
     
     if (s == 0):
-        s = os.system('rosrun pcv_base pubgoal.py _location:=bedroom1post')
+        s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom1PostClean')
     
     if (s == 0):
-        s = os.system('rosrun pcv_base door_servo.py _location:=bedroom1door _direction:=1')
+        s = os.system('rosrun pcv_base door_servo.py _location:=Bedroom1Door _direction:=1')
 
     if (s == 0):
-        s = os.system('rosrun pcv_base pubgoal.py _location:=bedroom1tobedroom2')
+        s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom1ToBedroom2')
     
     if (s == 0):
-        s = os.system('rosrun pcv_base door_servo.py _location:=bedroom2door _direction:=0')
+        s = os.system('rosrun pcv_base door_servo.py _location:=Bedroom2Door _direction:=0')
 
     if (s == 0):
-        s = os.system('rosrun pcv_base pubgoal.py _location:=bedroom2Clean')
+        s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom2Clean')
         s = -1
 
     if (s == 0):
-        s = os.system('rosrun pcv_base pubgoal.py _location:=bedroom2post')
+        s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom2PostClean')
     
     if (s == 0):
-        s = os.system('rosrun pcv_base door_servo.py _location:=bedroom2door _direction:=1')
+        s = os.system('rosrun pcv_base door_servo.py _location:=Bedroom2Door _direction:=1')
 
     if (s == 0):
-        s = os.system('rosrun pcv_base pubgoal.py _location:=return')
+        s = os.system('rosrun pcv_base pubgoal.py _location:=ReturnToKitchen')
     
     if (s == 0):
         print('Done!')

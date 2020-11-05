@@ -17,7 +17,7 @@ import sys
 
 class ScanVisualServo():
     def __init__(self):
-        #rospy.Subscriber('/scan', LaserScan, self.scan_cb)
+        rospy.Subscriber('/scan', LaserScan, self.scan_cb)
         rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_cb)
 
         self.vel_pub = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10)
@@ -70,6 +70,15 @@ class ScanVisualServo():
         rightClosestInd = np.argmin(dists[mid_id:])
         self.leftTh = self.pos[:,leftClosestInd]
         self.rightTh = self.pos[:,rightClosestInd]
+    
+    def isSideClear(self, dist):
+        clear = True
+        robotWidth = 0.32
+        dist_offset = -0.28
+        for pts in self.pos.transpose():
+            if pts[0] < (dist + dist_offset) and np.abs(pts[1]) < robotWidth:
+                clear = False
+        return clear
                 
     def amcl_cb(self,msg):
         quat = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
@@ -93,6 +102,8 @@ msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
         self.waypt_yd =  self.waypts[waypt_i,1]
         self.waypt_thd =  eul[2]
         print(self.waypt_xd)
+        heading_correction_flag = True
+        waypt_i += 1
         while not rospy.is_shutdown():
             # compute distance between present pos estimate and latest waypt update
             #if self.state == 0 or self.state == 2:
@@ -104,9 +115,14 @@ msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
             # The pd control
             pub_msg = Twist()
             ###### Steer pd
-            steer_err = self.waypt_thd - self.cp[2]
+            #steer_err = self.waypt_thd - self.cp[2]
             
             alpha = math.atan2(self.waypt_yd-self.cp[1],self.waypt_xd-self.cp[0])
+            if heading_correction_flag:
+                steer_err = alpha - self.cp[2]
+            else:
+                steer_err = self.waypt_thd - self.cp[2]
+            
             ori = self.cp[2]-alpha
             x_err = math.cos(ori)*self.dis_err
             y_err = -math.sin(ori)*self.dis_err
@@ -123,13 +139,15 @@ msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
             # waypoint updates
             if(self.dis_err < self.waypt_lim and y_err < self.lat_lim and steer_err < self.str_lim ):
                 if (waypt_i <= (len(self.waypts) - 1)):
-                    quat = [self.waypts[waypt_i,3],self.waypts[waypt_i,4],
+                    #quat = [self.waypts[waypt_i,3],self.waypts[waypt_i,4],
                             self.waypts[waypt_i,5],self.waypts[waypt_i,6]]
-                    eul = ts.euler_from_quaternion(quat)
+                    #eul = ts.euler_from_quaternion(quat)
                     self.waypt_xd =  self.waypts[waypt_i,0]
                     self.waypt_yd =  self.waypts[waypt_i,1]
-                    self.waypt_thd =  eul[2]
+                    #self.waypt_thd =  eul[2]
+                    self.waypt_thd = math.atan2(self.waypts[waypt_i,1] - self.waypts[waypt_i-1,1], self.waypts[waypt_i,0]-self.waypts[waypt_i-1,0])
                     waypt_i += 1
+                    heading_correction_flag = True
                 else:
                     print('End')
                     cmd_pub.publish(Twist())
@@ -141,18 +159,33 @@ msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
                 steer_err = 2*math.pi + steer_err
             
             # controller
-            steer = self.kp[2]*steer_err \
-            + self.kd[2]*(steer_err-psteer_err)
-            pub_msg.angular.z = steer/abs(steer)*min(abs(steer), self.vlim[2])
-            ######## x pd
-            xvel = self.kp[0]*x_err \
-            + self.kd[0]*(x_err-px_err)
-            pub_msg.linear.x = xvel/abs(xvel)*min(abs(xvel),self.vlim[0])
-            ######## y pd
-            yvel = self.kp[1]*y_err \
-            + self.kd[1]*(y_err-py_err)
-            pub_msg.linear.y = yvel/abs(yvel)*min(abs(yvel), self.vlim[1])
-            # Update previous errors
+            if heading_correction_flag:         # alignment phase
+                steer = self.kp[2]*steer_err \
+                + self.kd[2]*(steer_err-psteer_err)
+                pub_msg.angular.z = steer/abs(steer)*min(abs(steer), self.vlim[2])
+                pub_msg.linear.x = 0.
+                pub.msg.linear.y = 0.
+                
+                if steer_err < self.str_lim:
+                    isClear = self.isSideClear(dis_err)
+                    if isClear:
+                        heading_correction_flag = False
+                    else:
+                        print('NEED HELP - WAYPTS MAY BE SKEWED!')
+                
+            else:
+                steer = self.kp[2]*steer_err \
+                + self.kd[2]*(steer_err-psteer_err)
+                pub_msg.angular.z = steer/abs(steer)*min(abs(steer), self.vlim[2])
+                ######## x pd
+                xvel = self.kp[0]*x_err \
+                + self.kd[0]*(x_err-px_err)
+                pub_msg.linear.x = xvel/abs(xvel)*min(abs(xvel),self.vlim[0])
+                ######## y pd
+                yvel = self.kp[1]*y_err \
+                + self.kd[1]*(y_err-py_err)
+                pub_msg.linear.y = yvel/abs(yvel)*min(abs(yvel), self.vlim[1])
+                # Update previous errors
             px_err = x_err
             py_err = y_err
             psteer_err = steer_err
