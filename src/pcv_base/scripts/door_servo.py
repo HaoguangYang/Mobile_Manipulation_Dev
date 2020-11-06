@@ -78,6 +78,7 @@ class ScanVisualServo():
         for pts in np.array(self.pos).transpose():
             if pts[0] < (dist + dist_offset) and np.abs(pts[1]) < robotWidth:
                 clear = False
+                break
         return clear
                 
     def amcl_cb(self,msg):
