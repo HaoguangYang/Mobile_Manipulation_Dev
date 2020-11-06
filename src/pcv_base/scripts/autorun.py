@@ -7,7 +7,7 @@ from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from std_msgs.msg import Byte
 from sensor_msgs.msg import LaserScan
-from payload import *
+from payload import payload
 
 def status_cb(data):
     status = data.status.status
@@ -98,13 +98,13 @@ if __name__=="__main__":
 
     if (s == 0):
         s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom2Clean')
-        s = -1
 
     if (s == 0):
         s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom2PostClean')
     
     if (s == 0):
         s = os.system('rosrun pcv_base door_servo.py _location:=Bedroom2Door _direction:=1')
+        time.sleep(1)
 
     if (s == 0):
         s = os.system('rosrun pcv_base pubgoal.py _location:=ReturnToKitchen')

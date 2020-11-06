@@ -2,11 +2,19 @@ import serial
 import time
 import multiprocessing
 from functools import wraps
+from twilio.rest import Client
+import xml.etree.ElementTree as ET 
 
 ser = serial.Serial('/dev/ttyACM0', timeout=2)  # open serial port.
 
 class disinfectionPayload():
     def __init__(self):
+        sms_cred = ET.parse('~/Dev/smsCredentials.xml')
+        account_sid = sms_cred.findall('account_sid')[0].get('value')
+        auth_token = sms_cred.findall('auth_token')[0].get('value')
+        self.sms_client = Client(account_sid, auth_token)
+        self.sms_from = sms_cred.findall('from')[0].get('value')
+        self.sms_to = sms_cred.findall('to')[0].get('value')
         self.mgr = multiprocessing.Manager()
         self.d = self.mgr.dict()
         self.d[0] = False   # isReady
@@ -18,48 +26,63 @@ class disinfectionPayload():
         #except:
         #    print "Error: unable to start Serial Listener thread"
 
-    def serialComm(self, d):
-        ser.write('$L0&')
+    def serialComm(self):
+        ser.write('$S0&$L0&')
         lampState = False
         sms_timeout = 3600
         sms_time = 0
+        lowCurrentFlag = 0
         while 1:
             if ser.inWaiting():
                 header = ser.read(1)            # read one byte
                 if header == '@':               # header captured
                     cmd = ser.read(1)           # read second byte     
                     if cmd == 'A':
-                        current = ser.read(3)
+                        current = ser.read(4)
+                        #print(current)
                         end = ser.read(1)
                         if end == '%':          # tail matches, valid msg.
-                            d[1] = (float(current)-512.0)/4.83 # compose ros message of lamp current
+                            self.d[1] = (float(current)-512.0)/4.83 # compose ros message of lamp current
+                            if lampState and self.d[1] < 12.0:
+                                #print self.d[1]
+                                # delay, send sms until 20 consecutive low measurements.
+                                #print(lowCurrentFlag)
+                                lowCurrentFlag = lowCurrentFlag + 1
+                            elif lampState and self.d[1] >= 12.0:
+                                lowCurrentFlag = 0
                     elif cmd == 'S':
                         status = ser.read(1)
                         end = ser.read(1)
                         if end == '%':          # tail matches, valid msg
                             if status == '1':
-                                d[0] = True# start the code
+                                self.d[0] = True# start the code
                             else:
-                                d[0] = False
+                                self.d[0] = False
                     else:
                         # kill everything but keyboard teleop.
                         pass
                 else:                           # not a message.
                     pass
-            if d[2] == True and lampState == False:
+            if self.d[2] == True and lampState == False:
                 ser.write('$L1&')
                 lampState = True
-            elif d[2] == False and lampState == True:
+            elif self.d[2] == False and lampState == True:
                 ser.write('$L0&')
                 lampState = False
-            if d[3] == False and d[0] == True:
+            if self.d[3] == False and self.d[0] == True:
                 ser.write('$S0%')
-                d[3] = True
-                d[0] = False
-            if self.d[1] < 12.0:
+                self.d[3] = True
+                self.d[0] = False
+            if lowCurrentFlag > 20:
                 timeNow = time.time()
                 if timeNow - sms_time > sms_timeout :
                     # send text msg
+                    #message = self.sms_client.messages \
+                    #          .create(
+                    #                body='FIXME: UVC Lamp Battery Low or Lamp is Broken!',
+                    #                from_=self.sms_from, # this is my twilio number
+                    #                to=self.sms_to # this is my number
+                    #          )
                     print('message sent!')
                     sms_time = timeNow
 
@@ -79,7 +102,7 @@ class disinfectionPayload():
         return self.d[1]
         
 payload = disinfectionPayload()
-payload_thread = multiprocessing.Process(target=payload.serialComm, args=(payload.d,))
+payload_thread = multiprocessing.Process(target=payload.serialComm, args=())
 payload_thread.daemon = True
 payload_thread.start()
 

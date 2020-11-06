@@ -75,7 +75,7 @@ class ScanVisualServo():
         clear = True
         robotWidth = 0.32
         dist_offset = -0.28
-        for pts in self.pos.transpose():
+        for pts in np.array(self.pos).transpose():
             if pts[0] < (dist + dist_offset) and np.abs(pts[1]) < robotWidth:
                 clear = False
         return clear
@@ -140,7 +140,7 @@ msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
             if(self.dis_err < self.waypt_lim and y_err < self.lat_lim and steer_err < self.str_lim ):
                 if (waypt_i <= (len(self.waypts) - 1)):
                     #quat = [self.waypts[waypt_i,3],self.waypts[waypt_i,4],
-                            self.waypts[waypt_i,5],self.waypts[waypt_i,6]]
+                    #        self.waypts[waypt_i,5],self.waypts[waypt_i,6]]
                     #eul = ts.euler_from_quaternion(quat)
                     self.waypt_xd =  self.waypts[waypt_i,0]
                     self.waypt_yd =  self.waypts[waypt_i,1]
@@ -164,10 +164,10 @@ msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
                 + self.kd[2]*(steer_err-psteer_err)
                 pub_msg.angular.z = steer/abs(steer)*min(abs(steer), self.vlim[2])
                 pub_msg.linear.x = 0.
-                pub.msg.linear.y = 0.
+                pub_msg.linear.y = 0.
                 
                 if steer_err < self.str_lim:
-                    isClear = self.isSideClear(dis_err)
+                    isClear = self.isSideClear(self.dis_err)
                     if isClear:
                         heading_correction_flag = False
                     else:
