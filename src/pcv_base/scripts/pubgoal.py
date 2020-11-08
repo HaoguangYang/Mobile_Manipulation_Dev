@@ -58,9 +58,11 @@ class PubNavGoal():
         #time.sleep(1)
 
         # Start publishing goals from trajectory
-        msg = PoseStamped()
-        self.gpub.publish(msg)
-        self.gpub.publish(msg)
+        #msg = PoseStamped()
+        #self.gpub.publish(msg)
+        #self.gpub.publish(msg)
+        while not self.gpub.get_num_connections():
+            pass
         for i in range(self.traj.shape[0]):
             msg = PoseStamped()            
             # Create header
