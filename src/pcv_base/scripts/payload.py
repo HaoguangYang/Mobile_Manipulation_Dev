@@ -5,11 +5,13 @@ from functools import wraps
 from twilio.rest import Client
 import xml.etree.ElementTree as ET 
 
-ser = serial.Serial('/dev/ttyACM0', timeout=2)  # open serial port.
-
 class disinfectionPayload():
     def __init__(self):
-        sms_cred = ET.parse('~/Dev/smsCredentials.xml')
+        self.ser = serial.Serial('/dev/ttyACM0', timeout=2)  # open serial port.
+        time.sleep(1)
+        self.ser.setDTR(0)
+        time.sleep(1)
+        sms_cred = ET.parse('/home/cartman/Dev/smsCredentials.xml')
         account_sid = sms_cred.findall('account_sid')[0].get('value')
         auth_token = sms_cred.findall('auth_token')[0].get('value')
         self.sms_client = Client(account_sid, auth_token)
@@ -27,20 +29,20 @@ class disinfectionPayload():
         #    print "Error: unable to start Serial Listener thread"
 
     def serialComm(self):
-        ser.write('$S0&$L0&')
+        self.ser.write('$S0&$L0&')
         lampState = False
         sms_timeout = 3600
         sms_time = 0
         lowCurrentFlag = 0
         while 1:
-            if ser.inWaiting():
-                header = ser.read(1)            # read one byte
+            if self.ser.inWaiting():
+                header = self.ser.read(1)            # read one byte
                 if header == '@':               # header captured
-                    cmd = ser.read(1)           # read second byte     
+                    cmd = self.ser.read(1)           # read second byte     
                     if cmd == 'A':
-                        current = ser.read(4)
+                        current = self.ser.read(4)
                         #print(current)
-                        end = ser.read(1)
+                        end = self.ser.read(1)
                         if end == '%':          # tail matches, valid msg.
                             self.d[1] = (float(current)-512.0)/4.83 # compose ros message of lamp current
                             if lampState and self.d[1] < 12.0:
@@ -51,8 +53,8 @@ class disinfectionPayload():
                             elif lampState and self.d[1] >= 12.0:
                                 lowCurrentFlag = 0
                     elif cmd == 'S':
-                        status = ser.read(1)
-                        end = ser.read(1)
+                        status = self.ser.read(1)
+                        end = self.ser.read(1)
                         if end == '%':          # tail matches, valid msg
                             if status == '1':
                                 self.d[0] = True# start the code
@@ -64,13 +66,15 @@ class disinfectionPayload():
                 else:                           # not a message.
                     pass
             if self.d[2] == True and lampState == False:
-                ser.write('$L1&')
+                self.ser.write('$L1&')
                 lampState = True
             elif self.d[2] == False and lampState == True:
-                ser.write('$L0&')
+                self.ser.write('$L0&')
                 lampState = False
             if self.d[3] == False and self.d[0] == True:
-                ser.write('$S0%')
+                self.ser.write('$L0&')
+                lampState = False
+                self.ser.write('$S0&')
                 self.d[3] = True
                 self.d[0] = False
             if lowCurrentFlag > 20:
@@ -86,6 +90,12 @@ class disinfectionPayload():
                     print('message sent!')
                     sms_time = timeNow
 
+    def initialize(self):
+        self.ser.write('$S0&$L0&')
+        self.payload_thread = multiprocessing.Process(target=self.serialComm, args=())
+        self.payload_thread.daemon = True
+        self.payload_thread.start()
+        
     def turnOnUVC(self):
         self.d[2] = True
     
@@ -100,11 +110,9 @@ class disinfectionPayload():
         
     def getCurrent(self):
         return self.d[1]
-        
+
 payload = disinfectionPayload()
-payload_thread = multiprocessing.Process(target=payload.serialComm, args=())
-payload_thread.daemon = True
-payload_thread.start()
 
 if __name__ == '__main__':
-    pass
+    payload.ser.write('$S0&$L0&')
+    

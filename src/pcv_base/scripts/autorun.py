@@ -7,7 +7,9 @@ from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from std_msgs.msg import Byte
 from sensor_msgs.msg import LaserScan
+import serial
 from payload import payload
+import roslaunch
 
 def status_cb(data):
     status = data.status.status
@@ -40,22 +42,33 @@ if __name__=="__main__":
     #sub_cmd = rospy.Subscriber('/cmd_vel', Twist, cmd_vel_cb)
     #sub_cmd_tele = rospy.Subscriber('/cmd_vel_tele', Twist, cmd_vel_tele_cb)
     #sub_stat = rospy.Subscriber('/move_base/result', MoveBaseActionResult, status_cb)
-    #sub_scan = rospy.Subscriber('/scan',Scan, scan_cb)
+    #sub_scan = rospy.Subscriber('/scan',Scan, scan_cb)    
     os.system('. devel/setup.sh')
+    
+    uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+    roslaunch.configure_logging(uuid)
     # launch the stack of stuff
-    nav_thread = multiprocessing.Process(target=os.system, args=('roslaunch pcv_base run_nav_only.launch',))
-    nav_thread.daemon = True
-    nav_thread.start()
+    #nav_thread = multiprocessing.Process(target=os.system, args=('roslaunch pcv_base run_nav_only.launch',))
+    #nav_thread.daemon = True
+    #nav_thread.start()
     #time.sleep(30)      # wait for the stack to start up
     
-    while not (payload.isReady()):
-        pass
+    payload.initialize()
     
-    time.sleep(3)
-    robot_thread = multiprocessing.Process(target=os.system, args=('roslaunch pcv_base pcv_node.launch',))
-    robot_thread.daemon = True
-    robot_thread.start()
-    time.sleep(20)           # robot startup
+    while not (payload.isReady()):
+        if (os.path.exists('/dev/input/js0')):  # if a joystick is plugged in...
+            time.sleep(2)
+            launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/joystick_teleop.launch', './src/pcv_base/launch/pcv_node.launch'])
+            launch.start()
+            while (os.path.exists('/dev/input/js0')):
+                pass
+            launch.shutdown()
+    # Continue ONLY when the button is pressed
+    
+    time.sleep(10)
+    launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/run.launch'])
+    launch.start()
+    time.sleep(20)
     
     rospy.init_node('admin')
 
@@ -76,6 +89,8 @@ if __name__=="__main__":
     pose_pub.publish(ipose)
     time.sleep(1)
     
+    # robot starts moving... turn onUVC.
+    payload.turnOnUVC()
     s = os.system('rosrun pcv_base pubgoal.py _location:=LivingRoomClean')
     
     if (s == 0):
@@ -104,21 +119,22 @@ if __name__=="__main__":
     
     if (s == 0):
         s = os.system('rosrun pcv_base door_servo.py _location:=Bedroom2Door _direction:=1')
-        time.sleep(1)
 
     if (s == 0):
         s = os.system('rosrun pcv_base pubgoal.py _location:=ReturnToKitchen')
     
     if (s == 0):
         print('Done!')
-        payload.setDoneStatus()
     else:
         print('HELP NEEDED!')
         # help code...
+    payload.turnOffUVC()
+    payload.setDoneStatus()
     
-    nav_thread.terminate()
-    robot_thread.terminate()
-    payload.ser_thread.terminate()
+    #nav_thread.terminate()
+    #robot_thread.terminate()
+    launch.shutdown()
+    payload.payload_thread.terminate()
     
     #rate = rospy.rate(50)
     # Admin node functionalities:

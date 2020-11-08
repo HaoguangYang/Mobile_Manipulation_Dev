@@ -8,9 +8,9 @@ from tf import transformations as ts
 import time
 import os
 import sys
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Byte
 from move_base_msgs.msg import MoveBaseActionResult
-from payload import payload
+#from payload import payload
 
 class PubNavGoal():
     def __init__(self):
@@ -18,6 +18,7 @@ class PubNavGoal():
         locName = rospy.get_param('~location')
         self.gpub = rospy.Publisher('/move_base_simple/goal',PoseStamped, queue_size=10)
         #self.gsub = rospy.Subscriber('amcl_pose',, self.amcl_cb);                   
+        self.ena_pub = rospy.Publisher('/mobile_base_controller/control_mode', Byte, queue_size = 1)
         pathName = '/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/traj/'+locName+'.txt'
         if not (os.path.exists(pathName)):
             sys.exit('ERROR: '+pathName+' Does Not Exist! Aborting...')
@@ -95,17 +96,13 @@ class PubNavGoal():
             if (self.status == 3 and self.traj[i,7]>0):
                 # do disinfection stuff here.
                 loc = self.last_loc
-                print(loc)
-                loc_reinit = PoseWithCovarianceStamped()
-                payload.turnOnUVC()
+                #payload.turnOnUVC()
+                self.ena_pub.publish(Byte(0))
                 time.sleep(self.traj[i,7])
-                payload.turnOffUVC()
-                loc_reinit.pose.pose.position.x = loc.pose.pose.position.x
-                loc_reinit.pose.pose.position.y = loc.pose.pose.position.y
-                loc_reinit.pose.pose.orientation.z = loc.pose.pose.orientation.z
-                loc_reinit.pose.pose.orientation.w = loc.pose.pose.orientation.w
-                loc_reinit.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.05]
-                self.pose_pub.publish(loc_reinit)
+                #payload.turnOffUVC()
+                self.ena_pub.publish(Byte(1))
+                loc.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.05]
+                self.pose_pub.publish(loc)
                 time.sleep(1)
             if self.status != 3:
                 rospy.logerr('Did not succeed, status code: '+str(self.status))
@@ -114,7 +111,7 @@ class PubNavGoal():
             #if res.status.status != 3:
             #    break
             if rospy.is_shutdown():
-                payload.turnOffUVC()
+                #payload.turnOffUVC()
                 break
         
         return 0

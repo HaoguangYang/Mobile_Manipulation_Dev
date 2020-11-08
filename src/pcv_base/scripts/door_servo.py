@@ -50,7 +50,7 @@ class ScanVisualServo():
 
         self.waypt_lim = 0.05
         self.lat_lim = 0.01
-        self.str_lim = 0.05
+        self.str_lim = 0.02
         
         self.state = 0; # 0, 1, 2 = ["idle", "align", "crossing"]
 

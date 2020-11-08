@@ -26,7 +26,4 @@
 	<!-- Visualization -->
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find pcv_base)/resources/movebase.rviz"/>
 
-    <!-- Keyboard Teleop -->
-    <!--node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop" output="screen"/-->
-
 </launch>
