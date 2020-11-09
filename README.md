@@ -39,8 +39,9 @@ sudo tc qdisc add dev can0 root handle 1: pfifo_head_drop limit 9
 
 - This repository includes a bootup script, such that the SSH and VNC ports of the cart are mapped to a Virtual Private Server with static IP. To enable the automatic bootup sequence, add the following line in `crontab -e`:
 ```sh
-@reboot sleep 30; cd /path_to_repo/Mobile_Manipulation_Dev/src/pcv_base/scripts/; sh ./onBoot.sh
+@reboot sleep 30; cd /path_to_repo/; DISPLAY=:0 sh ./onBoot.sh
 ```
+**WARNING:** The program will run 30s after the machine is booted up. Plugging in a joystick will mobilize the robot. Refer to `autorun.py` (under `src/pcv_base/scripts`) for series of commands it executes.
 
 ### System environments:
 

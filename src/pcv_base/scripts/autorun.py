@@ -65,12 +65,12 @@ if __name__=="__main__":
             launch.shutdown()
     # Continue ONLY when the button is pressed
     
-    #time.sleep(10)
     launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/run_nav_only.launch'])
+    launch.start()
+    time.sleep(15)
     launch_baseNode = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/pcv_node.launch'])
     launch_baseNode.start()
-    launch.start()
-    time.sleep(10)
+    time.sleep(15)
     
     rospy.init_node('admin')
 
