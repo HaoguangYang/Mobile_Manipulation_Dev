@@ -14,7 +14,7 @@
 	<!-- static transform -->
 	<include file="$(find pcv_base)/launch/includes/static_tf.launch" />
 	<!-- Odometry (IMU, odom, ekf) -->
-	<!--include file="$(find pcv_base)/launch/includes/odom.launch" /-->
+	<include file="$(find pcv_base)/launch/includes/odom.launch" />
 
 	<!-- Robot localization (amcl) -->
 	<include file="$(find pcv_base)/launch/includes/localization.launch" />

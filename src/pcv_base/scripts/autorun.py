@@ -65,10 +65,12 @@ if __name__=="__main__":
             launch.shutdown()
     # Continue ONLY when the button is pressed
     
-    time.sleep(10)
-    launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/run.launch'])
+    #time.sleep(10)
+    launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/run_nav_only.launch'])
+    launch_baseNode = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/pcv_node.launch'])
+    launch_baseNode.start()
     launch.start()
-    time.sleep(20)
+    time.sleep(10)
     
     rospy.init_node('admin')
 
@@ -134,6 +136,7 @@ if __name__=="__main__":
     #nav_thread.terminate()
     #robot_thread.terminate()
     launch.shutdown()
+    launch_baseNode.shutdown()
     payload.payload_thread.terminate()
     
     #rate = rospy.rate(50)

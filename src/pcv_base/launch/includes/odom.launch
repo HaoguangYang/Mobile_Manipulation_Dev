@@ -1,6 +1,6 @@
 <launch>
     <!-- visual odom -->
-    <!-- <node pkg="rf2o_laser_odometry" type="rf2o_laser_odometry_node" name="rf2o_laser_odometry" output="screen">
+    <node pkg="rf2o_laser_odometry" type="rf2o_laser_odometry_node" name="rf2o_laser_odometry" output="screen">
         <param name="odom_frame_id" value="vo"/>
         <param name="base_frame_id" value="base_link"/>
         
@@ -10,8 +10,8 @@
         <param name="publish_tf" value="false"/>
         <param name="init_pose_from_topic" value=""/>
         <param name="verbose" value="false" />
-        <param name="freq" value="40.0"/>
-    </node> -->
+        <param name="freq" value="20.0"/>
+    </node>
     
     <!--node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen">
         <param name="base_frame" value="base_link" />
@@ -49,7 +49,7 @@
     </node> -->
 
     <!-- Mixer -->
-    <!--node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
+    <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
         <param name="odom_used" value="true"/>
         <param name="imu_used" value="false"/>
         <param name="vo_used" value="true"/>
@@ -60,6 +60,6 @@
         
         <param name="output_frame" value="odom"/>
         <param name="base_footprint_frame" value="base_link"/>
-        <param name="freq" value="40.0"/>
-    </node-->
+        <param name="freq" value="20.0"/>
+    </node>
 </launch>

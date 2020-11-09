@@ -27,14 +27,14 @@ Caster::Caster(int casterNum)
   initialized = false;
   enabled = false;
   stopped = false;
-  lastSteerMotorPos = 0;
-  lastRollMotorPos = 0;
-  steerPos = 0;
-  lastRollPos = 0;
-  steerVel = 0;
-  rollVel = 0;
-  steerTorque = 0;
-  rollTorque = 0;
+  lastSteerMotorPos = 0.;
+  lastRollMotorPos = 0.;
+  steerPos = 0.;
+  lastRollPos = 0.;
+  steerVel = 0.;
+  rollVel = 0.;
+  steerTorque = 0.;
+  rollTorque = 0.;
 }
 
 /* Destructor */

@@ -4,7 +4,7 @@
 footprint: [ [-0.22,-0.31], [0.22,-0.31], [0.3, -0.23], [0.3, 0.22], [0.22,0.3], [-0.22, 0.3], [-0.3, 0.22], [-0.3,-0.23] ]
 
 
-transform_tolerance: 0.1
+transform_tolerance: 0.5
 map_type: costmap
 
 obstacle_layer:

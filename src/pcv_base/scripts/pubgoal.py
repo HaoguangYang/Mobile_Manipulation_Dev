@@ -99,11 +99,11 @@ class PubNavGoal():
                 # do disinfection stuff here.
                 loc = self.last_loc
                 #payload.turnOnUVC()
-                self.ena_pub.publish(Byte(0))
+                #self.ena_pub.publish(Byte(0))
                 time.sleep(self.traj[i,7])
                 #payload.turnOffUVC()
-                self.ena_pub.publish(Byte(1))
-                loc.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.05]
+                #self.ena_pub.publish(Byte(1))
+                #loc.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.05]
                 self.pose_pub.publish(loc)
                 time.sleep(1)
             if self.status != 3:

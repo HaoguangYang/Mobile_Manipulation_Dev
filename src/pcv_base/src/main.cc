@@ -350,7 +350,7 @@ main (int argc, char *argv[])
         odom_trans.transform.translation.x = gx(0);//*cos_PI_4 + gx(1)*sin_PI_4;
         odom_trans.transform.translation.y = gx(1);//*sin_PI_4 + gx(1)*cos_PI_4;
         odom_trans.transform.rotation = odom_quat;
-        odomBroadcaster.sendTransform(odom_trans);
+        //odomBroadcaster.sendTransform(odom_trans);
 
         odom.header.stamp = current_time;
         odom.header.frame_id = "odom";
@@ -358,10 +358,23 @@ main (int argc, char *argv[])
         odom.pose.pose.position.x = gx(0);//*cos_PI_4 + gx(1)*sin_PI_4;
         odom.pose.pose.position.y = gx(1);//*sin_PI_4 + gx(1)*cos_PI_4;
         odom.pose.pose.orientation = odom_quat;
+        odom.pose.covariance[0] = 0.03;
+        odom.pose.covariance[7] = 0.03;
+        odom.pose.covariance[14] = 0.03;
+        odom.pose.covariance[21] = 0.03;
+        odom.pose.covariance[28] = 0.03;
+        odom.pose.covariance[35] = 0.1;
+        
         odom.twist.twist.linear.x = gxd(0);
         odom.twist.twist.linear.y = gxd(1);
         odom.twist.twist.angular.z = gxd(2);
-
+        odom.twist.covariance[0] = 0.2;
+        odom.twist.covariance[7] = 0.2;
+        odom.twist.covariance[14] = 0.2;
+        odom.twist.covariance[21] = 0.2;
+        odom.twist.covariance[28] = 0.2;
+        odom.twist.covariance[35] = 0.6;
+        
         odomPub.publish(odom);
         
         eStatus.stamp = current_time;
