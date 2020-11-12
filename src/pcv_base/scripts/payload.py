@@ -71,10 +71,11 @@ class disinfectionPayload():
             elif self.d[2] == False and lampState == True:
                 self.ser.write('$L0&')
                 lampState = False
-            if self.d[3] == False and self.d[0] == True:
-                self.ser.write('$L0&')
-                lampState = False
-                self.ser.write('$S0&')
+            if self.d[3] == False:
+                if self.d[0] == True:
+                    self.ser.write('$L0&')
+                    lampState = False
+                    self.ser.write('$S0&')
                 self.d[3] = True
                 self.d[0] = False
             if lowCurrentFlag > 20:
@@ -89,6 +90,7 @@ class disinfectionPayload():
                     #          )
                     print('message sent!')
                     sms_time = timeNow
+            #print(self.d)
 
     def initialize(self):
         self.ser.write('$S0&$L0&')
