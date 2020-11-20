@@ -25,5 +25,7 @@
 
 	<!-- Visualization -->
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find pcv_base)/resources/movebase.rviz"/>
-
+    
+    <!--Logging-->
+    <node pkg="pcv_base" type="databaseLogger.py" name="db_logger" output="screen"/>
 </launch>

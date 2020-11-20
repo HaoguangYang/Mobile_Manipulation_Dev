@@ -10,16 +10,16 @@ EBandPlannerROS:
     marker_lifetime: 0.5
     
     # EBand Parameters
-    eband_min_relative_overlap: 0.7
-    eband_tiny_bubble_distance: 0.01
-    eband_tiny_bubble_expansion: 0.01
-    eband_internal_force_gain: 1.0
-    eband_external_force_gain: 2.0
+    eband_min_relative_overlap: 0.9
+    eband_tiny_bubble_distance: 0.3
+    eband_tiny_bubble_expansion: 0.3
+    eband_internal_force_gain: 5.0
+    eband_external_force_gain: 10.0
     num_iterations_eband_optimization: 3
     eband_equilibrium_approx_max_recursion_depth: 4
     eband_equilibrium_relative_overshoot: 0.75
     eband_significant_force_lower_bound: 0.15
-    costmap_weight: 10.0
+    costmap_weight: 20.0
     
     # Trajectory Controller Params
     max_vel_lin: 0.3

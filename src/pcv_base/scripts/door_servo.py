@@ -105,6 +105,8 @@ msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
         print(self.waypt_xd)
         heading_correction_flag = True
         waypt_i += 1
+        #timer for reaching next waypoint
+        timeStamp = rospy.get_time()
         while not rospy.is_shutdown():
             # compute distance between present pos estimate and latest waypt update
             #if self.state == 0 or self.state == 2:
@@ -149,6 +151,7 @@ msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
                     self.waypt_thd = math.atan2(self.waypts[waypt_i,1] - self.waypts[waypt_i-1,1], self.waypts[waypt_i,0]-self.waypts[waypt_i-1,0])
                     waypt_i += 1
                     heading_correction_flag = True
+                    timeStamp = rospy.get_time()
                 else:
                     print('End')
                     cmd_pub.publish(Twist())
@@ -190,13 +193,18 @@ msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
             px_err = x_err
             py_err = y_err
             psteer_err = steer_err
-            print(self.dis_err)
-            print('d: ', self.waypt_xd,self.waypt_yd, self.waypt_thd)
-            print('cp: ', self.cp)
-            print('cmd: ', pub_msg.linear.x,pub_msg.linear.y,pub_msg.angular.z)
-            print('ori: ', ori)
-            print('-'*20)
-            cmd_pub.publish(pub_msg)
+            #print(self.dis_err)
+            #print('d: ', self.waypt_xd,self.waypt_yd, self.waypt_thd)
+            #print('cp: ', self.cp)
+            #print('cmd: ', pub_msg.linear.x,pub_msg.linear.y,pub_msg.angular.z)
+            #print('ori: ', ori)
+            #print('-'*20)
+            # if haven't reached a goal for too long, exit and set stuck flag.
+            if (rospy.get_time() - timeStamp > 20):
+                cmd_pub.publish(Twist())
+                sys.exit(-1)
+            else:
+                cmd_pub.publish(pub_msg)
 
             rt.sleep()
         

@@ -93,16 +93,21 @@ class PubNavGoal():
             itim = rospy.get_time()
             while cond and not rospy.is_shutdown():
                 dt = rospy.get_time()-itim
-                cond = self.status!=3 and dt<20 
+                cond = self.status!=3 and dt<30 
                 continue
             if (self.status == 3 and self.traj[i,7]>0):
                 # do disinfection stuff here.
                 loc = self.last_loc
                 #payload.turnOnUVC()
-                #self.ena_pub.publish(Byte(0))
-                time.sleep(self.traj[i,7])
+                if (self.traj[i,7]>10):
+                    self.ena_pub.publish(Byte(0))
+                    time.sleep(4)
+                    time.sleep(self.traj[i,7]-8)
+                    self.ena_pub.publish(Byte(1))
+                    time.sleep(4)
                 #payload.turnOffUVC()
-                #self.ena_pub.publish(Byte(1))
+                else:
+                    time.sleep(self.traj[i,7])
                 #loc.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.05]
                 self.pose_pub.publish(loc)
                 time.sleep(1)

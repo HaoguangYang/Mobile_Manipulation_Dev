@@ -82,12 +82,12 @@ class disinfectionPayload():
                 timeNow = time.time()
                 if timeNow - sms_time > sms_timeout :
                     # send text msg
-                    #message = self.sms_client.messages \
-                    #          .create(
-                    #                body='FIXME: UVC Lamp Battery Low or Lamp is Broken!',
-                    #                from_=self.sms_from, # this is my twilio number
-                    #                to=self.sms_to # this is my number
-                    #          )
+                    message = self.sms_client.messages \
+                              .create(
+                                    body='FIXME: UVC Lamp Battery Low or Lamp is Broken!',
+                                    from_=self.sms_from, # this is my twilio number
+                                    to=self.sms_to # this is my number
+                              )
                     print('message sent!')
                     sms_time = timeNow
             #print(self.d)

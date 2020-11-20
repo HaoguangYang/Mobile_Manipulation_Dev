@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import os, pickle, time, multiprocessing
+import subprocess
+from subprocess import check_output
 import rospy
 from move_base_msgs.msg import MoveBaseActionResult
 from geometry_msgs.msg import Twist
@@ -36,6 +38,25 @@ import roslaunch
 #    scan_cur = data.ranges
     
 uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+launch_baseNode = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/pcv_node.launch'])
+
+def checkBaseRunning():
+    restartFlag = False
+    try:
+        while 1:
+            try:
+                check_output(["pidof","pcv_base_node"])
+            except subprocess.CalledProcessError:
+                # thread is not running
+                restartFlag = True
+                launch_baseNode.start()
+            time.sleep(1)
+            #print('Watchdog active!')
+    except:
+        if restartFlag:
+            launch_baseNode.shutdown()
+        pass
+        
 
 def runDisinfection():
     launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/run_nav_only.launch'])
@@ -112,6 +133,12 @@ def runDisinfection():
             print('Done!')
         else:
             print('HELP NEEDED!')
+            message = payload.sms_client.messages \
+                      .create(
+                            body='FIXME: Robot got stuck, task is INCOMPLETE!',
+                            from_=self.sms_from, # this is my twilio number
+                            to=self.sms_to # this is my number
+                      )
         # help code...
     
     finally:
@@ -145,6 +172,9 @@ if __name__=="__main__":
     
     payload.initialize()
     
+    launch_video = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/includes/realsense.launch'])
+    launch_video.start()
+    
     while (1):
         while not (payload.isReady()):
             if (os.path.exists('/dev/input/js0')):  # if a joystick is plugged in...
@@ -160,13 +190,19 @@ if __name__=="__main__":
             disinfection_thread = multiprocessing.Process(target=runDisinfection, args=())
             disinfection_thread.daemon = True
             disinfection_thread.start()
+            time.sleep(20)
+            base_watchdog_thread = multiprocessing.Process(target=checkBaseRunning, args=())
+            base_watchdog_thread.daemon = True
+            base_watchdog_thread.start()
             while (payload.isReady()):
                 pass
             payload.turnOffUVC()
+            base_watchdog_thread.terminate()
             payload.setDoneStatus()
             disinfection_thread.terminate()
     
     payload.payload_thread.terminate()
+    launch_video.shutdown()
     
     #rate = rospy.rate(50)
     # Admin node functionalities:

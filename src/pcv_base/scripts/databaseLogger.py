@@ -16,6 +16,7 @@ class SQL_Logger:
         passwd = db_cred.findall('password')[0].get('value')
         dbName = db_cred.findall('databaseName')[0].get('value')
         self.connection = pymysql.connect(host=server, user=usrname, password=passwd, db=dbName)    # Fill in your credentials  
+        self.staleValues = True
         self.steer_1_Volt = 0.
         self.steer_2_Volt = 0.
         self.steer_3_Volt = 0.
@@ -41,6 +42,8 @@ class SQL_Logger:
         self.roll_2_Volt = d.roll_2_Volt
         self.roll_3_Volt = d.roll_3_Volt
         self.roll_4_Volt = d.roll_4_Volt
+        
+        self.staleValues = False
 
     def uploadData(self):
         # Add data to DB
@@ -65,10 +68,14 @@ class SQL_Logger:
     def run(self):
         rospy.init_node("database_logger")
         rospy.Subscriber("electricalStatus", electricalStatus, self.rosCallback)
-        while not rospy.is_shutdown():
-            time.sleep(10)
-            self.uploadData()
-        self.connection.close()
+        try:
+            while not rospy.is_shutdown():
+                time.sleep(10)
+                if not self.staleValues:
+                    self.uploadData()
+                    self.staleValues = True
+        except:
+            self.connection.close()
            
 
 if __name__ == "__main__":
