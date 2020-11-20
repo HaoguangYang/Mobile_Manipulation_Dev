@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import serial
 import time
 import multiprocessing
@@ -109,6 +111,9 @@ class disinfectionPayload():
     
     def isReady(self):
         return self.d[0]
+        
+    def isOn(self):
+        return self.d[2]
         
     def getCurrent(self):
         return self.d[1]

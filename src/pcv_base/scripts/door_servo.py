@@ -73,7 +73,7 @@ class ScanVisualServo():
     
     def isSideClear(self, dist):
         clear = True
-        robotWidth = 0.32
+        robotWidth = 0.31
         dist_offset = -0.28
         for pts in np.array(self.pos).transpose():
             if pts[0] < (dist + dist_offset) and np.abs(pts[1]) < robotWidth:
@@ -84,7 +84,8 @@ class ScanVisualServo():
     def amcl_cb(self,msg):
         quat = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
 msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
-        eul = ts.euler_from_quaternion(quat)    
+        eul = ts.euler_from_quaternion(quat) 
+        # current position vector   
         self.cp = [msg.pose.pose.position.x, msg.pose.pose.position.y, eul[2]]
         #print(self.cp)
 
@@ -171,11 +172,19 @@ msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
                 pub_msg.linear.y = 0.
                 
                 if steer_err < self.str_lim:
-                    isClear = self.isSideClear(self.dis_err)
-                    if isClear:
-                        heading_correction_flag = False
-                    else:
-                        print('NEED HELP - WAYPTS MAY BE SKEWED!')
+                    # with encoder-based AMCL only, need to verify that the pose 
+                    # is actually matching with what the LiDAR currently sees, as 
+                    # there is a big deadzone where AMCL is not updating.
+                    
+                    #isClear = self.isSideClear(self.dis_err)
+                    #if isClear:
+                    
+                    # if using fused odometry, the updating threshold of AMCL can
+                    # be reduced, hence double-checking is not necessary.
+                    heading_correction_flag = False
+                    
+                    #else:
+                    #    print('NEED HELP - WAYPTS OR NAV MAY BE SKEWED!')
                 
             else:
                 steer = self.kp[2]*steer_err \

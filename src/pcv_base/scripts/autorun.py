@@ -10,8 +10,8 @@ from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from std_msgs.msg import Header, Byte
 from sensor_msgs.msg import LaserScan
 import serial
-# uncomment payload if no Arduino-related payload (i.e. /dev/ttyACM0) exists.
-from payload import payload
+# comment out payload if no Arduino-related payload (i.e. /dev/ttyACM0) exists.
+from Payloads.UVC import payload
 import roslaunch
 
 #def status_cb(data):

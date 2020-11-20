@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #import requests
+#from payload import payload  #Used to get UVC lamp data
 import pymysql.cursors
 from datetime import datetime
 import time
@@ -26,10 +27,20 @@ class SQL_Logger:
         self.roll_2_Volt = 0.
         self.roll_3_Volt = 0.
         self.roll_4_Volt = 0.
+        
+        self.orientation = 0.
+        self.angVel = 0.
+        self.locX = 0.
+        self.locY = 0.
+        self.linVelX = 0.
+        self.linVelY = 0.
+        
+        self.payloadCurrent = 0.
+        self.payloadState = False
 
         self.date = datetime.now()
     
-    def rosCallback(self,d):
+    def callbackElec(self,d):
         #timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.date = datetime.fromtimestamp(d.stamp.to_sec())
 
@@ -44,6 +55,15 @@ class SQL_Logger:
         self.roll_4_Volt = d.roll_4_Volt
         
         self.staleValues = False
+        
+    def callbackOdom(self,d):
+        #self.orientation = d.pose.pose.orientation.z #Need to covnert to Euler Angle
+        self.angVel = d.twist.twist.angular.z
+
+        self.locX = d.pose.pose.position.x
+        self.locY = d.pose.pose.position.y
+        self.linVelX = d.twist.twist.linear.x
+        self.linVelY = d.twist.twist.linear.y
 
     def uploadData(self):
         # Add data to DB
@@ -52,8 +72,22 @@ class SQL_Logger:
                 
                 # INSERT INTO [TABLE NAME] (COLUMN NAME) VALUE(value1, value2)...
 
-    #Casts all parameters to strings, database can still intpret it
-                sql = "INSERT INTO `Omniveyors`.`CARTMAN12_practice` (`TimeStamp`, `steer1Volt`, `roll2Volt`, `steer2Volt`, `roll1Volt`, `steer3Volt`, `roll3Volt`, `steer4Volt`, `roll4Volt`) VALUES('"+str(self.date)+"','"+str(self.steer_1_Volt)+"','"+str(self.roll_1_Volt)+"','"+str(self.steer_2_Volt)+"','"+str(self.roll_2_Volt)+"','"+str(self.steer_3_Volt)+"','"+str(self.roll_3_Volt)+"','"+str(self.steer_4_Volt)+"','"+str(self.roll_4_Volt)+"');"
+                #Casts all parameters to strings, database can still intpret it
+                sql = "INSERT INTO `Omniveyors`.`CARTMAN12_practice` \
+                        (`TimeStamp`, `steer1Volt`, `roll2Volt`, `steer2Volt`, \
+                        `roll1Volt`, `steer3Volt`, `roll3Volt`, `steer4Volt`, \
+                        `roll4Volt`,`Orientation`,`AngVel`, `Location`, `LinVel`,\
+                        `PayloadCurrent`, `PayloadState`\
+                        ) VALUES(\
+                        '"+str(self.date)+"','"+str(self.steer_1_Volt)+"',\
+                        '"+str(self.roll_1_Volt)+"','"+str(self.steer_2_Volt)+"',\
+                        '"+str(self.roll_2_Volt)+"','"+str(self.steer_3_Volt)+"',\
+                        '"+str(self.roll_3_Volt)+"','"+str(self.steer_4_Volt)+"',\
+                        '"+str(self.roll_4_Volt)+"','"+str(self.orientation)+"',\
+                        '"+str(self.angVel)+"',\
+                        POINT('"+str(self.locX)+"','"+str(self.locY)+"'), \
+                        POINT('"+str(self.linVelX)+"','"+str(self.linVelY)+"'),\
+                        '"+str(self.payloadCurrent)+"','"+str(self.payloadState)+"');"
                 #sql = "INSERT INTO `Omniveyors`.`CARTMAN12_practice` (`TimeStamp`, `steer1Volt`, `roll2Volt`, `steer2Volt`, `roll1Volt`, `steer3Volt`, `roll3Volt`, `steer4Volt`, `roll4Volt`) VALUES(%s %f %f %f %f %f %f %f %f);"
                 #vals = (str(u.date),u.steer_1_Volt, u.roll_1_Volt, u.steer_2_Volt, u.roll_2_Volt, u.steer_3_Volt, u.roll_3_Volt, u.steer_4_Volt, u.roll_4_Volt) 
 
@@ -67,11 +101,14 @@ class SQL_Logger:
     
     def run(self):
         rospy.init_node("database_logger")
-        rospy.Subscriber("electricalStatus", electricalStatus, self.rosCallback)
+        rospy.Subscriber("electricalStatus", electricalStatus, self.callbackElec)
+        rospy.Subscriber("odom", Odometry, callbackOdom)
         try:
             while not rospy.is_shutdown():
                 time.sleep(10)
                 if not self.staleValues:
+                    #self.payloadCurrent = payload.getCurrent()
+                    #self.payloadState = payload.isOn()
                     self.uploadData()
                     self.staleValues = True
         except:
