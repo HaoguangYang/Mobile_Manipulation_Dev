@@ -28,6 +28,16 @@ class SQL_Logger:
         self.roll_3_Volt = 0.
         self.roll_4_Volt = 0.
         
+        self.steer_1_Amp = 0.
+        self.steer_2_Amp = 0.
+        self.steer_3_Amp = 0.
+        self.steer_4_Amp = 0.
+
+        self.roll_1_Amp = 0.
+        self.roll_2_Amp = 0.
+        self.roll_3_Amp = 0.
+        self.roll_4_Amp = 0.
+        
         self.orientation = 0.
         self.angVel = 0.
         self.locX = 0.
@@ -54,6 +64,16 @@ class SQL_Logger:
         self.roll_3_Volt = d.roll_3_Volt
         self.roll_4_Volt = d.roll_4_Volt
         
+        self.steer_1_Amp = d.steer_1_Amp
+        self.steer_2_Amp = d.steer_2_Amp
+        self.steer_3_Amp = d.steer_3_Amp
+        self.steer_4_Amp = d.steer_4_Amp
+
+        self.roll_1_Amp = d.roll_1_Amp
+        self.roll_2_Amp = d.roll_2_Amp
+        self.roll_3_Amp = d.roll_3_Amp
+        self.roll_4_Amp = d.roll_4_Amp
+        
         self.staleValues = False
         
     def callbackOdom(self,d):
@@ -74,16 +94,22 @@ class SQL_Logger:
 
                 #Casts all parameters to strings, database can still intpret it
                 sql = "INSERT INTO `Omniveyors`.`CARTMAN12_practice` \
-                        (`TimeStamp`, `steer1Volt`, `roll2Volt`, `steer2Volt`, \
-                        `roll1Volt`, `steer3Volt`, `roll3Volt`, `steer4Volt`, \
-                        `roll4Volt`,`Orientation`,`AngVel`, `Location`, `LinVel`,\
+                        (`TimeStamp`, `steer1Volt`, `roll1Volt`, `steer2Volt`, \
+                        `roll2Volt`, `steer3Volt`, `roll3Volt`, `steer4Volt`, \
+                        `roll4Volt`, `steer1Amp`, `roll1Amp`, `steer2Amp`, \
+                        `roll2Amp`, `steer3Amp`, `roll3Amp`, `steer4Amp`, \
+                        `roll4Amp`, `Orientation`,`AngVel`, `Location`, `LinVel`,\
                         `PayloadCurrent`, `PayloadState`\
                         ) VALUES(\
                         '"+str(self.date)+"','"+str(self.steer_1_Volt)+"',\
                         '"+str(self.roll_1_Volt)+"','"+str(self.steer_2_Volt)+"',\
                         '"+str(self.roll_2_Volt)+"','"+str(self.steer_3_Volt)+"',\
                         '"+str(self.roll_3_Volt)+"','"+str(self.steer_4_Volt)+"',\
-                        '"+str(self.roll_4_Volt)+"','"+str(self.orientation)+"',\
+                        '"+str(self.roll_4_Volt)+"','"+str(self.steer_1_Amp)+"',\
+                        '"+str(self.roll_1_Amp)+"','"+str(self.steer_2_Amp)+"',\
+                        '"+str(self.roll_2_Amp)+"','"+str(self.steer_3_Amp)+"',\
+                        '"+str(self.roll_3_Amp)+"','"+str(self.steer_4_Amp)+"',\
+                        '"+str(self.roll_4_Amp)+"','"+str(self.orientation)+"',\
                         '"+str(self.angVel)+"',\
                         POINT('"+str(self.locX)+"','"+str(self.locY)+"'), \
                         POINT('"+str(self.linVelX)+"','"+str(self.linVelY)+"'),\
