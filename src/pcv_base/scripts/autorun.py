@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 
-import os, pickle, time, multiprocessing
+import os, time, multiprocessing
 import subprocess
 from subprocess import check_output
 import rospy
-from move_base_msgs.msg import MoveBaseActionResult
-from geometry_msgs.msg import Twist
-from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
-from std_msgs.msg import Header, Byte
-from sensor_msgs.msg import LaserScan
-import serial
+#from move_base_msgs.msg import MoveBaseActionResult
+#from geometry_msgs.msg import Twist
+
+#from std_msgs.msg import Header, Byte
+#from sensor_msgs.msg import LaserScan
+#import serial
 # comment out payload if no Arduino-related payload (i.e. /dev/ttyACM0) exists.
-from Payloads.UVC import payload
+#from Payloads.UVC import payload
+from Tasks.uvcDisinfection import Task
 import roslaunch
 
 #def status_cb(data):
@@ -56,101 +57,6 @@ def checkBaseRunning():
         if restartFlag:
             launch_baseNode.shutdown()
         pass
-        
-
-def runDisinfection():
-    launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/run_nav_only.launch'])
-    launch.start()
-
-    rospy.init_node('admin')
-    
-    pose_pub = rospy.Publisher('/initialpose',PoseWithCovarianceStamped, queue_size=10)
-    while not pose_pub.get_num_connections():
-        pass
-    #init_pose = [ 0.0453101396561, 0.00364243984222, 0.0, 0.0, 0.0, -0.032842760778, 0.999460531019]
-    init_pose = [1.824850559234619141e+00, 2.446069240570068359e+00, 0.000000000000000000e+00, 0.000000000000000000e+00, 0.000000000000000000e+00, -6.975731935691269481e-01, 7.165135306564485163e-01]
-    # reads keyboard input. considers changing to read button status.
-    #ret = input('Is robot in position? (1-Yes, 0-NO)')
-    #if ret==0:
-    #    rospy.signal_shutdown('Exit')
-    
-    # initialize position in the map.
-    ipose = PoseWithCovarianceStamped()
-    ipose.header.frame_id="map"
-    ipose.pose.pose.position.x = init_pose[0]
-    ipose.pose.pose.position.y = init_pose[1]
-    ipose.pose.pose.orientation.z = init_pose[5]
-    ipose.pose.pose.orientation.w = init_pose[6]
-    pose_pub.publish(ipose)
-    
-    time.sleep(15)
-    launch_baseNode = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/pcv_node.launch'])
-    launch_baseNode.start()
-    time.sleep(15)
-
-    pose_pub.publish(ipose)
-    time.sleep(1)
-    
-    try:
-        # robot starts moving... turn onUVC.
-        payload.turnOnUVC()
-        s = os.system('rosrun pcv_base pubgoal.py _location:=EntranceToLivingRoom')
-
-        if (s == 0):
-            s = os.system('rosrun pcv_base pubgoal.py _location:=LivingRoomClean')
-       
-        if (s == 0):
-            s = os.system('rosrun pcv_base door_servo.py _location:=Bedroom1Door _direction:=0')
-    
-        if (s == 0):
-            s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom1Clean')
-    
-        if (s == 0):
-            s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom1PostClean')
-    
-        if (s == 0):
-            s = os.system('rosrun pcv_base door_servo.py _location:=Bedroom1Door _direction:=1')
-
-        if (s == 0):
-            s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom1ToBedroom2')
-    
-        if (s == 0):
-            s = os.system('rosrun pcv_base door_servo.py _location:=Bedroom2Door _direction:=0')
-
-        if (s == 0):
-            s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom2Clean')
-
-        if (s == 0):
-            s = os.system('rosrun pcv_base pubgoal.py _location:=Bedroom2PostClean')
-    
-        if (s == 0):
-            s = os.system('rosrun pcv_base door_servo.py _location:=Bedroom2Door _direction:=1')
-
-        if (s == 0):
-            s = os.system('rosrun pcv_base pubgoal.py _location:=ReturnToEntrance')
-    
-        if (s == 0):
-            print('Done!')
-        else:
-            print('HELP NEEDED!')
-            message = payload.sms_client.messages \
-                      .create(
-                            body='FIXME: Robot got stuck, task is INCOMPLETE!',
-                            from_=self.sms_from, # this is my twilio number
-                            to=self.sms_to # this is my number
-                      )
-        # help code...
-    
-    finally:
-        payload.turnOffUVC()
-        payload.setDoneStatus()
-    
-        #nav_thread.terminate()
-        #robot_thread.terminate()
-        launch.shutdown()
-        launch_baseNode.shutdown()
-
-
 
 if __name__=="__main__":
     # start ROS core
@@ -170,13 +76,13 @@ if __name__=="__main__":
     #nav_thread.start()
     #time.sleep(30)      # wait for the stack to start up
     
-    payload.initialize()
+    # task is already initialized.
     
     launch_video = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/includes/realsense.launch'])
     launch_video.start()
     
     while (1):
-        while not (payload.isReady()):
+        while not (Task.isReady()):
             if (os.path.exists('/dev/input/js0')):  # if a joystick is plugged in...
                 time.sleep(2)
                 launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/joystick_teleop.launch', './src/pcv_base/launch/pcv_node.launch'])
@@ -186,22 +92,22 @@ if __name__=="__main__":
                 launch.shutdown()
 
         # Continue ONLY when the button is pressed
-        if (payload.isReady()):
-            disinfection_thread = multiprocessing.Process(target=runDisinfection, args=())
-            disinfection_thread.daemon = True
-            disinfection_thread.start()
+        if (Task.isReady()):
+            task_thread = multiprocessing.Process(target=Task.run, args=(launch_baseNode,))
+            task_thread.daemon = True
+            task_thread.start()
             time.sleep(20)
             base_watchdog_thread = multiprocessing.Process(target=checkBaseRunning, args=())
             base_watchdog_thread.daemon = True
             base_watchdog_thread.start()
-            while (payload.isReady()):
+            while (not Task.chkFault()):
                 pass
-            payload.turnOffUVC()
+            #payload.turnOffUVC()
             base_watchdog_thread.terminate()
-            payload.setDoneStatus()
-            disinfection_thread.terminate()
+            #payload.setDoneStatus()
+            task_thread.terminate()
     
-    payload.payload_thread.terminate()
+    Task.end()
     launch_video.shutdown()
     
     #rate = rospy.rate(50)

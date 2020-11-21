@@ -119,6 +119,7 @@ class disinfectionPayload():
         return self.d[1]
 
 payload = disinfectionPayload()
+a = 2
 
 if __name__ == '__main__':
     payload.ser.write('$S0&$L0&')
