@@ -6,10 +6,12 @@ Development repo for the mobile manipulation platforms
 #### Preliminaries
 
 - Remove top panel and rear panel.
-- Remove UPS: (To be filled)
-- Change wiring harness (charging related) at battery terminal (behind battery bay): remove 06331R (Black), 06331Q (Black), 06021B (Red), 06021C (Red). Insulate separately and tie away.
-- Check main terminal box (DIN main) behind the switch panel, the wiring order should be as followed: (To be filled).
-- Set servo motor IDs: (To be filled)
+- Remove UPS and short the two pairs of wires with two connection blocks (+ with +, - with -)
+- Install SSD and PCI-e to USB 3.0 cards inside the robot computer. Remove the dedicated graphics card to make room for the USB 3.0 card.
+- Install Hokuyo UST-10LX LiDAR, RealSense D435i * 2, RealSense T265 * 1. Power the LiDAR from terminals (TBD).
+- (NOT NECESSARY) ~~Change wiring harness (charging related) at battery terminal (behind battery bay): remove 06331**P** (Black), 06331**Q** (Black), 06021**A** (Red), 06021**C** (Red). Insulate separately and tie away.~~
+- Install wireless charger. (TBD)
+- Check and set servo motor IDs.
 
 #### Setup Linux System
 
@@ -50,7 +52,8 @@ Ubuntu 16.04 or newer.
 - Install prerequisites:
 ```sh
 sudo apt-get update
-sudo apt-get install apt-transport-https ca-certificates gnupg software-properties-common wget doxygen openssh-server
+sudo apt-get install apt-transport-https ca-certificates gnupg screen \
+             software-properties-common wget doxygen openssh-server python-pip
 ```
 
 - Install CMake 3.6+:
@@ -66,7 +69,8 @@ sudo apt-key --keyring /etc/apt/trusted.gpg del C1F34CDD40CD72DA
 
 - Install Intel librealsense:
 ```sh
-sudo apt-key adv --keyserver keys.gnupg.net --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key
+sudo apt-key adv --keyserver keys.gnupg.net --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || \
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key
 sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u
 sudo apt-get install librealsense2-dkms
 sudo apt-get install librealsense2-utils
@@ -84,7 +88,11 @@ gsettings set org.gnome.Vino require-encryption false
 
 ### Steps to run the code: 
 ```sh
-sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping ros-kinetic-teb-local-planner ros-kinetic-dwa-local-planner ros-kinetic-urg-node ros-kinetic-map-server ros-kinetic-realsense-camera ros-kinetic-global-planner screen
+sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping \
+              ros-kinetic-teb-local-planner ros-kinetic-dwa-local-planner ros-kinetic-urg-node \
+              ros-kinetic-map-server ros-kinetic-realsense-camera ros-kinetic-global-planner \
+              ros-kinetic-eband-local-planner ros-kinetic-rtabmap
+sudo -H pip install numpy pyserial pymysql boto3 
 catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
 
@@ -95,3 +103,9 @@ username  ALL = (ALL) NOPASSWD: ALL
 ```
 Then run the ros package `pcv_base`.
 
+Automatic run procedure is defined in the autorun.py, which structures a move of the robot as a "task", as defined in the `pcv_base/scripts` folder:
+```
+autorun.py --(imports)--> task --(imports)--> payload
+                            |----(calls)--> launch
+                            |----(uses)--> resources
+```
