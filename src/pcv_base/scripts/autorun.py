@@ -76,13 +76,13 @@ if __name__=="__main__":
     #nav_thread.start()
     #time.sleep(30)      # wait for the stack to start up
     
-    # task is already initialized.
+    task = Task()
     
     launch_video = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/includes/realsense.launch'])
     launch_video.start()
     
     while (1):
-        while not (Task.isReady()):
+        while not (task.isReady()):
             if (os.path.exists('/dev/input/js0')):  # if a joystick is plugged in...
                 time.sleep(2)
                 launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/joystick_teleop.launch', './src/pcv_base/launch/pcv_node.launch'])
@@ -92,22 +92,22 @@ if __name__=="__main__":
                 launch.shutdown()
 
         # Continue ONLY when the button is pressed
-        if (Task.isReady()):
-            task_thread = multiprocessing.Process(target=Task.run, args=(launch_baseNode,))
-            task_thread.daemon = True
-            task_thread.start()
-            time.sleep(20)
+        if (task.isReady()):
+            launch_baseNode = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/pcv_node.launch'])
+            launch_baseNode.start()
+            task.start()
             base_watchdog_thread = multiprocessing.Process(target=checkBaseRunning, args=())
             base_watchdog_thread.daemon = True
             base_watchdog_thread.start()
-            while (not Task.chkFault()):
+            while (not task.chkFault()):
                 pass
             #payload.turnOffUVC()
             base_watchdog_thread.terminate()
             #payload.setDoneStatus()
-            task_thread.terminate()
+            launch_baseNode.shutdown()
+            task.stop()
     
-    Task.end()
+    task.end()
     launch_video.shutdown()
     
     #rate = rospy.rate(50)

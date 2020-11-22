@@ -5,6 +5,7 @@ import pymysql.cursors
 from datetime import datetime
 import time
 from pcv_base.msg import electricalStatus
+from nav_msgs.msg import Odometry
 import rospy
 from datetime import datetime
 import xml.etree.ElementTree as ET 
@@ -128,7 +129,7 @@ class SQL_Logger:
     def run(self):
         rospy.init_node("database_logger")
         rospy.Subscriber("electricalStatus", electricalStatus, self.callbackElec)
-        rospy.Subscriber("odom", Odometry, callbackOdom)
+        rospy.Subscriber("odom", Odometry, self.callbackOdom)
         try:
             while not rospy.is_shutdown():
                 time.sleep(10)
