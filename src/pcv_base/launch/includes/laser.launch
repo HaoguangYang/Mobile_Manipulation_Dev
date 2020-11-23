@@ -1,6 +1,6 @@
 <launch>
     <node pkg="urg_node" type="urg_node" name="run_hokuyo_10lx"  output="screen" >
-        <param name="ip_address" value="128.46.112.250"/>
+        <param name="ip_address" value="192.168.0.10"/>
         <param name="angle_min" value="-1.15"/>
         <param name="angle_max" value="1.1"/>
         <!--remap from="scan" to="/temp_scan"/-->

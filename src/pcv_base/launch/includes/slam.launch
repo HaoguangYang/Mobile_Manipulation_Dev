@@ -3,7 +3,7 @@
   <param name="particles" type="int" value="100" />
   <param name="linearUpdate" type="double" value="0.1" />
   <param name="angularUpdate" type="double" value="0.1" />
-  <param name="delta" type="double" value="0.01" />
+  <param name="delta" type="double" value="0.04" />
   <param name="xmin" type="double" value="-20"/>
     <param name="ymin" type="double" value="-20"/>
     <param name="xmax" type="double" value="20"/>

@@ -22,6 +22,7 @@ class SQL_Logger:
         dbName = db_cred.findall('databaseName')[0].get('value')
         self.tableName = db_cred.findall('tableName')[0].get('value')
         self.connection = pymysql.connect(host=server, user=usrname, password=passwd, db=dbName)    # Fill in your credentials  
+        self.UTC_OFFSET_TIMEDELTA = datetime.utcnow() - datetime.now()
         
         self.counter = 0
         
@@ -34,14 +35,14 @@ class SQL_Logger:
         self.roll_3_Amp = 0.
         self.roll_4_Amp = 0.
         
-        self.s1AMax = 0.
-        self.s2AMax = 0.
-        self.s3AMax = 0.
-        self.s4AMax = 0.
-        self.r1AMax = 0.
-        self.r2AMax = 0.
-        self.r3AMax = 0.
-        self.r4AMax = 0.
+        self.s1AMax = -1e6
+        self.s2AMax = -1e6
+        self.s3AMax = -1e6
+        self.s4AMax = -1e6
+        self.r1AMax = -1e6
+        self.r2AMax = -1e6
+        self.r3AMax = -1e6
+        self.r4AMax = -1e6
         
         self.battVoltSum = 0.
         self.battAmpSum = 0.
@@ -65,11 +66,11 @@ class SQL_Logger:
     
     def callbackElec(self,d):
         #timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.date = datetime.fromtimestamp(d.stamp.to_sec())
+        self.date = datetime.fromtimestamp(d.stamp.to_sec()) #+ self.UTC_OFFSET_TIMEDELTA
 
         self.counter = self.counter + 1
         
-        self.battVoltSum = self.battVoltSum + 
+        self.battVoltSum = self.battVoltSum + \
                 (d.steer_1_Volt + d.steer_2_Volt + d.steer_3_Volt + d.steer_4_Volt \
                 + d.roll_1_Volt + d.roll_2_Volt + d.roll_3_Volt + d.roll_4_Volt)/8.0
         sumAmp = d.steer_1_Amp + d.steer_2_Amp + d.steer_3_Amp + d.steer_4_Amp \
@@ -123,14 +124,14 @@ class SQL_Logger:
                         `steer3AMax`, `roll3AMax`, `steer4AMax`, `roll4AMax`, \
                         `BattAmp`, `BattAMax`, \
                         `PosX`, `PosY`, `Orientation`, `DesX`, `DesY`, `DesOrient`, \
-                        `LinSpeed`, `AngVel`, `NavStatus`\
+                        `LinSpeed`, `AngVel`, `NavStatus`, \
                         `PayloadCurrent`, `PayloadState`\
                         ) VALUES(\
                         '"+str(self.date)+"','"+str(round(self.battVoltSum/float(self.counter),3))+"',\
-                        '"+str(round(self.steer_1_Amp,3))+"','"+str(round(self.roll_1_Amp,3))+"', \
-                        '"+str(round(self.steer_2_Amp,3))+"','"+str(round(self.roll_2_Amp,3))+"', \
-                        '"+str(round(self.steer_3_Amp,3))+"','"+str(round(self.roll_3_Amp,3))+"', \
-                        '"+str(round(self.steer_4_Amp,3))+"','"+str(round(self.roll_4_Amp,3))+"', \
+                        '"+str(round(self.steer_1_Amp/float(self.counter),3))+"','"+str(round(self.roll_1_Amp/float(self.counter),3))+"', \
+                        '"+str(round(self.steer_2_Amp/float(self.counter),3))+"','"+str(round(self.roll_2_Amp/float(self.counter),3))+"', \
+                        '"+str(round(self.steer_3_Amp/float(self.counter),3))+"','"+str(round(self.roll_3_Amp/float(self.counter),3))+"', \
+                        '"+str(round(self.steer_4_Amp/float(self.counter),3))+"','"+str(round(self.roll_4_Amp/float(self.counter),3))+"', \
                         '"+str(round(self.s1AMax,3))+"','"+str(round(self.r1AMax,3))+"', \
                         '"+str(round(self.s2AMax,3))+"','"+str(round(self.r2AMax,3))+"', \
                         '"+str(round(self.s3AMax,3))+"','"+str(round(self.r3AMax,3))+"', \
@@ -154,27 +155,36 @@ class SQL_Logger:
         rospy.init_node("database_logger")
         rospy.Subscriber("electricalStatus", electricalStatus, self.callbackElec)
         rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.callbackAMCL)
-        rospy.Subscriber("odom", PoseWithCovarianceStamped, self.callbackOdom)
+        rospy.Subscriber("odom", Odometry, self.callbackOdom)
+        while not rospy.is_shutdown():
+            time.sleep(10)
+            if self.counter:
+                #self.payloadCurrent = payload.getCurrent()
+                #self.payloadState = payload.isOn()
+                self.uploadData()
+                self.counter = 0
+                self.battVoltSum = 0.
+                self.batAmpSum = 0.
+                self.battAMax = 0.
+                self.steer_1_Amp = 0.
+                self.steer_2_Amp = 0.
+                self.steer_3_Amp = 0.
+                self.steer_4_Amp = 0.
+                self.roll_1_Amp = 0.
+                self.roll_2_Amp = 0.
+                self.roll_3_Amp = 0.
+                self.roll_4_Amp = 0.
+                self.s1AMax = -1e6
+                self.s2AMax = -1e6
+                self.s3AMax = -1e6
+                self.s4AMax = -1e6
+                self.r1AMax = -1e6
+                self.r2AMax = -1e6
+                self.r3AMax = -1e6
+                self.r4AMax = -1e6
         try:
-            while not rospy.is_shutdown():
-                time.sleep(10)
-                if self.counter:
-                    #self.payloadCurrent = payload.getCurrent()
-                    #self.payloadState = payload.isOn()
-                    self.uploadData()
-                    self.counter = 0
-                    self.battVoltSum = 0.
-                    self.batAmpSum = 0.
-                    self.battAMax = 0.
-                    self.s1AMax = 0.
-                    self.s2AMax = 0.
-                    self.s3AMax = 0.
-                    self.s4AMax = 0.
-                    self.r1AMax = 0.
-                    self.r2AMax = 0.
-                    self.r3AMax = 0.
-                    self.r4AMax = 0.
-        except:
+            pass
+        finally:
             self.connection.close()
            
 
