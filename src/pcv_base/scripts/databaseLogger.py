@@ -4,9 +4,12 @@
 import pymysql.cursors
 from datetime import datetime
 import time
+from tf import transformations as ts
 from pcv_base.msg import electricalStatus
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseWithCovarianceStamped
 import rospy
+import numpy as np
 from datetime import datetime
 import xml.etree.ElementTree as ET 
 
@@ -17,37 +20,46 @@ class SQL_Logger:
         usrname = db_cred.findall('user')[0].get('value')
         passwd = db_cred.findall('password')[0].get('value')
         dbName = db_cred.findall('databaseName')[0].get('value')
+        self.tableName = db_cred.findall('tableName')[0].get('value')
         self.connection = pymysql.connect(host=server, user=usrname, password=passwd, db=dbName)    # Fill in your credentials  
-        self.staleValues = True
-        self.steer_1_Volt = 0.
-        self.steer_2_Volt = 0.
-        self.steer_3_Volt = 0.
-        self.steer_4_Volt = 0.
-
-        self.roll_1_Volt = 0.
-        self.roll_2_Volt = 0.
-        self.roll_3_Volt = 0.
-        self.roll_4_Volt = 0.
+        
+        self.counter = 0
         
         self.steer_1_Amp = 0.
         self.steer_2_Amp = 0.
         self.steer_3_Amp = 0.
         self.steer_4_Amp = 0.
-
         self.roll_1_Amp = 0.
         self.roll_2_Amp = 0.
         self.roll_3_Amp = 0.
         self.roll_4_Amp = 0.
         
+        self.s1AMax = 0.
+        self.s2AMax = 0.
+        self.s3AMax = 0.
+        self.s4AMax = 0.
+        self.r1AMax = 0.
+        self.r2AMax = 0.
+        self.r3AMax = 0.
+        self.r4AMax = 0.
+        
+        self.battVoltSum = 0.
+        self.battAmpSum = 0.
+        self.battAMax = 0.
+        
         self.orientation = 0.
         self.angVel = 0.
         self.locX = 0.
         self.locY = 0.
-        self.linVelX = 0.
-        self.linVelY = 0.
+        self.linSpeed = 0.
+        
+        self.desX = 0.
+        self.desY = 0.
+        self.desOrient = 0.
+        self.navState = 0
         
         self.payloadCurrent = 0.
-        self.payloadState = False
+        self.payloadState = 0
 
         self.date = datetime.now()
     
@@ -55,36 +67,46 @@ class SQL_Logger:
         #timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.date = datetime.fromtimestamp(d.stamp.to_sec())
 
-        self.steer_1_Volt = d.steer_1_Volt
-        self.steer_2_Volt = d.steer_2_Volt
-        self.steer_3_Volt = d.steer_3_Volt
-        self.steer_4_Volt = d.steer_4_Volt
-
-        self.roll_1_Volt = d.roll_1_Volt
-        self.roll_2_Volt = d.roll_2_Volt
-        self.roll_3_Volt = d.roll_3_Volt
-        self.roll_4_Volt = d.roll_4_Volt
+        self.counter = self.counter + 1
         
-        self.steer_1_Amp = d.steer_1_Amp
-        self.steer_2_Amp = d.steer_2_Amp
-        self.steer_3_Amp = d.steer_3_Amp
-        self.steer_4_Amp = d.steer_4_Amp
-
-        self.roll_1_Amp = d.roll_1_Amp
-        self.roll_2_Amp = d.roll_2_Amp
-        self.roll_3_Amp = d.roll_3_Amp
-        self.roll_4_Amp = d.roll_4_Amp
+        self.battVoltSum = self.battVoltSum + 
+                (d.steer_1_Volt + d.steer_2_Volt + d.steer_3_Volt + d.steer_4_Volt \
+                + d.roll_1_Volt + d.roll_2_Volt + d.roll_3_Volt + d.roll_4_Volt)/8.0
+        sumAmp = d.steer_1_Amp + d.steer_2_Amp + d.steer_3_Amp + d.steer_4_Amp \
+                + d.roll_1_Amp + d.roll_2_Amp + d.roll_3_Amp + d.roll_4_Amp
+        self.battAMax = max(self.battAMax, sumAmp)
+        self.battAmpSum = self.battAmpSum + sumAmp
         
-        self.staleValues = False
-        
-    def callbackOdom(self,d):
-        #self.orientation = d.pose.pose.orientation.z #Need to covnert to Euler Angle
-        self.angVel = d.twist.twist.angular.z
+        self.steer_1_Amp = self.steer_1_Amp + d.steer_1_Amp
+        self.steer_2_Amp = self.steer_2_Amp + d.steer_2_Amp
+        self.steer_3_Amp = self.steer_3_Amp + d.steer_3_Amp
+        self.steer_4_Amp = self.steer_4_Amp + d.steer_4_Amp
 
+        self.roll_1_Amp = self.roll_1_Amp + d.roll_1_Amp
+        self.roll_2_Amp = self.roll_2_Amp + d.roll_2_Amp
+        self.roll_3_Amp = self.roll_3_Amp + d.roll_3_Amp
+        self.roll_4_Amp = self.roll_4_Amp + d.roll_4_Amp
+        
+        self.s1AMax = max(d.steer_1_Amp, self.s1AMax)
+        self.s2AMax = max(d.steer_2_Amp, self.s2AMax)
+        self.s3AMax = max(d.steer_3_Amp, self.s3AMax)
+        self.s4AMax = max(d.steer_4_Amp, self.s4AMax)
+        self.r1AMax = max(d.roll_1_Amp, self.r1AMax)
+        self.r2AMax = max(d.roll_2_Amp, self.r2AMax)
+        self.r3AMax = max(d.roll_3_Amp, self.r3AMax)
+        self.r4AMax = max(d.roll_4_Amp, self.r4AMax)
+        
+    def callbackAMCL(self,d):
         self.locX = d.pose.pose.position.x
         self.locY = d.pose.pose.position.y
-        self.linVelX = d.twist.twist.linear.x
-        self.linVelY = d.twist.twist.linear.y
+        quat = [d.pose.pose.orientation.x, d.pose.pose.orientation.y, \
+                d.pose.pose.orientation.z, d.pose.pose.orientation.w]
+        eul = ts.euler_from_quaternion(quat)
+        self.orientation = eul[2]
+        
+    def callbackOdom(self,d):
+        self.linSpeed = np.sqrt(d.twist.twist.linear.x**2 + d.twist.twist.linear.y**2)
+        self.angVel = d.twist.twist.angular.z
 
     def uploadData(self):
         # Add data to DB
@@ -94,30 +116,32 @@ class SQL_Logger:
                 # INSERT INTO [TABLE NAME] (COLUMN NAME) VALUE(value1, value2)...
 
                 #Casts all parameters to strings, database can still intpret it
-                sql = "INSERT INTO `Omniveyors`.`CARTMAN12_practice` \
-                        (`TimeStamp`, `steer1Volt`, `roll1Volt`, `steer2Volt`, \
-                        `roll2Volt`, `steer3Volt`, `roll3Volt`, `steer4Volt`, \
-                        `roll4Volt`, `steer1Amp`, `roll1Amp`, `steer2Amp`, \
-                        `roll2Amp`, `steer3Amp`, `roll3Amp`, `steer4Amp`, \
-                        `roll4Amp`, `Orientation`,`AngVel`, `Location`, `LinVel`,\
+                sql = "INSERT INTO `Omniveyors`.`" + self.tableName + "` \
+                        (`TimeStamp`, `BattVolt`, `steer1Amp`, `roll1Amp`, `steer2Amp`, \
+                        `roll2Amp`, `steer3Amp`, `roll3Amp`, `steer4Amp`, `roll4Amp`, \
+                        `steer1AMax`, `roll1AMax`, `steer2AMax`, `roll2AMax`, \
+                        `steer3AMax`, `roll3AMax`, `steer4AMax`, `roll4AMax`, \
+                        `BattAmp`, `BattAMax`, \
+                        `PosX`, `PosY`, `Orientation`, `DesX`, `DesY`, `DesOrient`, \
+                        `LinSpeed`, `AngVel`, `NavStatus`\
                         `PayloadCurrent`, `PayloadState`\
                         ) VALUES(\
-                        '"+str(self.date)+"','"+str(self.steer_1_Volt)+"',\
-                        '"+str(self.roll_1_Volt)+"','"+str(self.steer_2_Volt)+"',\
-                        '"+str(self.roll_2_Volt)+"','"+str(self.steer_3_Volt)+"',\
-                        '"+str(self.roll_3_Volt)+"','"+str(self.steer_4_Volt)+"',\
-                        '"+str(self.roll_4_Volt)+"','"+str(self.steer_1_Amp)+"',\
-                        '"+str(self.roll_1_Amp)+"','"+str(self.steer_2_Amp)+"',\
-                        '"+str(self.roll_2_Amp)+"','"+str(self.steer_3_Amp)+"',\
-                        '"+str(self.roll_3_Amp)+"','"+str(self.steer_4_Amp)+"',\
-                        '"+str(self.roll_4_Amp)+"','"+str(self.orientation)+"',\
-                        '"+str(self.angVel)+"',\
-                        POINT('"+str(self.locX)+"','"+str(self.locY)+"'), \
-                        POINT('"+str(self.linVelX)+"','"+str(self.linVelY)+"'),\
+                        '"+str(self.date)+"','"+str(round(self.battVoltSum/float(self.counter),3))+"',\
+                        '"+str(round(self.steer_1_Amp,3))+"','"+str(round(self.roll_1_Amp,3))+"', \
+                        '"+str(round(self.steer_2_Amp,3))+"','"+str(round(self.roll_2_Amp,3))+"', \
+                        '"+str(round(self.steer_3_Amp,3))+"','"+str(round(self.roll_3_Amp,3))+"', \
+                        '"+str(round(self.steer_4_Amp,3))+"','"+str(round(self.roll_4_Amp,3))+"', \
+                        '"+str(round(self.s1AMax,3))+"','"+str(round(self.r1AMax,3))+"', \
+                        '"+str(round(self.s2AMax,3))+"','"+str(round(self.r2AMax,3))+"', \
+                        '"+str(round(self.s3AMax,3))+"','"+str(round(self.r3AMax,3))+"', \
+                        '"+str(round(self.s4AMax,3))+"','"+str(round(self.r4AMax,3))+"', \
+                        '"+str(round(self.battAmpSum/float(self.counter),3))+"', \
+                        '"+str(round(self.battAMax,3))+"', \
+                        '"+str(round(self.locX,4))+"','"+str(round(self.locY,4))+"','"+str(round(self.orientation,4))+"',\
+                        '"+str(round(self.desX,4))+"','"+str(round(self.desY,4))+"','"+str(round(self.desOrient,4))+"',\
+                        '"+str(round(self.linSpeed,3))+"','"+str(round(self.angVel,3))+"','"+str(self.navState)+"',\
                         '"+str(self.payloadCurrent)+"','"+str(self.payloadState)+"');"
-                #sql = "INSERT INTO `Omniveyors`.`CARTMAN12_practice` (`TimeStamp`, `steer1Volt`, `roll2Volt`, `steer2Volt`, `roll1Volt`, `steer3Volt`, `roll3Volt`, `steer4Volt`, `roll4Volt`) VALUES(%s %f %f %f %f %f %f %f %f);"
-                #vals = (str(u.date),u.steer_1_Volt, u.roll_1_Volt, u.steer_2_Volt, u.roll_2_Volt, u.steer_3_Volt, u.roll_3_Volt, u.steer_4_Volt, u.roll_4_Volt) 
-
+                
                 #cursor.execute(sql, vals)
                 cursor.execute(sql)
                 result = cursor.fetchone()
@@ -129,15 +153,27 @@ class SQL_Logger:
     def run(self):
         rospy.init_node("database_logger")
         rospy.Subscriber("electricalStatus", electricalStatus, self.callbackElec)
-        rospy.Subscriber("odom", Odometry, self.callbackOdom)
+        rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.callbackAMCL)
+        rospy.Subscriber("odom", PoseWithCovarianceStamped, self.callbackOdom)
         try:
             while not rospy.is_shutdown():
                 time.sleep(10)
-                if not self.staleValues:
+                if self.counter:
                     #self.payloadCurrent = payload.getCurrent()
                     #self.payloadState = payload.isOn()
                     self.uploadData()
-                    self.staleValues = True
+                    self.counter = 0
+                    self.battVoltSum = 0.
+                    self.batAmpSum = 0.
+                    self.battAMax = 0.
+                    self.s1AMax = 0.
+                    self.s2AMax = 0.
+                    self.s3AMax = 0.
+                    self.s4AMax = 0.
+                    self.r1AMax = 0.
+                    self.r2AMax = 0.
+                    self.r3AMax = 0.
+                    self.r4AMax = 0.
         except:
             self.connection.close()
            
