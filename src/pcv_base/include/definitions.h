@@ -15,7 +15,7 @@
 #define CURRENT_CONT				(8.0)               // [A], limited by the controller.
 #define CURRENT_NUM					(2.0)
 #define CURRENT_DENOM				(65472.0) //(65520.0)
-#define VOLTAGE_NUM					(105.0)
+#define VOLTAGE_NUM					(107.5)
 #define VOLTAGE_DENOM				(65520.0)
 #define TORQUE_PEAK					(TORQUE_CONSTANT * CURRENT_PEAK)
 #define TORQUE_CONT 				(TORQUE_CONSTANT * CURRENT_CONT)

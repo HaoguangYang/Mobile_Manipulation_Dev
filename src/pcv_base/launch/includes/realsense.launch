@@ -2,9 +2,9 @@
   <arg name="device_type_camera_t1"    		default="t265"/>
   <arg name="device_type_camera_d1"    		default="d4.5"/>		<!-- Note: using regular expression. match D435, D435i, D415... -->
   <arg name="device_type_camera_d2"    		default="d4.5"/>		<!-- Note: using regular expression. match D435, D435i, D415... -->
-  <arg name="serial_no_camera_t1"    			default=""/>
-  <arg name="serial_no_camera_d1"    			default=""/>
-  <arg name="serial_no_camera_d2"    			default=""/>
+  <arg name="usb_port_id_t1"    			default=""/>
+  <arg name="usb_port_id_d1"    			default="6-1"/>
+  <arg name="usb_port_id_d2"    			default="6-2"/>
   <arg name="camera_t1"              			default="cam_t1"/>
   <arg name="camera_d1"              			default="cam_d1"/>
   <arg name="camera_d2"              			default="cam_d2"/>
@@ -21,11 +21,11 @@
   <arg name="topic_odom_in"             default="odom"/>
   <arg name="calib_odom_file"           default=""/>
 
-  <!--
+  
   <group ns="$(arg camera_t1)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="device_type"           value="$(arg device_type_camera_t1)"/>
-      <arg name="serial_no"             value="$(arg serial_no_camera_t1)"/>
+      <arg name="usb_port_id"             value="$(arg usb_port_id_t1)"/>
       <arg name="tf_prefix"         	value="$(arg tf_prefix_camera_t1)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>
       <arg name="enable_fisheye1"       value="$(arg enable_fisheye)"/>
@@ -34,12 +34,12 @@
       <arg name="calib_odom_file"       value="$(arg calib_odom_file)"/>
     </include>
   </group>
-  -->
+  
 
   <group ns="$(arg camera_d1)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="device_type"           value="$(arg device_type_camera_d1)"/>
-      <arg name="serial_no"             value="$(arg serial_no_camera_d1)"/>
+      <arg name="usb_port_id"             value="$(arg usb_port_id_d1)"/>
       <arg name="tf_prefix"		        value="$(arg tf_prefix_camera_d1)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>
       <arg name="align_depth"           value="true"/>
@@ -52,11 +52,11 @@
     </include>
   </group>
   
-  <!--
+  
   <group ns="$(arg camera_d2)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="device_type"           value="$(arg device_type_camera_d2)"/>
-      <arg name="serial_no"             value="$(arg serial_no_camera_d2)"/>
+      <arg name="usb_port_id"             value="$(arg usb_port_id_d2)"/>
       <arg name="tf_prefix"		        value="$(arg tf_prefix_camera_d2)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>
       <arg name="align_depth"           value="true"/>
@@ -68,7 +68,7 @@
       <arg name="clip_distance"         value="$(arg clip_distance)"/>
     </include>
   </group>
-  -->
+  
   
   <node pkg="web_video_server" type="web_video_server" name="web_video_server"/>
   

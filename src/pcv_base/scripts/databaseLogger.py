@@ -66,7 +66,7 @@ class SQL_Logger:
     
     def callbackElec(self,d):
         #timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.date = datetime.fromtimestamp(d.stamp.to_sec()) #+ self.UTC_OFFSET_TIMEDELTA
+        self.date = datetime.fromtimestamp(d.stamp.to_sec()) + self.UTC_OFFSET_TIMEDELTA
 
         self.counter = self.counter + 1
         
