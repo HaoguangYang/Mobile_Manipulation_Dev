@@ -7,7 +7,7 @@ TebLocalPlannerROS:
     teb_autosize: True
     dt_ref: 0.2 # temporal resolution of the trajectory
     dt_hysteresis: 0.05
-    max_samples: 500
+    max_samples: 20
     global_plan_overwrite_orientation: True
     allow_init_with_backwards_motion: False
     max_global_plan_lookahead_dist: 3.0
@@ -19,9 +19,9 @@ TebLocalPlannerROS:
     
     # Robot
             
-    max_vel_x: 1.0
+    max_vel_x: 0.5
     max_vel_x_backwards: 0.2
-    max_vel_y: 0.2
+    max_vel_y: 0.1
     max_vel_theta: 1.0 # the angular velocity is also bounded by min_turning_radius in case of a carlike robot (r = v / omega)
     acc_lim_x: 0.5
     acc_lim_y: 0.5
@@ -31,7 +31,7 @@ TebLocalPlannerROS:
 
     footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
         type: "polygon"
-        vertices: [ [-0.5,-0.5], [0.5,-0.5], [0.5,0.5], [-0.5,0.5] ]
+        vertices: [ [-0.31,-0.31], [0.31,-0.31], [0.31,0.31], [-0.31,0.31] ]
 
     # GoalTolerance
         
@@ -42,7 +42,7 @@ TebLocalPlannerROS:
         
     # Obstacles
 
-    min_obstacle_dist: 0.2 # This value must also include our robot's expansion, since footprint_model is set to "line".
+    min_obstacle_dist: 0.1 # This value must also include our robot's expansion, since footprint_model is set to "line".
     dynamic_obstacle_inflation_dist: 0.6
     include_dynamic_obstacles: True
     include_costmap_obstacles: True
@@ -50,7 +50,7 @@ TebLocalPlannerROS:
     obstacle_poses_affected: 15
     costmap_converter_plugin: "costmap_converter::CostmapToDynamicObstacles"
     costmap_converter_spin_thread: True
-    costmap_converter_rate: 5
+    costmap_converter_rate: 2
     
     ## Configure plugins (namespace move_base/CostmapToDynamicObstacles)
     costmap_converter/CostmapToDynamicObstacles:
@@ -81,23 +81,23 @@ TebLocalPlannerROS:
 
     # Optimization
 
-    no_inner_iterations: 5
-    no_outer_iterations: 4
+    no_inner_iterations: 3
+    no_outer_iterations: 2
     optimization_activate: True
     optimization_verbose: False
     penalty_epsilon: 0.1
     obstacle_cost_exponent: 4
-    weight_max_vel_x: 2
-    weight_max_vel_y: 2
-    weight_max_vel_theta: 1
+    weight_max_vel_x: 4
+    weight_max_vel_y: 4
+    weight_max_vel_theta: 2
     weight_acc_lim_x: 1
     weight_acc_lim_y: 1
     weight_acc_lim_theta: 1
     weight_kinematics_nh: 1
     weight_kinematics_forward_drive: 1
     weight_kinematics_turning_radius: 1
-    weight_optimaltime: 1
-    weight_shortest_path: 0
+    weight_optimaltime: 100.0
+    weight_shortest_path: 1.0
     weight_obstacle: 100
     weight_dynamic_obstacle: 10
     weight_dynamic_obstacle_inflation: 0.2
@@ -109,7 +109,7 @@ TebLocalPlannerROS:
     enable_homotopy_class_planning: True
     enable_multithreading: True
     simple_exploration: False
-    max_number_classes: 4
+    max_number_classes: 3
     selection_cost_hysteresis: 1.0
     selection_prefer_initial_plan: 0.9
     selection_obst_cost_scale: 1.0
@@ -127,7 +127,7 @@ TebLocalPlannerROS:
     delete_detours_backwards: True
     max_ratio_detours_duration_best_duration: 3.0
     visualize_hc_graph: False
-    wisualize_with_time_as_z_axis_scale: False
+    visualize_with_time_as_z_axis_scale: False
     
     # Recovery
     

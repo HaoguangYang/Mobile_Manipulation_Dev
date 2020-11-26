@@ -35,14 +35,14 @@ class SQL_Logger:
         self.roll_3_Amp = 0.
         self.roll_4_Amp = 0.
         
-        self.s1AMax = -1e6
-        self.s2AMax = -1e6
-        self.s3AMax = -1e6
-        self.s4AMax = -1e6
-        self.r1AMax = -1e6
-        self.r2AMax = -1e6
-        self.r3AMax = -1e6
-        self.r4AMax = -1e6
+        self.s1AMax = 0.
+        self.s2AMax = 0.
+        self.s3AMax = 0.
+        self.s4AMax = 0.
+        self.r1AMax = 0.
+        self.r2AMax = 0.
+        self.r3AMax = 0.
+        self.r4AMax = 0.
         
         self.battVoltSum = 0.
         self.battAmpSum = 0.
@@ -88,14 +88,14 @@ class SQL_Logger:
         self.roll_3_Amp = self.roll_3_Amp + d.roll_3_Amp
         self.roll_4_Amp = self.roll_4_Amp + d.roll_4_Amp
         
-        self.s1AMax = max(d.steer_1_Amp, self.s1AMax)
-        self.s2AMax = max(d.steer_2_Amp, self.s2AMax)
-        self.s3AMax = max(d.steer_3_Amp, self.s3AMax)
-        self.s4AMax = max(d.steer_4_Amp, self.s4AMax)
-        self.r1AMax = max(d.roll_1_Amp, self.r1AMax)
-        self.r2AMax = max(d.roll_2_Amp, self.r2AMax)
-        self.r3AMax = max(d.roll_3_Amp, self.r3AMax)
-        self.r4AMax = max(d.roll_4_Amp, self.r4AMax)
+        self.s1AMax = min(max(d.steer_1_Amp, abs(self.s1AMax)),100.)
+        self.s2AMax = min(max(d.steer_2_Amp, abs(self.s2AMax)),100.)
+        self.s3AMax = min(max(d.steer_3_Amp, abs(self.s3AMax)),100.)
+        self.s4AMax = min(max(d.steer_4_Amp, abs(self.s4AMax)),100.)
+        self.r1AMax = min(max(d.roll_1_Amp, abs(self.r1AMax)),100.)
+        self.r2AMax = min(max(d.roll_2_Amp, abs(self.r2AMax)),100.)
+        self.r3AMax = min(max(d.roll_3_Amp, abs(self.r3AMax)),100.)
+        self.r4AMax = min(max(d.roll_4_Amp, abs(self.r4AMax)),100.)
         
     def callbackAMCL(self,d):
         self.locX = d.pose.pose.position.x
@@ -174,14 +174,14 @@ class SQL_Logger:
                 self.roll_2_Amp = 0.
                 self.roll_3_Amp = 0.
                 self.roll_4_Amp = 0.
-                self.s1AMax = -1e6
-                self.s2AMax = -1e6
-                self.s3AMax = -1e6
-                self.s4AMax = -1e6
-                self.r1AMax = -1e6
-                self.r2AMax = -1e6
-                self.r3AMax = -1e6
-                self.r4AMax = -1e6
+                self.s1AMax = 0.
+                self.s2AMax = 0.
+                self.s3AMax = 0.
+                self.s4AMax = 0.
+                self.r1AMax = 0.
+                self.r2AMax = 0.
+                self.r3AMax = 0.
+                self.r4AMax = 0.
         try:
             pass
         finally:

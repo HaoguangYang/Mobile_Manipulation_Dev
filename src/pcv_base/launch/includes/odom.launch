@@ -62,4 +62,5 @@
         <param name="base_footprint_frame" value="base_link"/>
         <param name="freq" value="20.0"/>
     </node>
+    
 </launch>

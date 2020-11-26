@@ -351,6 +351,7 @@ main (int argc, char *argv[])
         odom_trans.transform.translation.y = gx(1);//*sin_PI_4 + gx(1)*cos_PI_4;
         odom_trans.transform.rotation = odom_quat;
         //odomBroadcaster.sendTransform(odom_trans);
+        // if using RF2O+EKF, disable tf publication from the base to avoid multiple parent frame issue.
 
         odom.header.stamp = current_time;
         odom.header.frame_id = "odom";
@@ -358,12 +359,12 @@ main (int argc, char *argv[])
         odom.pose.pose.position.x = gx(0);//*cos_PI_4 + gx(1)*sin_PI_4;
         odom.pose.pose.position.y = gx(1);//*sin_PI_4 + gx(1)*cos_PI_4;
         odom.pose.pose.orientation = odom_quat;
-        odom.pose.covariance[0] = 0.03;
-        odom.pose.covariance[7] = 0.03;
-        odom.pose.covariance[14] = 0.03;
-        odom.pose.covariance[21] = 0.03;
-        odom.pose.covariance[28] = 0.03;
-        odom.pose.covariance[35] = 0.1;
+        odom.pose.covariance[0] = 0.1;
+        odom.pose.covariance[7] = 0.1;
+        odom.pose.covariance[14] = 0.1;
+        odom.pose.covariance[21] = 0.4;
+        odom.pose.covariance[28] = 0.4;
+        odom.pose.covariance[35] = 0.4;
         
         odom.twist.twist.linear.x = gxd(0);
         odom.twist.twist.linear.y = gxd(1);
@@ -371,9 +372,9 @@ main (int argc, char *argv[])
         odom.twist.covariance[0] = 0.2;
         odom.twist.covariance[7] = 0.2;
         odom.twist.covariance[14] = 0.2;
-        odom.twist.covariance[21] = 0.2;
-        odom.twist.covariance[28] = 0.2;
-        odom.twist.covariance[35] = 0.6;
+        odom.twist.covariance[21] = 0.8;
+        odom.twist.covariance[28] = 0.8;
+        odom.twist.covariance[35] = 0.8;
         
         odomPub.publish(odom);
         
