@@ -5,11 +5,13 @@ import rospy, tf, tf2_ros
 import math
 import cv2
 from std_msgs.msg import String
-from sensor_msgs.msg import Image, PointCloud2
+from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Image, PointCloud2, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import ros_numpy
-#from matplotlib.pyplot import figure, draw
+import pyrealsense2 as rs2
+import matplotlib.pyplot as plt
 
 class targetVisualServoing:
 
@@ -19,14 +21,35 @@ class targetVisualServoing:
     
     self.bridge = CvBridge()
     self.rgb_sub = rospy.Subscriber("cam_d1/color/image_raw",Image,self.rgbCallback)
+    init_data = rospy.wait_for_message("cam_d1/color/image_raw",Image)
+    self.rgbCallback(init_data)
     self.depth_sub = rospy.Subscriber("cam_d1/aligned_depth_to_color/image_raw",Image,self.grayCallback)
-    self.pc_sub = rospy.Subscriber("cam_d1/depth/color/points",PointCloud2,self.ptCloudCallback)
+    init_data = rospy.wait_for_message("cam_d1/aligned_depth_to_color/image_raw",Image)
+    self.grayCallback(init_data)
+    # depth camera info for transformation
+    #self.info_sub = rospy.Subscriber("/cam_d1/aligned_depth_to_color/camera_info", CameraInfo, self.imageDepthInfoCallback)
+    init_data = rospy.wait_for_message("/cam_d1/aligned_depth_to_color/camera_info", CameraInfo)
+    self.intrinsics = rs2.intrinsics()
+    self.intrinsics.width = init_data.width
+    self.intrinsics.height = init_data.height
+    self.intrinsics.ppx = init_data.K[2]
+    self.intrinsics.ppy = init_data.K[5]
+    self.intrinsics.fx = init_data.K[0]
+    self.intrinsics.fy = init_data.K[4]
+    if init_data.distortion_model == 'plumb_bob':
+        self.intrinsics.model = rs2.distortion.brown_conrady
+    elif init_data.distortion_model == 'equidistant':
+        self.intrinsics.model = rs2.distortion.kannala_brandt4
+    self.intrinsics.coeffs = [i for i in init_data.D]
+    #self.pc_sub = rospy.Subscriber("cam_d1/depth/color/points",PointCloud2,self.ptCloudCallback)
+    #init_data = rospy.wait_for_message("cam_d1/depth/color/points",PointCloud2)
+    #self.ptCloudCallback(init_data)
     self.vel_pub = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10)
     
     # control
-    self.kp = [1.2,1.2,4.0]
-    self.kd = [0.025,0.025,0.02]      
-    self.vlim = [0.3,0.3,0.3]
+    self.kp = [0.0012,0.0012,4.0]
+    self.kd = [0.000025,0.000025,0.02]      
+    self.vlim = [0.1,0.1,0.1]
     self.errX = 0.
     self.errY = 0.
     self.errAng = 0.
@@ -36,8 +59,8 @@ class targetVisualServoing:
     
     # target detection
     #self.featureExtractor = cv2.AKAZE_create()
-    self.featureExtractor = cv2.SIFT_create()
-    #self.featureExtractor = cv2.xfeatures2d.SURF_create(400)
+    #self.featureExtractor = cv2.xfeatures2d.SIFT_create()
+    self.featureExtractor = cv2.xfeatures2d.SURF_create(400)
     #self.featureExtractor = cv2.ORB_create()
     #index_params= dict(algorithm = 6, #FLANN_INDEX_LSH,
     #               table_number = 12, # 6
@@ -51,10 +74,10 @@ class targetVisualServoing:
     self.matchFlag = False
     
     # load target features
-    im_target = cv2.imread('../resources/visualTargets/steelStand.jpg')
+    im_target = cv2.imread('/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/visualTargets/steelStand.jpg')
     (rows,cols,channels) = im_target.shape
-    scale = 0.1
-    im_target = cv2.resize(im_target, (int(cols*scale), int(rows*scale)), interpolation = cv2.INTER_CUBIC)
+    #scale = 0.1
+    #im_target = cv2.resize(im_target, (int(cols*scale), int(rows*scale)), interpolation = cv2.INTER_CUBIC)
     self.im_target = cv2.normalize(im_target, im_target, 0, 255, norm_type=cv2.NORM_MINMAX)
     self.kp_tgt, self.des_tgt = self.featureExtractor.detectAndCompute(self.im_target, None)
     h,w,c = self.im_target.shape
@@ -62,8 +85,8 @@ class targetVisualServoing:
     self.tgt_area = h*w
 
     # target position (of target object from robot base_link)
-    self.pos_tgt = [1.0, 0.0]
-    self.ang_tgt = 0.0
+    self.pos_tgt = [1710.0, -10.0]
+    self.ang_tgt = 0.
     self.tfBuffer = tf2_ros.Buffer()
     self.tfListener = tf2_ros.TransformListener(self.tfBuffer)
     
@@ -100,7 +123,7 @@ class targetVisualServoing:
         src_pts = np.float32([ self.kp_tgt[m.queryIdx].pt for m in goodMatch ]).reshape(-1,1,2)
         dst_pts = np.float32([ kp_f[m.trainIdx].pt for m in goodMatch ]).reshape(-1,1,2)
 
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 3.0)
+        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 2.0)
         matchesMask1 = mask.ravel().tolist()
 
         #print(M)
@@ -118,8 +141,8 @@ class targetVisualServoing:
             syy = np.dot(np.dot(j, Msub),r2)
             sxy = np.dot(np.dot(r, Msub),r)
             r = (n*sxy - sx*sy)/np.sqrt((n*sxx-sx**2)*(n*syy-sy**2))
-            #print(r)
-            if M[0,0]>0 and M[1,1]>0 and r>0.8:
+            print(r)
+            if M[0,0]>0 and M[1,1]>0 and r>0.6:
                 dst = cv2.perspectiveTransform(self.tgt_coords,M)
                 dst_area = -0.5*(dst[0,0,0]*dst[1,0,1] - dst[1,0,0]*dst[0,0,1] \
                               + dst[1,0,0]*dst[2,0,1] - dst[2,0,0]*dst[1,0,1] \
@@ -134,10 +157,13 @@ class targetVisualServoing:
                     #print(bbox)
                     c = max(np.min(bbox[:,:,:,0]),0)
                     r = max(np.min(bbox[:,:,:,1]),0)
-                    w = min(np.max(bbox[:,:,:,0]),frame.shape[0]-1)-c+1
-                    h = min(np.max(bbox[:,:,:,1]),frame.shape[1]-1)-r+1
+                    w = min(np.max(bbox[:,:,:,0]),frame.shape[1]-1)-c+1
+                    h = min(np.max(bbox[:,:,:,1]),frame.shape[0]-1)-r+1
+                    print(bbox)
+                    print([c,r,w,h])
                     self.track_window = (c,r,w,h)
                     self.tracker = self.trackerObj()
+                    print(self.track_window)
                     self.tracker.init(frame, self.track_window)
                     #print('Found!')
                     self.matchFlag = True
@@ -157,10 +183,11 @@ class targetVisualServoing:
     # use the bounding box generated in the match step and track the matched part
     # does not perform further matching unless the tracking is lost.
     # updates bounding box
-    ret_ok, self.track_window = self.tracker.update(frame)
+    ret_ok, track_window = self.tracker.update(frame)
+    self.track_window = (int(track_window[0]), int(track_window[1]), int(track_window[2]), int(track_window[3]))
     if ret_ok:
-        corner1 = (int(self.track_window[0]), int(self.track_window[1]))
-        corner2 = (int(self.track_window[0]+self.track_window[2]), int(self.track_window[1]+self.track_window[3]))
+        corner1 = (self.track_window[0], self.track_window[1])
+        corner2 = (self.track_window[0]+self.track_window[2], self.track_window[1]+self.track_window[3])
         cv2.rectangle(frame, corner1, corner2, (255,0,0), 2, 1)
     else:
         self.matchFlag = False
@@ -170,63 +197,83 @@ class targetVisualServoing:
   def extractObjectMask(self):
     # using the depth image, extract the foreground object in the bounding box using Otsu
     # generates a mask of which pixels belongs to the foreground object
-    DframeROI = self.Dframe[self.track_window[0]:self.track_window[0]+self.track_window[2],\
-                            self.track_window[1]:self.track_window[1]+self.track_window[3]]
-    ret, th = cv2.threshold(DframeROI, 0, 10000, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-    mask = np.zeros(self.Dframe.shape[0:2], dtype=bool)
-    mask[self.track_window[0]:self.track_window[0]+self.track_window[2],\
-         self.track_window[1]:self.track_window[1]+self.track_window[3]] = \
-         (DframeROI < th)
+    DframeROI = self.Dframe[self.track_window[1]:self.track_window[1]+self.track_window[3],\
+                            self.track_window[0]:self.track_window[0]+self.track_window[2]]
+    DframeROI = np.clip(DframeROI*256.0/8000.0, 0, 255).astype('uint8')
+    ret, th = cv2.threshold(DframeROI, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    #print(th)
+    mask = np.zeros(self.Dframe.shape[0:2], dtype='uint8')
+    if th is not None:
+        mask[self.track_window[1]:self.track_window[1]+self.track_window[3],\
+             self.track_window[0]:self.track_window[0]+self.track_window[2]] = \
+             255-th
+    cv2.imshow("Depth Mask", mask)
     return mask
   
-  def getTransformAndError(self, mask)
+  def getTransformAndError(self, mask):
     # using the mask of the foreground object and the corresponding depths,
     # determine the relative position using PCA on the X and Z (depth) coordinates of the pixels in the mask
     # generates a tf.
-    xyz_array = ros_numpy.point_cloud2.get_xyz_points(self.ptCloud)
-    pts = xyz_array[mask]
-    
-    # perform PCA on the points (Nx2 numpy array)
-    mean = np.empty((0))
-    mean, eigvec, eigval = cv2.PCACompute2(pts[:,0:2], mean)
-    # position of the center of the target surface w.r.t. the camera center.
-    center = [mean[0,0], mean[0,1]]
-    # angle of the feature, i.e. the angle of the target surface with the camera plane
-    angle = np.arctan2(eigvec[0,1], eigvec[0,0])
-    # transform from base link to depth camera
-    try:
-        baseToCam = self.tfBuffer.lookup_transform('base_link','camera_d1_depth',rospy,Time()).transform
-        tx = baseToCam.translation.x
-        ty = baseToCam.translation.y
-        th = tf.transformations.euler_from_quaternion(\
-                            (baseToCam.rotation.x, \
-                             baseToCam.rotation.y, \
-                             baseToCam.rotation.z, \
-                             baseToCam.rotation.w)
-                            )[2]
-        dx = center[0]*np.cos(th) - center[1]*np.sin(th) + tx
-        dy = center[0]*np.sin(th) + center[1]*np.cos(th) + ty
-        # errors are all in base_link frame.
-        self.errX = self.pos_tgt[0] - dx
-        self.errY = self.pos_tgt[1] - dy
-        self.errAng = self.ang_tgt - (th + angle)
-    except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-        pass
+    #xyz_array = ros_numpy.point_cloud2.get_xyz_points(self.ptCloud)
+    x, y = np.nonzero(mask)
+    if len(x)>10:
+        pts = np.zeros([len(x),3])
+        n = 0
+        for idx in np.array([x,y]).transpose():
+            pts[n,:] = rs2.rs2_deproject_pixel_to_point(self.intrinsics, [idx[1], idx[0]], self.Dframe[idx[0], idx[1]])
+            n += 1
+        
+        #print(np.mean(pts,0))
+        #plt.scatter(pts[:,0], pts[:,2])
+        #plt.show()
+        # perform PCA on the points (Nx2 numpy array)
+        mean, eigvec = cv2.PCACompute(pts[:,[0,2]], mean=None)
+        # position of the center of the target surface w.r.t. the camera center.
+        center = [mean[0,1], -mean[0,0]]
+        # angle of the feature, i.e. the angle of the target surface with the camera plane
+        angle = -np.arctan2(eigvec[0,1], eigvec[0,0])-np.pi/2.
+        print(center[0], center[1], angle)
+        # transform from base link to depth camera
+        try:
+            baseToCam = self.tfBuffer.lookup_transform('base_link','cam_d1_aligned_depth_to_color_frame',rospy.Time()).transform
+            tx = baseToCam.translation.x
+            ty = baseToCam.translation.y
+            th = tf.transformations.euler_from_quaternion(\
+                                (baseToCam.rotation.x, \
+                                 baseToCam.rotation.y, \
+                                 baseToCam.rotation.z, \
+                                 baseToCam.rotation.w)
+                                )[2]
+            self.errAng = - self.ang_tgt - th - angle
+            center[0] = center[0]*np.cos(th) - center[1]*np.sin(th) + tx*1000.0
+            center[1] = center[0]*np.sin(th) + center[1]*np.cos(th) + ty*1000.0
+            print(tx,ty, th)
+            print(center[0], center[1])
+            self.errX = center[0]*np.cos(self.errAng) + center[1]*np.sin(self.errAng) - self.pos_tgt[0]
+            self.errY = center[0]*np.sin(self.errAng) - center[1]*np.cos(self.errAng) - self.pos_tgt[1]
+            # errors are all in base_link frame.
+            #self.errX = self.pos_tgt[1] - dx
+            #self.errY = self.pos_tgt[0] - dy
+            
+            print(self.errX, self.errY, self.errAng)
+            print('===')
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            pass
     
   def control(self):
     pub_msg = Twist()
     
     steer = self.kp[2]*self.errAng \
             + self.kd[2]*(self.errAng-self.errAngOld)*self.rate
-    pub_msg.angular.z = steer/abs(steer)*min(abs(steer), self.vlim[2])
+    pub_msg.angular.z = steer/(abs(steer)+1e-3)*min(abs(steer), self.vlim[2])
 
     xvel = self.kp[0]*self.errX \
             + self.kd[0]*(self.errX-self.errXOld)*self.rate
-    pub_msg.linear.x = xvel/abs(xvel)*min(abs(xvel),self.vlim[0])
+    pub_msg.linear.x = xvel/(abs(xvel)+1e-3)*min(abs(xvel),self.vlim[0])
 
     yvel = self.kp[1]*self.errY \
             + self.kd[1]*(self.errY-self.errYOld)*self.rate
-    pub_msg.linear.y = yvel/abs(yvel)*min(abs(yvel), self.vlim[1])
+    pub_msg.linear.y = yvel/(abs(yvel)+1e-3)*min(abs(yvel), self.vlim[1])
     
     self.vel_pub.publish(pub_msg)
     
@@ -265,7 +312,8 @@ class targetVisualServoing:
             else:
                 self.trackRGBfeature(self.bgrFrame)
                 self.getTransformAndError(self.extractObjectMask())
-            self.rate.sleep()
+                self.control()
+            self.rosRate.sleep()
     except KeyboardInterrupt:
         print("Shutting down")
     finally:
