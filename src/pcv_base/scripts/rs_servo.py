@@ -44,12 +44,12 @@ class targetVisualServoing:
     #self.pc_sub = rospy.Subscriber("cam_d1/depth/color/points",PointCloud2,self.ptCloudCallback)
     #init_data = rospy.wait_for_message("cam_d1/depth/color/points",PointCloud2)
     #self.ptCloudCallback(init_data)
-    self.vel_pub = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10)
+    self.vel_pub = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=1)
     
     # control
-    self.kp = [0.0012,0.0012,4.0]
-    self.kd = [0.000025,0.000025,0.02]      
-    self.vlim = [0.1,0.1,0.1]
+    self.kp = [0.5,0.5,2.0]
+    self.kd = [0.025,0.025,0.02]      
+    self.vlim = [0.05,0.05,0.05]
     self.errX = 0.
     self.errY = 0.
     self.errAng = 0.
@@ -85,8 +85,14 @@ class targetVisualServoing:
     self.tgt_area = h*w
 
     # target position (of target object from robot base_link)
-    self.pos_tgt = [1710.0, -10.0]
+    self.pos_tgt = [1.800, -0.100]  # need to be read in from file.
     self.ang_tgt = 0.
+    
+    ca = np.cos(self.ang_tgt)
+    sa = np.sin(self.ang_tgt)
+    # tgtToObj ^ -1 = R^T * (T^-1)
+    self.objToTgt = np.matmul(np.array([[ca,sa,0.],[-sa,ca,0.],[0.,0.,1.]]), \
+                np.array([[1.,0.,-self.pos_tgt[0]],[0.,1.,-self.pos_tgt[1]],[0.,0.,1.]]))
     self.tfBuffer = tf2_ros.Buffer()
     self.tfListener = tf2_ros.TransformListener(self.tfBuffer)
     
@@ -176,8 +182,8 @@ class targetVisualServoing:
 
     img_disp = cv2.drawMatches(self.im_target, self.kp_tgt, img_disp, kp_f, goodMatch, None, **draw_params)
     
-    cv2.imshow("Image window", img_disp)
-    cv2.waitKey(1)
+    #cv2.imshow("Image window", img_disp)
+    #cv2.waitKey(1)
     
   def trackRGBfeature(self,frame):
     # use the bounding box generated in the match step and track the matched part
@@ -191,15 +197,15 @@ class targetVisualServoing:
         cv2.rectangle(frame, corner1, corner2, (255,0,0), 2, 1)
     else:
         self.matchFlag = False
-    cv2.imshow("Tracking Results", frame)
-    cv2.waitKey(1)
+    #cv2.imshow("Tracking Results", frame)
+    #cv2.waitKey(1)
     
   def extractObjectMask(self):
     # using the depth image, extract the foreground object in the bounding box using Otsu
     # generates a mask of which pixels belongs to the foreground object
     DframeROI = self.Dframe[self.track_window[1]:self.track_window[1]+self.track_window[3],\
                             self.track_window[0]:self.track_window[0]+self.track_window[2]]
-    DframeROI = np.clip(DframeROI*256.0/8000.0, 0, 255).astype('uint8')
+    DframeROI = np.clip(DframeROI*256.0/5000.0, 0., 255.).astype('uint8')
     ret, th = cv2.threshold(DframeROI, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     #print(th)
     mask = np.zeros(self.Dframe.shape[0:2], dtype='uint8')
@@ -207,7 +213,11 @@ class targetVisualServoing:
         mask[self.track_window[1]:self.track_window[1]+self.track_window[3],\
              self.track_window[0]:self.track_window[0]+self.track_window[2]] = \
              255-th
+    else:
+        print(ret,th)
+        self.vel_pub.publish(Twist())
     cv2.imshow("Depth Mask", mask)
+    cv2.waitKey(1)
     return mask
   
   def getTransformAndError(self, mask):
@@ -229,36 +239,61 @@ class targetVisualServoing:
         # perform PCA on the points (Nx2 numpy array)
         mean, eigvec = cv2.PCACompute(pts[:,[0,2]], mean=None)
         # position of the center of the target surface w.r.t. the camera center.
-        center = [mean[0,1], -mean[0,0]]
+        # center is expressed w.r.t. the camera frame (x front, y left),  convert from mm to m.
+        center = [0.001*mean[0,1], -0.001*mean[0,0]]
         # angle of the feature, i.e. the angle of the target surface with the camera plane
-        angle = -np.arctan2(eigvec[0,1], eigvec[0,0])-np.pi/2.
-        print(center[0], center[1], angle)
-        # transform from base link to depth camera
+        angle = np.arctan2(eigvec[0,0], -eigvec[0,1])
+        angle_pi = angle/np.pi
+        # filtering the angle readings as it affects the transform drastically...
+        if angle_pi>0.25 and angle_pi<0.75:
+            # swapped x with y axis
+            angle_pi -= 0.5
+        elif angle_pi<-0.25 and angle_pi>-0.75:
+            angle_pi += 0.5
+        elif angle_pi < -0.75:
+            # x axis reverted
+            angle_pi += 1.
+        elif angle_pi > 0.75:
+            angle_pi -= 1.
+        angle = angle_pi * np.pi
+        #    angle += np.pi/2
+        #else:
+        #    angle -= np.pi/2
+        #angle = angle - np.pi/2
+        #if angle <= -np.pi/2:
+        #    angle = angle + np.pi
+        
+        #print(center[0], center[1], angle)
+        ca = np.cos(angle)
+        sa = np.sin(angle)
+        #print(center, angle)
+        # transform from camera to object
+        camToObject = np.array([[ca,-sa,center[0]],[sa,ca,center[1]],[0.,0.,1.]])
+        
         try:
-            baseToCam = self.tfBuffer.lookup_transform('base_link','cam_d1_aligned_depth_to_color_frame',rospy.Time()).transform
-            tx = baseToCam.translation.x
-            ty = baseToCam.translation.y
+            # transform from base link to depth camera
+            baseToCamTF = self.tfBuffer.lookup_transform('base_link','cam_d1_aligned_depth_to_color_frame',rospy.Time()).transform
+            tx = baseToCamTF.translation.x
+            ty = baseToCamTF.translation.y
             th = tf.transformations.euler_from_quaternion(\
-                                (baseToCam.rotation.x, \
-                                 baseToCam.rotation.y, \
-                                 baseToCam.rotation.z, \
-                                 baseToCam.rotation.w)
+                                (baseToCamTF.rotation.x, \
+                                 baseToCamTF.rotation.y, \
+                                 baseToCamTF.rotation.z, \
+                                 baseToCamTF.rotation.w)
                                 )[2]
-            self.errAng = - self.ang_tgt - th - angle
-            center[0] = center[0]*np.cos(th) - center[1]*np.sin(th) + tx*1000.0
-            center[1] = center[0]*np.sin(th) + center[1]*np.cos(th) + ty*1000.0
-            print(tx,ty, th)
-            print(center[0], center[1])
-            self.errX = center[0]*np.cos(self.errAng) + center[1]*np.sin(self.errAng) - self.pos_tgt[0]
-            self.errY = center[0]*np.sin(self.errAng) - center[1]*np.cos(self.errAng) - self.pos_tgt[1]
-            # errors are all in base_link frame.
-            #self.errX = self.pos_tgt[1] - dx
-            #self.errY = self.pos_tgt[0] - dy
-            
+            ct = np.cos(th)
+            st = np.sin(th)
+            baseToCam = np.array([[ct,-st,tx],[st,ct,ty],[0.,0.,1.]])
+            baseToTgt = np.matmul(np.matmul(baseToCam, camToObject), self.objToTgt)
+            self.errAng = np.arctan2(baseToTgt[1,0],baseToTgt[0,0])
+            self.errX = baseToTgt[0,2]
+            self.errY = baseToTgt[1,2]
             print(self.errX, self.errY, self.errAng)
-            print('===')
+            #print('===')
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             pass
+    else:
+        self.vel_pub.publish(Twist())
     
   def control(self):
     pub_msg = Twist()
@@ -309,14 +344,19 @@ class targetVisualServoing:
         while not rospy.is_shutdown():
             if not self.matchFlag:
                 self.matchRGBfeature(self.bgrFrame)
+                self.vel_pub.publish(Twist())
             else:
                 self.trackRGBfeature(self.bgrFrame)
                 self.getTransformAndError(self.extractObjectMask())
                 self.control()
+                if abs(self.errX) <= 0.05 and abs(self.errY)<=0.05:
+                    self.vel_pub.publish(Twist())
+                    break
             self.rosRate.sleep()
     except KeyboardInterrupt:
         print("Shutting down")
     finally:
+        self.vel_pub.publish(Twist())
         cv2.destroyAllWindows()
 
 if __name__ == '__main__':
