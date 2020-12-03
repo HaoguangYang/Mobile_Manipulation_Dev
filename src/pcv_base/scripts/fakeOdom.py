@@ -72,15 +72,15 @@ def main():
         eStatus.roll_3_Volt = 42.
         eStatus.roll_4_Volt = 42.
         
-        eStatus.steer_1_Amp = 0.1
-        eStatus.steer_2_Amp = 0.1
-        eStatus.steer_3_Amp = 0.1
-        eStatus.steer_4_Amp = 0.1
+        eStatus.steer_1_Amp = 1.
+        eStatus.steer_2_Amp = 1.
+        eStatus.steer_3_Amp = 1.
+        eStatus.steer_4_Amp = 1.
         
-        eStatus.roll_1_Amp = 0.1
-        eStatus.roll_2_Amp = 0.1
-        eStatus.roll_3_Amp = 0.1
-        eStatus.roll_4_Amp = 0.1
+        eStatus.roll_1_Amp = 1.
+        eStatus.roll_2_Amp = 1.
+        eStatus.roll_3_Amp = 1.
+        eStatus.roll_4_Amp = 1.
         
         eStatus_pub.publish(eStatus)
         

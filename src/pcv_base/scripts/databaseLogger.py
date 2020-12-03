@@ -4,7 +4,7 @@
 import pymysql.cursors
 from datetime import datetime
 import time
-import socket
+import netifaces as ni
 from tf import transformations as ts
 from pcv_base.msg import electricalStatus
 from nav_msgs.msg import Odometry
@@ -69,11 +69,11 @@ class SQL_Logger:
         self.payloadState = 0
 
         self.date = datetime.now()
+        #print("Starting..")
         
         # IP address will not change in a short period as long as it is connected,
         # so just record the startup IP.
-        hostname = socket.gethostname()
-        self.robot_ip = socket.gethostbyname(hostname)
+        self.robot_ip = ni.ifaddresses('wlxd03745152aa4')[ni.AF_INET][0]['addr']
         try:
             with self.connection.cursor() as cursor:
                 # INSERT INTO [TABLE NAME] (COLUMN NAME) VALUE(value1, value2)...
@@ -88,10 +88,15 @@ class SQL_Logger:
                 #print(sql)
         except:
             pass
+        finally:
+            print("robot IP: "+self.robot_ip+" is logged in the database. Database logger initialized")
+            self.connection.commit()
+            
     
     def callbackElec(self,d):
         #timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.date = datetime.fromtimestamp(d.stamp.to_sec()) + self.UTC_OFFSET_TIMEDELTA
+        #print("Electric callback triggered")
+        self.date = datetime.fromtimestamp(d.stamp.to_sec()) #+ self.UTC_OFFSET_TIMEDELTA
 
         self.counter = self.counter + 1
         #self.upload_cyles = self.upload_cyles + 1
@@ -164,7 +169,7 @@ class SQL_Logger:
                 result = cursor.fetchone()
                 #print(sql)
         finally:
-            #print("db..ip")
+            #print("db..navigation")
             self.connection.commit()
             
     def uploadData(self):
@@ -206,7 +211,7 @@ class SQL_Logger:
                 result = cursor.fetchone()
                 #print(sql)
         finally:
-            #print("db..normal")
+            #print("db..battery")
             self.connection.commit()
 
     def run(self):
@@ -217,14 +222,15 @@ class SQL_Logger:
         rospy.Subscriber('/move_base/result', MoveBaseActionResult, self.status_cb) #Need to test if this can access the navigation status
         
         while not rospy.is_shutdown():
-            time.sleep(10)
+            time.sleep(2)
+            #print(self.counter)
             if self.counter: #Checks if the counter is more than 0
                 #self.payloadCurrent = payload.getCurrent()
                 #self.payloadState = payload.isOn()
                 self.uploadData()
                 self.counter = 0
                 self.battVoltSum = 0.
-                self.batAmpSum = 0.
+                self.battAmpSum = 0.
                 self.battAMax = 0.
                 self.steer_1_Amp = 0.
                 self.steer_2_Amp = 0.
