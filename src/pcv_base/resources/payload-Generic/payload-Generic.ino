@@ -51,25 +51,25 @@ void loop(){
 					Serial.readBytes(&tail, 1);
 					if (tail == '&'){	// valid command
 						int which = cmd-48; // ASCII to int
-                        char buf[8];
-                        sprintf(buf, "@A%04d%%", (int)analogSen[which]);
-                        Serial.print(buf);
+            char buf[8];
+            sprintf(buf, "@A%04d%%", (int)analogSen[which]);
+            Serial.print(buf);
 					}
 					break;
-                case 'S':               // command for setting the state machine from the computer
-                    Serial.readBytes(&cmd, 1);
-                    Serial.readBytes(&tail, 1);
-                    if (tail == '&'){   // valid command
-                        int state = cmd-48; // ASCII to int
-                        Serial.println(cmd);
-                        if (state == 0 || state == 3 || state == 5){
-                            programState = state;
-                            char buf[5];
-                            sprintf(buf, "@S%1d%%", state);
-                            Serial.print(buf);  // echo the state setting
-                        }
-                    }
-                    break;
+        case 'S':               // command for setting the state machine from the computer
+          Serial.readBytes(&cmd, 1);
+          Serial.readBytes(&tail, 1);
+          if (tail == '&'){   // valid command
+            int state = cmd-48; // ASCII to int
+            Serial.println(cmd);
+            if (state == 0 || state == 3 || state == 5){
+              programState = state;
+              char buf[5];
+              sprintf(buf, "@S%1d%%", state);
+              Serial.print(buf);  // echo the state setting
+            }
+          }
+          break;
 				default:
 					break;				// stops processing the current frame.
 			}
