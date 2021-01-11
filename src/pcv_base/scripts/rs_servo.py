@@ -18,7 +18,7 @@ class targetVisualServoing:
   def __init__(self):
     #self.image_pub = rospy.Publisher("image_topic_2",Image)
     rospy.init_node('targetVisualServoing', anonymous=True)
-    
+    targName = rospy.get_param('~targetName','steelStand')
     self.bridge = CvBridge()
     self.rgb_sub = rospy.Subscriber("cam_d1/color/image_raw",Image,self.rgbCallback)
     init_data = rospy.wait_for_message("cam_d1/color/image_raw",Image)
@@ -49,7 +49,7 @@ class targetVisualServoing:
     # control
     self.kp = [0.5,0.5,2.0]
     self.kd = [0.025,0.025,0.02]      
-    self.vlim = [0.05,0.05,0.05]
+    self.vlim = [0.1,0.1,0.1]
     self.errX = 0.
     self.errY = 0.
     self.errAng = 0.
@@ -74,7 +74,7 @@ class targetVisualServoing:
     self.matchFlag = False
     
     # load target features
-    im_target = cv2.imread('/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/visualTargets/steelStand.jpg')
+    im_target = cv2.imread('/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/visualTargets/'+targName+'.jpg')
     (rows,cols,channels) = im_target.shape
     #scale = 0.1
     #im_target = cv2.resize(im_target, (int(cols*scale), int(rows*scale)), interpolation = cv2.INTER_CUBIC)
@@ -85,8 +85,10 @@ class targetVisualServoing:
     self.tgt_area = h*w
 
     # target position (of target object from robot base_link)
-    self.pos_tgt = [1.800, -0.100]  # need to be read in from file.
-    self.ang_tgt = 0.
+    tgtX = rospy.get_param('~desX','1.8')
+    tgtY = rospy.get_param('~desY','-0.1')
+    self.pos_tgt = [tgtX, tgtY]
+    self.ang_tgt = rospy.get_param('~desTh','0.0')
     
     ca = np.cos(self.ang_tgt)
     sa = np.sin(self.ang_tgt)

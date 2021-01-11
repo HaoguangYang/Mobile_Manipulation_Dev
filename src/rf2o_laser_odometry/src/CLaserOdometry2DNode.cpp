@@ -242,23 +242,23 @@ void CLaserOdometry2DNode::publish()
   odom.pose.pose.position.y = robot_pose_.translation()(1);
   odom.pose.pose.position.z = 0.0;
   odom.pose.pose.orientation = tf::createQuaternionMsgFromYaw(rf2o::getYaw(robot_pose_.rotation()));
-  odom.pose.covariance[0] = 0.8;
-  odom.pose.covariance[7] = 0.8;
-  odom.pose.covariance[14] = 0.8;
-  odom.pose.covariance[21] = 0.2;
-  odom.pose.covariance[28] = 0.2;
-  odom.pose.covariance[35] = 0.2;
+  odom.pose.covariance[0] = 1.0;
+  odom.pose.covariance[7] = 1.0;
+  odom.pose.covariance[14] = 1.0;
+  odom.pose.covariance[21] = 1.0;
+  odom.pose.covariance[28] = 1.0;
+  odom.pose.covariance[35] = 1.0;
   //set the velocity
   odom.child_frame_id = base_frame_id;
   odom.twist.twist.linear.x = lin_speed_x;    //linear speed
   odom.twist.twist.linear.y = lin_speed_y;
   odom.twist.twist.angular.z = ang_speed;   //angular speed
-  odom.twist.covariance[0] = 1.6;
-  odom.twist.covariance[7] = 1.6;
-  odom.twist.covariance[14] = 1.6;
-  odom.twist.covariance[21] = 0.4;
-  odom.twist.covariance[28] = 0.4;
-  odom.twist.covariance[35] = 0.4;
+  odom.twist.covariance[0] = 2.0;
+  odom.twist.covariance[7] = 2.0;
+  odom.twist.covariance[14] = 2.0;
+  odom.twist.covariance[21] = 2.0;
+  odom.twist.covariance[28] = 2.0;
+  odom.twist.covariance[35] = 2.0;
   //publish the message
   odom_pub.publish(odom);
 }

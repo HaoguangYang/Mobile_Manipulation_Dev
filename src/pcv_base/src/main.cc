@@ -362,19 +362,19 @@ main (int argc, char *argv[])
         odom.pose.covariance[0] = 0.1;
         odom.pose.covariance[7] = 0.1;
         odom.pose.covariance[14] = 0.1;
-        odom.pose.covariance[21] = 0.4;
-        odom.pose.covariance[28] = 0.4;
-        odom.pose.covariance[35] = 0.4;
+        odom.pose.covariance[21] = 0.2;
+        odom.pose.covariance[28] = 0.2;
+        odom.pose.covariance[35] = 0.2;
         
         odom.twist.twist.linear.x = gxd(0);
         odom.twist.twist.linear.y = gxd(1);
         odom.twist.twist.angular.z = gxd(2);
-        odom.twist.covariance[0] = 0.2;
-        odom.twist.covariance[7] = 0.2;
-        odom.twist.covariance[14] = 0.2;
-        odom.twist.covariance[21] = 0.8;
-        odom.twist.covariance[28] = 0.8;
-        odom.twist.covariance[35] = 0.8;
+        odom.twist.covariance[0] = 0.1;
+        odom.twist.covariance[7] = 0.1;
+        odom.twist.covariance[14] = 0.1;
+        odom.twist.covariance[21] = 0.1;
+        odom.twist.covariance[28] = 0.1;
+        odom.twist.covariance[35] = 0.1;
         
         odomPub.publish(odom);
         

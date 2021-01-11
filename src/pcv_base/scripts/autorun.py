@@ -12,7 +12,8 @@ import rospy
 #import serial
 # comment out payload if no Arduino-related payload (i.e. /dev/ttyACM0) exists.
 #from Payloads.UVC import payload
-from Tasks.uvcDisinfection import Task
+#from Tasks.uvcDisinfection import Task
+from Tasks.logisticRoute import Task
 import roslaunch
 
 #def status_cb(data):
@@ -76,39 +77,40 @@ if __name__=="__main__":
     #nav_thread.start()
     #time.sleep(30)      # wait for the stack to start up
     
-    task = Task()
+    task = Task(uuid, 'imi_traj_EABICD')
     
-    launch_video = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/includes/realsense.launch'])
-    launch_video.start()
-    
-    while (1):
-        while not (task.isReady()):
-            if (os.path.exists('/dev/input/js0')):  # if a joystick is plugged in...
-                time.sleep(2)
-                launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/joystick_teleop.launch', './src/pcv_base/launch/pcv_node.launch'])
-                launch.start()
-                while (os.path.exists('/dev/input/js0')):
-                    pass
-                launch.shutdown()
+    #launch_video = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/includes/realsense.launch'])
+    #launch_video.start()
+    try:
+        while (1):
+            while not (task.isReady()):
+                if (os.path.exists('/dev/input/js0')):  # if a joystick is plugged in...
+                    time.sleep(2)
+                    launch = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/joystick_teleop.launch', './src/pcv_base/launch/pcv_node.launch'])
+                    launch.start()
+                    while (os.path.exists('/dev/input/js0')):
+                        pass
+                    launch.shutdown()
 
-        # Continue ONLY when the button is pressed
-        if (task.isReady()):
-            launch_baseNode = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/pcv_node.launch'])
-            launch_baseNode.start()
-            task.start()
-            base_watchdog_thread = multiprocessing.Process(target=checkBaseRunning, args=())
-            base_watchdog_thread.daemon = True
-            base_watchdog_thread.start()
-            while (not task.chkFault()):
-                pass
-            #payload.turnOffUVC()
-            base_watchdog_thread.terminate()
-            #payload.setDoneStatus()
-            launch_baseNode.shutdown()
-            task.stop()
-    
-    task.end()
-    launch_video.shutdown()
+            # Continue ONLY when the button is pressed
+            if (task.isReady()):
+                launch_baseNode = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/pcv_node.launch'])
+                launch_baseNode.start()
+                time.sleep(12)
+                base_watchdog_thread = multiprocessing.Process(target=checkBaseRunning, args=())
+                base_watchdog_thread.daemon = True
+                base_watchdog_thread.start()
+                print('Task Launched!')
+                task.start()            # stuck here when a task runs.
+                #task.run()          
+                #payload.turnOffUVC()
+                base_watchdog_thread.terminate()
+                #payload.setDoneStatus()
+                launch_baseNode.shutdown()
+                task.stop()
+    except KeyboardInterrupt:
+        task.cleanup()
+    #launch_video.shutdown()
     
     #rate = rospy.rate(50)
     # Admin node functionalities:

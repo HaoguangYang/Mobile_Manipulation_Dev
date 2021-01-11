@@ -222,7 +222,7 @@ class SQL_Logger:
         rospy.Subscriber('/move_base/result', MoveBaseActionResult, self.status_cb) #Need to test if this can access the navigation status
         
         while not rospy.is_shutdown():
-            time.sleep(2)
+            time.sleep(10)
             #print(self.counter)
             if self.counter: #Checks if the counter is more than 0
                 #self.payloadCurrent = payload.getCurrent()
