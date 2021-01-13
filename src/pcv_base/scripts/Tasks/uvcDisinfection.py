@@ -124,8 +124,8 @@ class Task():
                         payload.resume()
                 except ValueError:
                     pass
-            while payload.isPaused():
-                pass
+            #while payload.isPaused():
+            #    pass
             # anti-drifting re-init
             self.pose_pub.publish(last_loc_rec)
         else:
@@ -176,12 +176,12 @@ class Task():
         print(init_scan.ranges[wheremax])
         package = 'map_server'
         executable = 'map_server'
-        self.isLeft = False
+        self.isMirror = False
         if wheremax > 0:        # opening is to the left, use the L side map file
             node = roslaunch.core.Node(package, executable, name=package, args='$(find pcv_base)/resources/map/pvil_small_L.yaml')
-            self.isLeft = True
         else:
             node = roslaunch.core.Node(package, executable, name=package, args='$(find pcv_base)/resources/map/pvil_small_R.yaml')
+            self.isMirror = True
         self.mapLaunch = roslaunch.scriptapi.ROSLaunch()
         self.mapLaunch.start()
         self.mapServer = self.mapLaunch.launch(node)
@@ -198,14 +198,14 @@ class Task():
         ipose.header.frame_id="map"
         init_pose = self.traj[self.waypt_idx]
         ipose.pose.pose.position.y = init_pose[1]
-        if self.isLeft:
-            ipose.pose.pose.position.x = init_pose[0]
-            ipose.pose.pose.orientation.z = init_pose[5]
-            ipose.pose.pose.orientation.w = init_pose[6]
-        else:   # perform mirroring operation
+        if self.isMirror:   # perform mirroring operation
             ipose.pose.pose.position.x = -init_pose[0]
             ipose.pose.pose.orientation.z = init_pose[6]
             ipose.pose.pose.orientation.w = init_pose[5]
+        else:
+            ipose.pose.pose.position.x = init_pose[0]
+            ipose.pose.pose.orientation.z = init_pose[5]
+            ipose.pose.pose.orientation.w = init_pose[6]
         pose_pub.publish(ipose)
         time.sleep(1)
         

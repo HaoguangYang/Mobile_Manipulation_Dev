@@ -27,6 +27,7 @@ class disinfectionPayload():
         self.d[4] = 0.0     # current (A)
         #self.d[2] = False   # lampCmd
         self.d[5] = True    # rst_nCmd (Software-generated)
+        self.isPaused = False
         #try:
         #    thread.start_new_thread( self.readSerial )
         #except:
@@ -123,6 +124,15 @@ class disinfectionPayload():
         
     def setDoneStatus(self):
         self.d[5] = False
+        
+    def pause(self):
+        self.isPaused = True
+        
+    def resume(self):
+        self.isPaused = False
+        
+    def isPaused(self):
+        return self.isPaused
     
     def isReady(self):
         return self.d[0]

@@ -26,15 +26,16 @@ class gotoPos():
         self.pos=[]
 
         # Traj following with points
-        self.kp = [1.5,1.5,5.0]
-        self.kd = [0.6,0.6,0.5]      
-        self.vlim = [0.3,0.3,0.3]
+        self.kp = [1.5,5.0]     # Linear, Angular
+        self.kd = [0.6,0.5]     # Linear, Angular
+        self.vlim = [0.3,0.3]   # lim_linear_vel, lim_angular_vel
         self.cp = [0,0,0]
         
         locName = rospy.get_param('~location')
         print locName
         direction = rospy.get_param('~direction', '0')
         backup = rospy.get_param('~isBackUp', '0')
+        mirror = rospy.get_param('~isMirror','0')
         
         self.controller_rate = 20 
         pathName = '/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/traj/'+locName
@@ -43,6 +44,9 @@ class gotoPos():
 
         self.waypts = np.loadtxt(pathName)
         #print direction
+        if mirror == 1:                                         # Mirroring the map along Y axis
+            self.waypts[:,0] = -self.waypts[:,0]
+            self.waypts[:,[5,6]] = self.waypts[:,[6,5]]
         if direction == 1:                                      # Going the reverse direction
             if backup == 0:                                     # not backing up, turn 180 degrees of the headings in the traj files.
                 self.waypts[:,[5,6]] = self.waypts[:,[6,5]]     # swapping cos and sin values
@@ -95,8 +99,7 @@ class gotoPos():
         rt = rospy.Rate(self.controller_rate)
         
         waypt_i = 0
-        px_err = 0.
-        py_err = 0.
+        pd_err = 0.
         psteer_err = 0.
         quat = [self.waypts[waypt_i,3],self.waypts[waypt_i,4],
                         self.waypts[waypt_i,5],self.waypts[waypt_i,6]]
@@ -106,6 +109,7 @@ class gotoPos():
         self.waypt_thd =  eul[2]
         #print(self.waypt_xd)
         waypt_i += 1
+        print(waypt_i)
         #timer for reaching next waypoint
         timeStamp = rospy.get_time()
         while not rospy.is_shutdown():
@@ -121,8 +125,8 @@ class gotoPos():
             steer_err = self.waypt_thd - self.cp[2]
             
             ori = self.cp[2]-alpha
-            x_err = math.cos(ori)*self.dis_err
-            y_err = -math.sin(ori)*self.dis_err          
+            #x_err = math.cos(ori)*self.dis_err
+            #y_err = -math.sin(ori)*self.dis_err          
 
             # waypoint updates
             if(self.dis_err < self.waypt_lim and y_err < self.lat_lim and steer_err < self.str_lim ):
@@ -134,9 +138,10 @@ class gotoPos():
                     self.waypt_yd =  self.waypts[waypt_i,1]
                     self.waypt_thd =  eul[2]
                     waypt_i += 1
+                    print(waypt_i)
                     timeStamp = rospy.get_time()
                 else:
-                    print('End')
+                    print('Segment End')
                     cmd_pub.publish(Twist())
                     break                
              
@@ -171,28 +176,28 @@ class gotoPos():
                 
             else:
             """
-            steer = self.kp[2]*steer_err \
-                    + self.kd[2]*(steer_err-psteer_err)
-            pub_msg.angular.z = np.clip(steer, -self.vlim[2], self.vlim[2])
-            ######## x pd
-            xvel = self.kp[0]*x_err \
-                    + self.kd[0]*(x_err-px_err)
-            pub_msg.linear.x = np.clip(xvel, -self.vlim[0], self.vlim[0])
-            ######## y pd
-            yvel = self.kp[1]*y_err \
-                    + self.kd[1]*(y_err-py_err)
-            pub_msg.linear.y = np.clip(yvel, -self.vlim[1], self.vlim[1])
+            ######## Angular
+            steer = self.kp[1]*steer_err \
+                    + self.kd[1]*(steer_err-psteer_err)
+            pub_msg.angular.z = np.clip(steer, -self.vlim[1], self.vlim[1])
+            ######## Linear
+            vel = self.kp[0]*self.dis_err \
+                    + self.kd[0]*(self.dis_err-pd_err)
+            vel = np.clip(vel, -self.vlim[0], self.vlim[0])
+            
+            pub_msg.linear.x = np.cos(ori)*vel
+            pub_msg.linear.y = -np.sin(ori)*vel
+
             # Update previous errors
-            px_err = x_err
-            py_err = y_err
+            pd_err = self.dis_err
             psteer_err = steer_err
-            print(waypt_i)
-            print(steer_err)
-            print('d: ', self.waypt_xd,self.waypt_yd, self.waypt_thd)
-            print('cp: ', self.cp)
-            print('cmd: ', pub_msg.linear.x,pub_msg.linear.y,pub_msg.angular.z)
-            print('ori: ', ori)
-            print('-'*20)
+            #print(waypt_i)
+            #print(steer_err)
+            #print('d: ', self.waypt_xd,self.waypt_yd, self.waypt_thd)
+            #print('cp: ', self.cp)
+            #print('cmd: ', pub_msg.linear.x,pub_msg.linear.y,pub_msg.angular.z)
+            #print('ori: ', ori)
+            #print('-'*20)
             # if haven't reached a goal for too long, exit and set stuck flag.
             if (rospy.get_time() - timeStamp > 20):
                 cmd_pub.publish(Twist())

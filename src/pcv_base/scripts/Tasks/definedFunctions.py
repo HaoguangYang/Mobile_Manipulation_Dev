@@ -13,7 +13,12 @@ def gotoWaitAndReturn(task, payload, waypointFileName, time=-1):
     while payload.isPaused():
         pass
     task.pose_pub.publish(last_loc_rec)
-    s = os.system('rosrun pcv_base gotoPos.py _location:='+waypointFileName+' _direction:=1 _backup:=1')
+    s = os.system('rosrun pcv_base gotoPos.py _location:='+waypointFileName+' _direction:=1 _isBackup:=1')
+    return s
+    
+def gotoAndProceed(task, payload, waypointFileName, direction=0):
+    s = os.system('rosrun pcv_base gotoPos.py _location:='+waypointFileName+' _direction:='\
+                  +str(direction)+' _isMirror:='+str(task.isMirror))
     return s
 
 def visualServoingWaitAndReturn(task, payload, handoffPoint, targetImage, desX=1.8, desY=-0.1, desTh=0., time=-1):
@@ -29,5 +34,5 @@ def visualServoingWaitAndReturn(task, payload, handoffPoint, targetImage, desX=1
     while payload.isPaused():
         pass
     task.pose_pub.publish(last_loc_rec)
-    s = os.system('rosrun pcv_base gotoPos.py _location:='+handoffPoint+' _direction:=1 _backup:=1')
+    s = os.system('rosrun pcv_base gotoPos.py _location:='+handoffPoint+' _direction:=1 _isBackup:=1')
     return s
