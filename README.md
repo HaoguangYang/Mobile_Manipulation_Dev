@@ -90,9 +90,10 @@ gsettings set org.gnome.Vino require-encryption false
 ```sh
 sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping \
               ros-kinetic-teb-local-planner ros-kinetic-dwa-local-planner ros-kinetic-urg-node \
-              ros-kinetic-map-server ros-kinetic-realsense-camera ros-kinetic-global-planner \
-              ros-kinetic-eband-local-planner ros-kinetic-rtabmap
-sudo -H pip install numpy pyserial pymysql boto3 
+              ros-kinetic-map-server ros-kinetic-realsense2-camera ros-kinetic-global-planner \
+              ros-kinetic-eband-local-planner ros-kinetic-rtabmap ros-kinetic-ros-numpy \
+              ros-kinetic-cv-bridge
+sudo -H pip install numpy pyserial pymysql boto3 twillio opencv-contrib-python
 catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
 

@@ -1,8 +1,8 @@
 const int inputPins[7]={0,1,2,3,4,5,6};
 const int outputPins[7]={7,9,10,12,13};
 const int analogPins[6]={14,15,16,17,18,19};
-const int buttonPin = 11;
-const int ledPin = 8;
+const int buttonPin = 8;
+const int ledPin = 11;
 
 unsigned long buttonMillis = 0;
 unsigned long buttonMillisDebounce = 0;
@@ -27,11 +27,11 @@ void setup() {
         pinMode(outputPins[i], OUTPUT);
         digitalWrite(outputPins[i], LOW);
     }
-    pinMode(buttonPin, INPUT);
+    pinMode(buttonPin, INPUT_PULLUP);
     pinMode(ledPin, OUTPUT);
     digitalWrite(ledPin, LOW);
     Serial.begin(9600);
-}
+} 
 
 void loop(){
   /*
@@ -50,25 +50,26 @@ void loop(){
 					Serial.readBytes(&cmd, 1);
 					Serial.readBytes(&tail, 1);
 					if (tail == '&'){	// valid command
-						int which = atoi(cmd);
-                        char buf[8];
-                        sprintf(buf, "@A%04d%%", (int)analogVal[which]);
-                        Serial.print(buf);
+						int which = cmd-48; // ASCII to int
+            char buf[8];
+            sprintf(buf, "@A%04d%%", (int)analogSen[which]);
+            Serial.print(buf);
 					}
 					break;
-                case 'S':               // command for setting the state machine from the computer
-                    Serial.readBytes(&cmd, 1);
-                    Serial.readBytes(&tail, 1);
-                    if (tail == '&'){   // valid command
-                        int state = atoi(cmd);
-                        if (state == 0 || state == 3 || state == 5){
-                            programState = state;
-                            char buf[5];
-                            sprintf(buf, "@S%1d%%", state);
-                            Serial.print(buf);  // echo the state setting
-                        }
-                    }
-                    break;
+        case 'S':               // command for setting the state machine from the computer
+          Serial.readBytes(&cmd, 1);
+          Serial.readBytes(&tail, 1);
+          if (tail == '&'){   // valid command
+            int state = cmd-48; // ASCII to int
+            Serial.println(cmd);
+            if (state == 0 || state == 3 || state == 5){
+              programState = state;
+              char buf[5];
+              sprintf(buf, "@S%1d%%", state);
+              Serial.print(buf);  // echo the state setting
+            }
+          }
+          break;
 				default:
 					break;				// stops processing the current frame.
 			}
@@ -76,8 +77,8 @@ void loop(){
 	}
 	unsigned long curMillis = millis();
     pushbutton(curMillis);
-    relay();
-    currentsensor(curMillis);
+    //relay();
+    //currentsensor(curMillis);
     led(curMillis);
     //digitalWrite(buttonPin, LOW);
     //Serial.print(relayState);
@@ -89,7 +90,8 @@ void loop(){
 //For Push Button
 void pushbutton(unsigned long curMillis)
 {
-    int buttonRead = digitalRead(buttonPin);
+    int buttonRead = !digitalRead(buttonPin);
+    //Serial.println(buttonRead);
     if (buttonRead != buttonStateLast){
         buttonMillisDebounce = curMillis;
     }
@@ -134,17 +136,18 @@ void pushbutton(unsigned long curMillis)
         case 3:         // Active state: robot has a new nav target to achieve
             if (buttonState){
                 programState = 4;
+                Serial.println("@S5%");
             }
             break;
         case 4:         // Pause state: robot is paused manually
             if (!buttonState){
                 programState = 5;
-                Serial.println("@S5%");
             }
             break;
         case 5:         // Pause state: Goal reached / paused.
             if (buttonState){
                 programState = 6;
+                buttonMillis = curMillis;
             }
             break;
         case 6:         // Intermediate state for resume/shutdown branch
@@ -167,6 +170,7 @@ void pushbutton(unsigned long curMillis)
         default:        // robot is not ready.
             break;
     }
+    //Serial.println(programState);
 }
 
 //For Analog Sensor

@@ -16,7 +16,7 @@
         <param name="controller_patience" value="15.0" />
 
         <!-- Our omniveyor is able to rotate in place -->
-        <param name="clearing_rotation_allowed" value="true" />
+        <param name="clearing_rotation_allowed" value="false" />
         
         <remap from="cmd_vel" to="/mobile_base_controller/cmd_vel"/>
     </node>
