@@ -21,9 +21,12 @@ class disinfectionPayload():
         self.mgr = multiprocessing.Manager()
         self.d = self.mgr.dict()
         self.d[0] = False   # isReady
-        self.d[1] = 0.0     # current (A)
-        self.d[2] = False   # lampCmd
-        self.d[3] = True    # rst_nCmd (Software-generated)
+        self.d[1] = False   # status_notified
+        self.d[2] = False   # lamp cmd
+        self.d[3] = False   # lamp_notified
+        self.d[4] = 0.0     # current (A)
+        #self.d[2] = False   # lampCmd
+        self.d[5] = True    # rst_nCmd (Software-generated)
         #try:
         #    thread.start_new_thread( self.readSerial )
         #except:
@@ -31,27 +34,26 @@ class disinfectionPayload():
 
     def serialComm(self):
         self.ser.write('$S0&$L0&')
-        lampState = False
         sms_timeout = 3600
         sms_time = 0
         lowCurrentFlag = 0
         while 1:
             if self.ser.inWaiting():
-                header = self.ser.read(1)            # read one byte
-                if header == '@':               # header captured
-                    cmd = self.ser.read(1)           # read second byte     
+                header = self.ser.read(1)           # read one byte
+                if header == '@':                   # header captured
+                    cmd = self.ser.read(1)          # read second byte     
                     if cmd == 'A':
                         current = self.ser.read(4)
                         #print(current)
                         end = self.ser.read(1)
-                        if end == '%':          # tail matches, valid msg.
-                            self.d[1] = (float(current)-512.0)/4.83 # compose ros message of lamp current
-                            if lampState and self.d[1] < 12.0:
+                        if end == '%':              # tail matches, valid msg.
+                            self.d[4] = (float(current)-512.0)/4.83 # analog conversion of lamp current
+                            if self.d[2] and self.d[3] and self.d[4] < 12.0:
                                 #print self.d[1]
                                 # delay, send sms until 20 consecutive low measurements.
                                 #print(lowCurrentFlag)
                                 lowCurrentFlag = lowCurrentFlag + 1
-                            elif lampState and self.d[1] >= 12.0:
+                            elif self.d[2] and self.d[3] and self.d[4] >= 12.0:
                                 lowCurrentFlag = 0
                     elif cmd == 'S':
                         status = self.ser.read(1)
@@ -66,47 +68,61 @@ class disinfectionPayload():
                         pass
                 else:                           # not a message.
                     pass
-            if self.d[2] == True and lampState == False:
-                self.ser.write('$L1&')
-                lampState = True
-            elif self.d[2] == False and lampState == True:
-                self.ser.write('$L0&')
-                lampState = False
+            if self.d[1] == False:
+                if self.d[0] == False:
+                    self.ser.write('$L0&$S0&')
+                self.d[1] = True
             if self.d[3] == False:
-                if self.d[0] == True:
+                if self.d[2] == True:
+                    self.ser.write('$L1&')
+                else:
                     self.ser.write('$L0&')
-                    lampState = False
-                    self.ser.write('$S0&')
                 self.d[3] = True
+            if self.d[5] == False:
+                self.ser.write('$S0&$L0&')
                 self.d[0] = False
+                self.d[1] = True
+                self.d[2] = False
+                self.d[3] = True
+                self.d[4] = 0.
+                lowCurrentFlag = 0
             if lowCurrentFlag > 20:
                 timeNow = time.time()
                 if timeNow - sms_time > sms_timeout :
                     # send text msg
+                    """
                     message = self.sms_client.messages \
                               .create(
-                                    body='FIXME: UVC Lamp Battery Low or Lamp is Broken!',
+                                    body='FIXME: UVC Lamp Malfunction, Battery is Low or Lamp is Broken!',
                                     from_=self.sms_from, # this is my twilio number
                                     to=self.sms_to # this is my number
                               )
+                    """
                     print('message sent!')
                     sms_time = timeNow
             #print(self.d)
 
     def initialize(self):
         self.ser.write('$S0&$L0&')
+        self.d[0] = False
+        self.d[1] = True
+        self.d[2] = False
+        self.d[3] = True
+        self.d[4] = 0.
         self.payload_thread = multiprocessing.Process(target=self.serialComm, args=())
         self.payload_thread.daemon = True
         self.payload_thread.start()
         
     def turnOnUVC(self):
         self.d[2] = True
+        self.d[3] = False
     
     def turnOffUVC(self):
         self.d[2] = False
+        self.d[3] = False
         
     def setDoneStatus(self):
-        self.d[3] = False
+        self.d[5] = False
     
     def isReady(self):
         return self.d[0]
@@ -115,7 +131,7 @@ class disinfectionPayload():
         return self.d[2]
         
     def getCurrent(self):
-        return self.d[1]
+        return self.d[4]
 
 payload = disinfectionPayload()
 

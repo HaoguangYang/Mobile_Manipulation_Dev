@@ -6,10 +6,10 @@
 
 
 	<!-- map server -->
-	<include file="$(find pcv_base)/launch/includes/map_server.launch" />
+	<!--include file="$(find pcv_base)/launch/includes/map_server.launch" /-->
 
 	<!-- Laser scanner -->
-	<include file="$(find pcv_base)/launch/includes/laser.launch" />
+	<!--include file="$(find pcv_base)/launch/includes/laser.launch" /-->
 
 	<!-- static transform -->
 	<include file="$(find pcv_base)/launch/includes/static_tf.launch" />

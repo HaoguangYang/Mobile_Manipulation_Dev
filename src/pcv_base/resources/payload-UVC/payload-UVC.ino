@@ -55,6 +55,7 @@ void loop(){
 						if (cmd=='0'){  			// valid command
 							relayState = false;
 							programState = 0;
+              Serial.print("@S0%");
 						}
 					}
 					break;
