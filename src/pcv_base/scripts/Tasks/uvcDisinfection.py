@@ -23,7 +23,7 @@ class Task():
         self.launch = roslaunch.parent.ROSLaunchParent(self.uuid,['./src/pcv_base/launch/run_nav_only_narrow.launch'])
         
         # route file, combined. Route file is generated based on the "Left"-sided map.
-        self.pathName = '/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/traj/disinfectionRoute.txt'
+        self.pathName = '/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/traj/pvil_traj.txt'
         if not (os.path.exists(self.pathName)):
             sys.exit('ERROR: '+self.pathName+' Does Not Exist! Aborting...')
         self.traj = np.loadtxt(self.pathName)
@@ -169,15 +169,21 @@ class Task():
     def start(self):
         time.sleep(self.delayStart)
         self.laserLaunch.start()
+        rospy.init_node('admin')
         init_scan = rospy.wait_for_message("/scan", LaserScan)
         amin = init_scan.angle_min
         dth = init_scan.angle_increment
         wheremax = np.argmax(init_scan.ranges) * dth + amin
-        print(init_scan.ranges[wheremax])
+        
+        #print(np.max(init_scan.ranges)) # 4.9
+        if np.max(init_scan.ranges)<=1.0:
+            #payload.sendSMS('FIXME: Robot can not identify the way to the living room! Is it placed correctly and path is cleard?')
+            sys.exit('FIXME: Robot can not identify the way to the living room! Is it placed correctly and path is cleard?')
+        
         package = 'map_server'
         executable = 'map_server'
         self.isMirror = False
-        if wheremax > 0:        # opening is to the left, use the L side map file
+        if wheremax < 0:        # opening is to the left, use the L side map file
             node = roslaunch.core.Node(package, executable, name=package, args='$(find pcv_base)/resources/map/pvil_small_L.yaml')
         else:
             node = roslaunch.core.Node(package, executable, name=package, args='$(find pcv_base)/resources/map/pvil_small_R.yaml')
@@ -188,8 +194,6 @@ class Task():
         
         self.launch.start()
 
-        rospy.init_node('admin')
-        
         pose_pub = rospy.Publisher('/initialpose',PoseWithCovarianceStamped, queue_size=1)
         while not pose_pub.get_num_connections():
             pass
