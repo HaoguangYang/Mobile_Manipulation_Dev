@@ -18,7 +18,8 @@ def gotoWaitAndReturn(task, payload, waypointFileName, time=-1):
     
 def gotoAndProceed(task, payload, waypointFileName, direction=0):
     s = os.system('rosrun pcv_base gotoPos.py _location:='+waypointFileName+' _direction:='\
-                  +str(direction)+' _isMirror:='+str(task.isMirror))
+                  +str(direction)+' _isMirror:='+str(task.isMirror)+' _isBackup:=0')
+    task.waypt_idx += 1
     return s
 
 def visualServoingWaitAndReturn(task, payload, handoffPoint, targetImage, desX=1.8, desY=-0.1, desTh=0., time=-1):

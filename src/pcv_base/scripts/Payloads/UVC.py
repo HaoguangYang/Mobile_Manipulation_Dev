@@ -27,7 +27,7 @@ class disinfectionPayload():
         self.d[4] = 0.0     # current (A)
         #self.d[2] = False   # lampCmd
         self.d[5] = True    # rst_nCmd (Software-generated)
-        self.isPaused = False
+        self.paused = False
         #try:
         #    thread.start_new_thread( self.readSerial )
         #except:
@@ -99,6 +99,7 @@ class disinfectionPayload():
                                     to=self.sms_to # this is my number
                               )
                     """
+                    print('FIXME: UVC Lamp Malfunction, Battery is Low or Lamp is Broken!')
                     print('message sent!')
                     sms_time = timeNow
             #print(self.d)
@@ -126,13 +127,13 @@ class disinfectionPayload():
         self.d[5] = False
         
     def pause(self):
-        self.isPaused = True
+        self.paused = True
         
     def resume(self):
-        self.isPaused = False
+        self.paused = False
         
     def isPaused(self):
-        return self.isPaused
+        return self.paused
     
     def isReady(self):
         return self.d[0]

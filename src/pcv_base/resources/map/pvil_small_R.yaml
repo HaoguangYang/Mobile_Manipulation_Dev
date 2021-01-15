@@ -1,4 +1,4 @@
-image: pvil_small.pgm
+image: pvil_small_R.pgm
 resolution: 0.010000
 origin: [-20.000000, -20.000000, -0.000000]
 negate: 0

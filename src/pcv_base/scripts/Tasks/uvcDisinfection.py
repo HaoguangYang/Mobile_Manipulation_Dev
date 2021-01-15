@@ -16,7 +16,7 @@ class Task():
     def __init__(self, uuid, init_pos = 1):
         payload.initialize()
         self.uuid = uuid
-        self.delayStart = 30
+        self.delayStart = 10
         
         self.laserLaunch = roslaunch.parent.ROSLaunchParent(self.uuid,['./src/pcv_base/launch/includes/laser.launch'])
         # remove laser and map server in the launch file below, since they are separately launched.
@@ -77,12 +77,12 @@ class Task():
             for i in range(self.waypt_idx+1, self.lenWaypt):
                 if self.targetActionList[i][1]!='via':
                     break
-            print('rosrun pcv_base pubgoalNew.py _waypt_file_path:='+\
+            print('rosrun pcv_base pubgoalNew.py _timeout:=30 _waypt_file_path:='+\
                           self.pathName+' _startLn:='+str(self.waypt_idx+1)+\
-                          ' _endLn:='+str(i+1)+' _dir:=0')
-            s = os.system('rosrun pcv_base pubgoalNew.py _waypt_file_path:='+\
+                          ' _endLn:='+str(i+1)+' _dir:=0'+' _isMirror:='+('1' if self.isMirror else '0'))
+            s = os.system('rosrun pcv_base pubgoalNew.py _timeout:=30 _waypt_file_path:='+\
                           self.pathName+' _startLn:='+str(self.waypt_idx+1)+\
-                          ' _endLn:='+str(i+1)+' _dir:=0')
+                          ' _endLn:='+str(i+1)+' _dir:=0'+' _isMirror:='+('1' if self.isMirror else '0'))
             if (s==0):
                 self.waypt_idx = i
                 eof = self.waypt_idx+1 == self.lenWaypt
@@ -97,9 +97,12 @@ class Task():
                 for i in range(self.lenWaypt):
                     if self.targetActionList[i][1]!='via':
                         break
+                print('rosrun pcv_base pubgoalNew.py _waypt_file_path:='+\
+                          self.pathName+' _startLn:=1 _endLn:='+str(i+1)+\
+                          ' _dir:=0'+' _isMirror:='+('1' if self.isMirror else '0'))
                 s = os.system('rosrun pcv_base pubgoalNew.py _waypt_file_path:='+\
                           self.pathName+' _startLn:=1 _endLn:='+str(i+1)+\
-                          ' _dir:=0')
+                          ' _dir:=0'+' _isMirror:='+('1' if self.isMirror else '0'))
                 if (s==0):
                     self.waypt_idx = i
         return s
@@ -142,7 +145,7 @@ class Task():
         payload.turnOnUVC()
         while payload.isReady():
             #print('In While Loop...')
-            if payload.isRunning():
+            if payload.isReady() and not payload.isPaused():
                 s = self.gotoNext()
                 if s==0:
                     s = self.evaluate()
@@ -167,7 +170,7 @@ class Task():
     #    return not payload.isReady()
 
     def start(self):
-        time.sleep(self.delayStart)
+        time.sleep(self.delayStart/2)
         self.laserLaunch.start()
         rospy.init_node('admin')
         init_scan = rospy.wait_for_message("/scan", LaserScan)
@@ -183,6 +186,7 @@ class Task():
         package = 'map_server'
         executable = 'map_server'
         self.isMirror = False
+        wheremax = 1.0          # FIXME: debug flag
         if wheremax < 0:        # opening is to the left, use the L side map file
             node = roslaunch.core.Node(package, executable, name=package, args='$(find pcv_base)/resources/map/pvil_small_L.yaml')
         else:
@@ -193,9 +197,9 @@ class Task():
         self.mapServer = self.mapLaunch.launch(node)
         
         self.launch.start()
-
-        pose_pub = rospy.Publisher('/initialpose',PoseWithCovarianceStamped, queue_size=1)
-        while not pose_pub.get_num_connections():
+        time.sleep(self.delayStart/2)
+        self.pose_pub = rospy.Publisher('/initialpose',PoseWithCovarianceStamped, queue_size=1)
+        while not self.pose_pub.get_num_connections():
             pass
         
         ipose = PoseWithCovarianceStamped()
@@ -210,7 +214,7 @@ class Task():
             ipose.pose.pose.position.x = init_pose[0]
             ipose.pose.pose.orientation.z = init_pose[5]
             ipose.pose.pose.orientation.w = init_pose[6]
-        pose_pub.publish(ipose)
+        self.pose_pub.publish(ipose)
         time.sleep(1)
         
         self.task_thread = multiprocessing.Process(target=self.runDisinfection, args=())
@@ -233,7 +237,7 @@ class Task():
         self.task_thread.terminate()
         self.launch.shutdown()
         self.laserLaunch.shutdown()
-        self.mapLaunch.shutdown()
+        self.mapLaunch.stop()
         
     def cleanup(self):
         payload.payload_thread.terminate()

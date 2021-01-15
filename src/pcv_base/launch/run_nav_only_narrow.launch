@@ -21,7 +21,7 @@
 	<!--include file="$(find pcv_base)/launch/includes/realsense.launch" /-->
 
 	<!-- navigation (move_base) -->
-	<include file="$(find pcv_base)/launch/includes/navigation.launch" />
+	<include file="$(find pcv_base)/launch/includes/navigation_narrow.launch" />
 
 	<!-- Visualization -->
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find pcv_base)/resources/movebase.rviz"/>

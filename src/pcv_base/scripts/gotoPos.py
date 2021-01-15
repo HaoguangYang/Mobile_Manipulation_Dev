@@ -11,7 +11,6 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 from matplotlib import pyplot as plt
 import numpy as np
-import math
 import os
 import sys
 
@@ -34,7 +33,7 @@ class gotoPos():
         locName = rospy.get_param('~location')
         print locName
         direction = rospy.get_param('~direction', '0')
-        backup = rospy.get_param('~isBackUp', '0')
+        backup = rospy.get_param('~isBackup', '0')
         mirror = rospy.get_param('~isMirror','0')
         
         self.controller_rate = 20 
@@ -54,9 +53,8 @@ class gotoPos():
             self.waypts = self.waypts[::-1,:]                   # reverse order
 
         print(self.waypts)
-        self.waypt_lim = 0.05
-        self.lat_lim = 0.01
-        self.str_lim = 0.05
+        self.waypt_lim = 0.02
+        self.str_lim = 0.025
         
         self.state = 0; # 0, 1, 2 = ["idle", "align", "moving"]
 
@@ -121,15 +119,19 @@ class gotoPos():
             ###### Steer pd
             #steer_err = self.waypt_thd - self.cp[2]
             
-            alpha = math.atan2(self.waypt_yd-self.cp[1],self.waypt_xd-self.cp[0])
+            alpha = np.arctan2(self.waypt_yd-self.cp[1],self.waypt_xd-self.cp[0])
             steer_err = self.waypt_thd - self.cp[2]
+            if (steer_err > np.pi):
+                steer_err = -2*np.pi + steer_err
+            elif (steer_err < -np.pi):
+                steer_err = 2*np.pi + steer_err
             
             ori = self.cp[2]-alpha
             #x_err = math.cos(ori)*self.dis_err
             #y_err = -math.sin(ori)*self.dis_err          
 
             # waypoint updates
-            if(self.dis_err < self.waypt_lim and y_err < self.lat_lim and steer_err < self.str_lim ):
+            if(self.dis_err < self.waypt_lim and abs(steer_err) < self.str_lim ):
                 if (waypt_i <= (len(self.waypts) - 1)):
                     #quat = [self.waypts[waypt_i,3],self.waypts[waypt_i,4],
                     #        self.waypts[waypt_i,5],self.waypts[waypt_i,6]]
@@ -145,11 +147,6 @@ class gotoPos():
                     cmd_pub.publish(Twist())
                     break                
              
-            if (steer_err > math.pi):
-                steer_err = -2*math.pi + steer_err
-            elif (steer_err < -math.pi):
-                steer_err = 2*math.pi + steer_err
-            
             # controller
             """
             if heading_correction_flag:         # alignment phase: steer towards the next waypoint
@@ -191,15 +188,15 @@ class gotoPos():
             # Update previous errors
             pd_err = self.dis_err
             psteer_err = steer_err
-            #print(waypt_i)
-            #print(steer_err)
-            #print('d: ', self.waypt_xd,self.waypt_yd, self.waypt_thd)
-            #print('cp: ', self.cp)
-            #print('cmd: ', pub_msg.linear.x,pub_msg.linear.y,pub_msg.angular.z)
+            print(waypt_i)
+            print('err: ', self.dis_err, ori, steer_err)
+            print('d:   ', self.waypt_xd,self.waypt_yd, self.waypt_thd)
+            print('cp:  ', self.cp)
+            print('cmd: ', pub_msg.linear.x,pub_msg.linear.y,pub_msg.angular.z)
             #print('ori: ', ori)
-            #print('-'*20)
+            print('-'*20)
             # if haven't reached a goal for too long, exit and set stuck flag.
-            if (rospy.get_time() - timeStamp > 20):
+            if (rospy.get_time() - timeStamp > 60):
                 cmd_pub.publish(Twist())
                 sys.exit(-1)
             else:
