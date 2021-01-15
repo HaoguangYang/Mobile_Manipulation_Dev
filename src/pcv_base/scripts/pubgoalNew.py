@@ -47,7 +47,7 @@ class PubNavGoal():
         rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_cb)
         rospy.Subscriber('/pauseAction', Byte, self.pause_cb)
         
-        self.pose_pub = rospy.Publisher('/initialpose',PoseWithCovarianceStamped, queue_size=10)
+        #self.pose_pub = rospy.Publisher('/initialpose',PoseWithCovarianceStamped, queue_size=10)
         print(self.traj)
         self.pause_duration = 0.
         self.pause_time = 0.

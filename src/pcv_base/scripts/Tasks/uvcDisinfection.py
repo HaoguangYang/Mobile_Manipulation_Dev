@@ -97,10 +97,10 @@ class Task():
                 for i in range(self.lenWaypt):
                     if self.targetActionList[i][1]!='via':
                         break
-                print('rosrun pcv_base pubgoalNew.py _waypt_file_path:='+\
+                print('rosrun pcv_base pubgoalNew.py _timeout:=30 _waypt_file_path:='+\
                           self.pathName+' _startLn:=1 _endLn:='+str(i+1)+\
                           ' _dir:=0'+' _isMirror:='+('1' if self.isMirror else '0'))
-                s = os.system('rosrun pcv_base pubgoalNew.py _waypt_file_path:='+\
+                s = os.system('rosrun pcv_base pubgoalNew.py _timeout:=30 _waypt_file_path:='+\
                           self.pathName+' _startLn:=1 _endLn:='+str(i+1)+\
                           ' _dir:=0'+' _isMirror:='+('1' if self.isMirror else '0'))
                 if (s==0):
@@ -186,7 +186,6 @@ class Task():
         package = 'map_server'
         executable = 'map_server'
         self.isMirror = False
-        wheremax = 1.0          # FIXME: debug flag
         if wheremax < 0:        # opening is to the left, use the L side map file
             node = roslaunch.core.Node(package, executable, name=package, args='$(find pcv_base)/resources/map/pvil_small_L.yaml')
         else:
@@ -224,12 +223,13 @@ class Task():
         print('In main process')
         pause_pub = rospy.Publisher('/pauseAction', Byte, queue_size=1)
         while payload.isReady():
+            pass
             #print(payload.isPaused())
-            if payload.isPaused():
-                pause_pub.publish(Byte(1))
-            else:
-                pause_pub.publish(Byte(0))
-            time.sleep(0.1)
+            #if payload.isPaused():
+            #    pause_pub.publish(Byte(1))
+            #else:
+            #    pause_pub.publish(Byte(0))
+            #time.sleep(0.1)
 
     def stop(self):
         payload.turnOffUVC()
