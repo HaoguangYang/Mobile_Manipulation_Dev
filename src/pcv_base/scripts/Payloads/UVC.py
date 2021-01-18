@@ -87,6 +87,7 @@ class disinfectionPayload():
                 self.d[3] = True
                 self.d[4] = 0.
                 lowCurrentFlag = 0
+                self.d[5] = True
             if lowCurrentFlag > 20:
                 timeNow = time.time()
                 if timeNow - sms_time > sms_timeout :

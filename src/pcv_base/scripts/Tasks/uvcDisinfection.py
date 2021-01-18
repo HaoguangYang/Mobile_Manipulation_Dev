@@ -18,12 +18,8 @@ class Task():
         self.uuid = uuid
         self.delayStart = 10
         
-        self.laserLaunch = roslaunch.parent.ROSLaunchParent(self.uuid,['./src/pcv_base/launch/includes/laser.launch'])
-        # remove laser and map server in the launch file below, since they are separately launched.
-        self.launch = roslaunch.parent.ROSLaunchParent(self.uuid,['./src/pcv_base/launch/run_nav_only_narrow.launch'])
-        
         # route file, combined. Route file is generated based on the "Left"-sided map.
-        self.pathName = '/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/traj/pvil_traj.txt'
+        self.pathName = '/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/traj/pvil_traj_no_pause.txt'
         if not (os.path.exists(self.pathName)):
             sys.exit('ERROR: '+self.pathName+' Does Not Exist! Aborting...')
         self.traj = np.loadtxt(self.pathName)
@@ -146,12 +142,14 @@ class Task():
         while payload.isReady():
             #print('In While Loop...')
             if payload.isReady() and not payload.isPaused():
-                s = self.gotoNext()
+                s = self.evaluate()
+                #s = self.gotoNext()
                 if s==0:
-                    s = self.evaluate()
-                    if s==-128:         # ending mark
-                        payload.setDoneStatus()
-                        break
+                    #s = self.evaluate()
+                    s = self.gotoNext()
+                elif s==-128:         # ending mark
+                    payload.setDoneStatus()
+                    break
                 else:
                     payload.setDoneStatus()
                     print('HELP NEEDED!')
@@ -170,6 +168,9 @@ class Task():
     #    return not payload.isReady()
 
     def start(self):
+        self.laserLaunch = roslaunch.parent.ROSLaunchParent(self.uuid,['./src/pcv_base/launch/includes/laser.launch'])
+        # remove laser and map server in the launch file below, since they are separately launched.
+        self.launch = roslaunch.parent.ROSLaunchParent(self.uuid,['./src/pcv_base/launch/run_nav_only_narrow.launch'])
         time.sleep(self.delayStart/2)
         self.laserLaunch.start()
         rospy.init_node('admin')

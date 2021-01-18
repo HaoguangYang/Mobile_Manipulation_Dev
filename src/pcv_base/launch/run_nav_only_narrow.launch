@@ -17,7 +17,7 @@
 	<include file="$(find pcv_base)/launch/includes/odom.launch" />
 
 	<!-- Robot localization (amcl) -->
-	<include file="$(find pcv_base)/launch/includes/localization.launch" />
+	<include file="$(find pcv_base)/launch/includes/localization_narrow.launch" />
 	<!--include file="$(find pcv_base)/launch/includes/realsense.launch" /-->
 
 	<!-- navigation (move_base) -->
