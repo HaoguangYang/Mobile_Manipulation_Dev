@@ -15,7 +15,7 @@ class PubNavGoal():
     def __init__(self):
         rospy.init_node('trajpub')
         locName = rospy.get_param('~location', 'traj')
-        self.timeout = rospy.get_param('~timeout', '300')
+        self.timeout = rospy.get_param('~timeout', 300)
         self.gpub = rospy.Publisher('/move_base_simple/goal',PoseStamped, queue_size=1)
         self.ena_pub = rospy.Publisher('/mobile_base_controller/control_mode', Byte, queue_size = 1)
         pathName = rospy.get_param('~waypt_file_path', '/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/traj/'+locName+'.txt')
@@ -25,15 +25,15 @@ class PubNavGoal():
         if self.traj.ndim<2:                # in case of only one line in the traj...
             self.traj = np.expand_dims(self.traj,0)
             
-        self.startLine = rospy.get_param('~startLn','1') - 1
-        self.endLine = rospy.get_param('~endLn', str(self.traj.shape[0])) - 1
+        self.startLine = rospy.get_param('~startLn',1) - 1
+        self.endLine = rospy.get_param('~endLn', self.traj.shape[0]) - 1
         assert (self.startLine >= 0)
         assert (self.endLine < self.traj.shape[0])
-        self.isMirror = rospy.get_param('~isMirror','0')
+        self.isMirror = rospy.get_param('~isMirror',0)
         if self.isMirror == 1:                                         # Mirroring the map along Y axis
             self.traj[:,0] = -self.traj[:,0]
             self.traj[:,[5,6]] = self.traj[:,[6,5]]
-        if rospy.get_param('~dir','0') == 0:
+        if rospy.get_param('~dir',0) == 0:
             self.direction = 1      # in normal direction
         else:
             self.direction = -1     # in reversed direction

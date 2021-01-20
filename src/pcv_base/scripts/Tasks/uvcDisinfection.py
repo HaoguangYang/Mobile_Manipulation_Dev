@@ -153,7 +153,7 @@ class Task():
                 elif s==-128:         # ending mark
                     payload.setDoneStatus()
                     break
-                else:
+                if s!=0:
                     payload.setDoneStatus()
                     print('HELP NEEDED!')
                     # payload.sendSMS('FIXME: Robot got stuck, task is INCOMPLETE!')

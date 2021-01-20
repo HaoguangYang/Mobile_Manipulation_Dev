@@ -13,7 +13,7 @@ import ros_numpy
 import pyrealsense2 as rs2
 import matplotlib.pyplot as plt
 
-class targetVisualServoing:
+class markerFreeVisualServoing:
 
   def __init__(self):
     #self.image_pub = rospy.Publisher("image_topic_2",Image)
@@ -85,10 +85,10 @@ class targetVisualServoing:
     self.tgt_area = h*w
 
     # target position (of target object from robot base_link)
-    tgtX = rospy.get_param('~desX','1.8')
-    tgtY = rospy.get_param('~desY','-0.1')
+    tgtX = rospy.get_param('~desX',1.8)
+    tgtY = rospy.get_param('~desY',-0.1)
     self.pos_tgt = [tgtX, tgtY]
-    self.ang_tgt = rospy.get_param('~desTh','0.0')
+    self.ang_tgt = rospy.get_param('~desTh',0.0)
     
     ca = np.cos(self.ang_tgt)
     sa = np.sin(self.ang_tgt)
@@ -362,5 +362,5 @@ class targetVisualServoing:
         cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    vs = targetVisualServoing()
+    vs = markerFreeVisualServoing()
     vs.run()

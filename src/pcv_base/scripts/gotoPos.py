@@ -32,9 +32,9 @@ class gotoPos():
         
         locName = rospy.get_param('~location')
         print locName
-        direction = rospy.get_param('~direction', '0')
-        backup = rospy.get_param('~isBackup', '0')
-        mirror = rospy.get_param('~isMirror','0')
+        direction = rospy.get_param('~direction', 0)
+        backup = rospy.get_param('~isBackup', 0)
+        mirror = rospy.get_param('~isMirror', 0)
         
         self.controller_rate = 20 
         pathName = '/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/traj/'+locName
@@ -137,7 +137,7 @@ class gotoPos():
                     #        self.waypts[waypt_i,5],self.waypts[waypt_i,6]]
                     #eul = ts.euler_from_quaternion(quat)
                     self.waypt_xd =  self.waypts[waypt_i,0]
-                    self.waypt_yd =  self.waypts[waypt_i,1]
+                   f self.waypt_yd =  self.waypts[waypt_i,1]
                     self.waypt_thd =  eul[2]
                     waypt_i += 1
                     print(waypt_i)

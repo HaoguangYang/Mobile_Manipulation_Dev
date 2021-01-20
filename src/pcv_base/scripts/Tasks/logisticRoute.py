@@ -170,13 +170,13 @@ class Task():
         while payload.isReady():
             #print('In While Loop...')
             if payload.isRunning():
-                s = self.gotoNext()
+                s = self.evaluate()
                 if s==0:
-                    s = self.evaluate()
-                    if s==-128:         # ending mark
-                        payload.setDoneStatus()
-                        break
-                else:
+                    s = self.gotoNext()
+                elif s==-128:         # ending mark
+                    payload.setDoneStatus()
+                    break
+                if s!=0:
                     print('HELP NEEDED!')
                     # payload.sendSMS('FIXME: Robot got stuck, task is INCOMPLETE!')
                     # help code...
