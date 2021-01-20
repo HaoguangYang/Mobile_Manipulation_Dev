@@ -93,6 +93,7 @@ endif()
 add_message_files(
     FILES
     electricalStatus.msg
+    payloadStatus.msg
 #   Message2.msg
 )
 
