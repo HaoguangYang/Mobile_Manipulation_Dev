@@ -229,15 +229,17 @@ class Task():
     def start(self):
         self.launch.start()
         
+        time.sleep(10)
+
         rospy.init_node('admin')
         
         rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.amcl_cb)
-        self.pose_pub = rospy.Publisher('/initialpose',PoseWithCovarianceStamped, queue_size=10)
+        self.pose_pub = rospy.Publisher('/initialpose',PoseWithCovarianceStamped, queue_size=3)
         while not self.pose_pub.get_num_connections():
             pass
         #init_pose = [ 0.0453101396561, 0.00364243984222, 0.0, 0.0, 0.0, -0.032842760778, 0.999460531019]
         init_pose = self.traj[self.waypt_idx]
-        
+        print(init_pose)
         # initialize position in the map.
         ipose = PoseWithCovarianceStamped()
         ipose.header.frame_id="map"
@@ -271,7 +273,7 @@ class Task():
         
     def amcl_cb(self,msg):
         self.last_loc = msg
-        
+
     def isReady(self):
         return payload.isReady()
     

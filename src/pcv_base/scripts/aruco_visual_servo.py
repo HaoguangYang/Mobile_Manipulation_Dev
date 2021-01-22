@@ -2,7 +2,6 @@
 import roslib
 import sys
 import rospy, tf, tf2_ros
-import math
 import cv2
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
@@ -11,7 +10,6 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import ros_numpy
 import pyrealsense2 as rs2
-import matplotlib.pyplot as plt
 
 class arucoVisualServoing:
 
