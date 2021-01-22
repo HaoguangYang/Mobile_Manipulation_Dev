@@ -92,7 +92,7 @@ sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping
               ros-kinetic-teb-local-planner ros-kinetic-dwa-local-planner ros-kinetic-urg-node \
               ros-kinetic-map-server ros-kinetic-realsense2-camera ros-kinetic-global-planner \
               ros-kinetic-eband-local-planner ros-kinetic-rtabmap ros-kinetic-ros-numpy \
-              ros-kinetic-cv-bridge
+              ros-kinetic-cv-bridge ros-kinetic-robot-pose-ekf
 sudo -H pip install numpy pyserial pymysql boto3 twillio opencv-contrib-python
 catkin_make -DCMAKE_BUILD_TYPE=Release
 ```

@@ -806,7 +806,7 @@ init_motor (struct motor *m)
 		mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
 		if (e.type == TIMEOUT)
 		{
-			printf("init timer timeout, init_motor failed");
+			printf("Motor %d init timer timeout, init_motor failed", m->no);
 			return -1;
 		}
 		if (e.type == init_responses[i].type && e.param == init_responses[i].param)

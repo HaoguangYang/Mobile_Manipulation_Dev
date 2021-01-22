@@ -137,7 +137,7 @@ class gotoPos():
                     #        self.waypts[waypt_i,5],self.waypts[waypt_i,6]]
                     #eul = ts.euler_from_quaternion(quat)
                     self.waypt_xd =  self.waypts[waypt_i,0]
-                   f self.waypt_yd =  self.waypts[waypt_i,1]
+                    self.waypt_yd =  self.waypts[waypt_i,1]
                     self.waypt_thd =  eul[2]
                     waypt_i += 1
                     print(waypt_i)

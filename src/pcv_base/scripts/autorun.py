@@ -77,7 +77,7 @@ if __name__=="__main__":
     #nav_thread.start()
     #time.sleep(30)      # wait for the stack to start up
     
-    task = Task(uuid, 'imi_traj_EABICD')
+    task = Task(uuid, 'imi_traj_fanuc')
     
     #launch_video = roslaunch.parent.ROSLaunchParent(uuid,['./src/pcv_base/launch/includes/realsense.launch'])
     #launch_video.start()
