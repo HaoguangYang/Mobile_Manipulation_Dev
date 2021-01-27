@@ -1,6 +1,9 @@
 #!/bin/bash
 
-NODE_NO=6
+if [ -z "$NODE_NO" ]
+then
+    export NODE_NO=6
+fi
 NODE_SSH_REMOTE_PORT=`expr 50000 + $NODE_NO`
 NODE_VNC_REMOTE_PORT=`expr 50020 + $NODE_NO`
 NODE_HTTP_REMOTE_PORT=`expr 50040 + $NODE_NO`

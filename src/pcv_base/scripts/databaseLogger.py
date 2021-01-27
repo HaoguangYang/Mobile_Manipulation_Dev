@@ -6,6 +6,7 @@ from datetime import datetime
 import time
 import netifaces as ni
 from tf import transformations as ts
+import os
 from pcv_base.msg import *
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -19,14 +20,20 @@ class SQL_Logger:
     def __init__(self):
         db_cred = ET.parse('/home/cartman/Dev/dbCredentials.xml')
         server = db_cred.findall('server')[0].get('value')
+        portNo = db_cred.findall('port')
+        if len(portNo)>0:
+            portNo = int(portNo[0].get('value'))
+        else:
+            portNo = 3306
         usrname = db_cred.findall('user')[0].get('value')
         passwd = db_cred.findall('password')[0].get('value')
-        dbName = db_cred.findall('databaseName')[0].get('value')
-        self.motorTableName = db_cred.findall('motorTableName')[0].get('value')
-        self.navTableName = db_cred.findall('navTableName')[0].get('value')
-        self.payloadTableName = db_cred.findall('payloadTableName')[0].get('value')
-        self.telemetryTableName = db_cred.findall('telemetryTableName')[0].get('value')
-        self.connection = pymysql.connect(host=server, user=usrname, password=passwd, db=dbName)    # Fill in your credentials  
+        self.dbName = db_cred.findall('databaseName')[0].get('value')
+        thisNode = os.getenv('NODE_NO')
+        self.motorTableName = 'CARTMAN'+(thisNode.zfill(2))+'_MOTOR'    #db_cred.findall('motorTableName')[0].get('value')
+        self.navTableName = 'CARTMAN'+(thisNode.zfill(2))+'_NAV'        #db_cred.findall('navTableName')[0].get('value')
+        self.payloadTableName = 'CARTMAN'+(thisNode.zfill(2))+'_PAYLOAD'        #db_cred.findall('payloadTableName')[0].get('value')
+        self.telemetryTableName = 'CARTMAN'+(thisNode.zfill(2))+'_TELEMETRY'    #db_cred.findall('telemetryTableName')[0].get('value')
+        self.connection = pymysql.connect(host=server, port=portNo, user=usrname, password=passwd, database=self.dbName)    # Fill in your credentials  
         self.UTC_OFFSET_TIMEDELTA = datetime.utcnow() - datetime.now()
 
         self.robot_ip = None
@@ -162,7 +169,7 @@ class SQL_Logger:
             with self.connection.cursor() as cursor:
                 # INSERT INTO [TABLE NAME] (COLUMN NAME) VALUE(value1, value2)...
                 #Casts all parameters to strings
-                sql = "INSERT INTO `Omniveyors`.`" + self.navTableName + "` \
+                sql = "INSERT INTO `"+self.dbName+"`.`" + self.navTableName + "` \
                         (`TimeStamp`, `PosX`, `PosY`, `Orientation`, \
                         `VelX`, `VelY`, `AngVel`, \
                         `DesX`, `DesY`, `DesOrient`, `NavStatus`\
@@ -182,13 +189,14 @@ class SQL_Logger:
         finally:
             #print("db..navigation")
             self.connection.commit()
+            print('nav status sent')
             
     def uploadMotorData(self):
         try:
             with self.connection.cursor() as cursor:
                 # INSERT INTO [TABLE NAME] (COLUMN NAME) VALUE(value1, value2)...
                 #Casts all parameters to strings
-                sql = "INSERT INTO `Omniveyors`.`" + self.motorTableName + "` \
+                sql = "INSERT INTO `"+self.dbName+"`.`" + self.motorTableName + "` \
                         (`TimeStamp`, `steer1Amp`, `roll1Amp`, `steer2Amp`, \
                         `roll2Amp`, `steer3Amp`, `roll3Amp`, `steer4Amp`, `roll4Amp`, \
                         `steer1AMax`, `roll1AMax`, `steer2AMax`, `roll2AMax`, \
@@ -231,12 +239,13 @@ class SQL_Logger:
         finally:
             #print("db..battery")
             self.connection.commit()
+            print('motor status sent')
 
     def uploadPayloadData(self):
         try:
             with self.connection.cursor() as cursor:
                 # INSERT INTO [TABLE NAME] (COLUMN NAME) VALUE(value1, value2)...
-                sql = "INSERT INTO `Omniveyors`.`" + self.payloadTableName + "` \
+                sql = "INSERT INTO `"+self.dbName+"`.`" + self.payloadTableName + "` \
                         (`TimeStamp`, `PayloadSensor`, `PayloadState`\
                         ) VALUES(\
                         '"+str(self.date)+"', \
@@ -252,12 +261,13 @@ class SQL_Logger:
         finally:
             #print("db..navigation")
             self.connection.commit()
+            print('payload status sent')
             
     def uploadTelemetryData(self):
         try:
             with self.connection.cursor() as cursor:
                 # INSERT INTO [TABLE NAME] (COLUMN NAME) VALUE(value1, value2)...
-                sql = "INSERT INTO `Omniveyors`.`" + self.payloadTableName + "` \
+                sql = "INSERT INTO `"+self.dbName+"`.`" + self.telemetryTableName + "` \
                         (`TimeStamp`, `BattVolt`, `BattAmp`, `BattAMax`, `IP`\
                         ) VALUES(\
                         '"+str(self.date)+"', \
@@ -277,6 +287,7 @@ class SQL_Logger:
         finally:
             #print("db..navigation")
             self.connection.commit()
+            print('telemetry sent')
 
     def run(self):
         rospy.init_node("database_logger")
@@ -290,19 +301,19 @@ class SQL_Logger:
             self.date = datetime.now()
             if (self.date - self.tLastTelemetry).total_seconds() > self.intervalTelemetry \
                 and self.bcounter > 0:
-                uploadTelemetryData()
+                self.uploadTelemetryData()
                 self.tLastTelemetry = self.date
             if (self.date - self.tLastMotor).total_seconds() > self.intervalMotor \
                 and self.counter > 0:
-                uploadMotorData()
+                self.uploadMotorData()
                 self.tLastMotor = self.date
             if (self.date - self.tLastPayload).total_seconds() > self.intervalPayload \
                 and self.newPayloadStat :
-                uploadPayloadData()
+                self.uploadPayloadData()
                 self.tLastPayload = self.date
             if (self.date - self.tLastNav).total_seconds() > self.intervalNav \
                 and self.newNavStat :
-                uploadNavData()
+                self.uploadNavData()
                 self.tLastNav = self.date
         try:
             pass
