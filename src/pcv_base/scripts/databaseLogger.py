@@ -189,7 +189,7 @@ class SQL_Logger:
         finally:
             #print("db..navigation")
             self.connection.commit()
-            print('nav status sent')
+            #print('nav status sent')
             
     def uploadMotorData(self):
         try:
@@ -239,7 +239,7 @@ class SQL_Logger:
         finally:
             #print("db..battery")
             self.connection.commit()
-            print('motor status sent')
+            #print('motor status sent')
 
     def uploadPayloadData(self):
         try:
@@ -261,7 +261,7 @@ class SQL_Logger:
         finally:
             #print("db..navigation")
             self.connection.commit()
-            print('payload status sent')
+            #print('payload status sent')
             
     def uploadTelemetryData(self):
         try:
@@ -287,7 +287,7 @@ class SQL_Logger:
         finally:
             #print("db..navigation")
             self.connection.commit()
-            print('telemetry sent')
+            #print('telemetry sent')
 
     def run(self):
         rospy.init_node("database_logger")

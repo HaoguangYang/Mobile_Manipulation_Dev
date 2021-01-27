@@ -39,6 +39,11 @@ sudo tc qdisc add dev can0 root handle 1: pfifo_head_drop limit 9
 
 **Note:** If the internal display is disabled, Ubuntu desktop may not boot properly without an external monitor plugged in. To reenable the internal display, revert the changes by deleting `video=...` section, and spesify the LVDS resolution in BIOS.
 
+- Set the index number of the robot such that it can correspond itself in the database logs (replace 9 with the actual index):
+```
+echo "export NODE_NO=9" | sudo tee /etc/profile.d/robot_name.sh
+```
+
 - This repository includes a bootup script, such that the SSH and VNC ports of the cart are mapped to a Virtual Private Server with static IP. To enable the automatic bootup sequence, add the following line in `crontab -e`:
 ```sh
 @reboot sleep 30; cd /home/cartman/Dev/Mobile_Manipulation_Dev/; sh ./onBoot.sh
@@ -87,6 +92,7 @@ gsettings set org.gnome.Vino require-encryption false
 ```
 
 ### Steps to run the code: 
+Install more packages...
 ```sh
 sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping \
               ros-kinetic-teb-local-planner ros-kinetic-dwa-local-planner ros-kinetic-urg-node \
@@ -96,8 +102,9 @@ sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping
 sudo -H pip install numpy pyserial pymysql boto3 twilio opencv-contrib-python pyrealsense2
 catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
+If using Python 2, the compatible version of pymysql is 0.x.
 
-Setup passwordless sudo for the current user: add the following line to `/etc/sudoers` **second line before ending**
+Setup passwordless sudo for the current user: add the following line to `/etc/sudoers` **second line before ending** (Replace username with the actual username)
 
 ```sh
 username  ALL = (ALL) NOPASSWD: ALL
