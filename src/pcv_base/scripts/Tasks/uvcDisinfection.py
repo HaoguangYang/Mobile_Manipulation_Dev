@@ -6,6 +6,7 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from std_msgs.msg import Byte
 from Payloads.UVC import payload
+from pcv_base.msg import payloadStatus
 import roslaunch
 import numpy as np
 import multiprocessing
@@ -62,6 +63,8 @@ class Task():
         
         # last reported location, for recovery from faults
         self.last_loc = PoseWithCovarianceStamped()
+        
+        self.payload_msg = payloadStatus()
     
     def gotoNext(self):
         """
@@ -225,9 +228,14 @@ class Task():
         self.task_thread.start()
         
         print('In main process')
-        pause_pub = rospy.Publisher('/pauseAction', Byte, queue_size=1)
+        #pause_pub = rospy.Publisher('/pauseAction', Byte, queue_size=1)
+        payload_pub = rospy.Publisher('/payloadStatus', payloadStatus, queue_size = 1)
+        self.payload_msg.index = 0
         while payload.isReady():
-            pass
+            self.payload_msg.state = payload.isOn()
+            self.payload_msg.sensor = payload.getCurrent()
+            payload_pub.publish(self.payload_msg)
+            time.sleep(1.0)
             #print(payload.isPaused())
             #if payload.isPaused():
             #    pause_pub.publish(Byte(1))
