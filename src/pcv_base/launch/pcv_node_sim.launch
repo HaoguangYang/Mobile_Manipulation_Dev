@@ -1,3 +1,6 @@
 <launch>
 	<node pkg="pcv_base" type="fakeOdom.py" name="pcv_base_sim_node" output="screen"/>
+
+    <!-- static transform -->
+	<include file="$(find pcv_base)/launch/includes/static_tf.launch" />
 </launch>

@@ -29,6 +29,4 @@
     <!-- Keyboard Teleop -->
     <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop" output="screen"/>
     
-    <!--Logging-->
-    <node pkg="pcv_base" type="databaseLogger.py" name="db_logger" output="screen"/>
 </launch>
