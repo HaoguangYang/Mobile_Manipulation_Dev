@@ -160,7 +160,7 @@ class SQL_Logger:
         
     def payload_cb(self,d):
         while d.index >= len(self.payloadStatus):
-            self.payloadStatus.append([d.index, d.state, d.sensor])
+            self.payloadStatus.append([len(self.payloadStatus)-1, 0, 0])
         self.payloadStatus[d.index] = [d.index, d.state, d.sensor]
         self.newPayloadStat = True
 
