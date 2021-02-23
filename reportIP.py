@@ -43,7 +43,6 @@ class SQL_IP_Logger:
         self.robot_ip = ni.ifaddresses(wlan_name)[ni.AF_INET][0]['addr']
 
     def reportIP(self):
-        print("inTry")
         with self.connection.cursor() as cursor:
             # INSERT INTO [TABLE NAME] (COLUMN NAME) VALUE(value1, value2)...
             sql = "INSERT INTO `"+self.dbName+"`.`" + self.telemetryTableName + "` \
@@ -51,9 +50,8 @@ class SQL_IP_Logger:
                     '"+str(self.date)+"', '"+self.robot_ip+"');"
             #cursor.execute(sql, vals)
             cursor.execute(sql)
-            print("inTry")
             result = cursor.fetchone()
-            print(sql)
+            #print(sql)
         #print("db..navigation")
         self.connection.commit()
         #print('telemetry sent')
