@@ -91,6 +91,8 @@ sudo apt-get install librealsense2-dev
 gsettings set org.gnome.Vino require-encryption false
 ```
 
+- Optional: install [Aircrack-ng's RTL 8188EUS driver](https://github.com/aircrack-ng/rtl8188eus) for better WiFi connection.
+
 ### Steps to run the code: 
 Install more packages...
 ```sh
