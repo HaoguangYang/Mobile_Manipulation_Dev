@@ -3,7 +3,7 @@
 	<include file="$(find pcv_base)/launch/pcv_node.launch"/>
 	
 	<!-- static transform -->
-	<include file="$(find pcv_base)/launch/includes/static_tf.launch" />
+	<!--include file="$(find pcv_base)/launch/includes/static_tf.launch" /-->
 
 	<!-- Laser scanner -->
 	<include file="$(find pcv_base)/launch/includes/laser.launch" />
