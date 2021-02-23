@@ -300,7 +300,6 @@ class SQL_Logger:
 
 
     def run(self):
-        self.reportIP()
         rospy.init_node("database_logger")
         rospy.Subscriber("electricalStatus", electricalStatus, self.electrical_cb)
         rospy.Subscriber("payloadStatus", payloadStatus, self.payload_cb)
