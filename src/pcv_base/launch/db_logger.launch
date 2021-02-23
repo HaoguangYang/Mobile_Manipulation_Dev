@@ -1,0 +1,4 @@
+<launch>
+    <!--Logging-->
+    <node pkg="pcv_base" type="databaseLogger.py" name="db_logger" output="screen"/>
+</launch>
