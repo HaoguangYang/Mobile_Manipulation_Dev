@@ -9,7 +9,7 @@ from tf import transformations as ts
 import os
 from pcv_base.msg import *
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
 import rospy
 import numpy as np
 from datetime import datetime
@@ -153,6 +153,15 @@ class SQL_Logger:
         self.angVel = d.twist.twist.angular.z
         #self.newNavStat = True
 
+    def navTarget_cb(self,d):
+        self.desX = d.pose.position.x
+        self.desY = d.pose.position.y
+        quat = [d.pose.orientation.x, d.pose.orientation.y, \
+                d.pose.orientation.z, d.pose.orientation.w]
+        eul = ts.euler_from_quaternion(quat)
+        self.desOrient = eul[2]
+        self.newNavStat = True
+    
     def navStatus_cb(self,d):
         # nav status will not publish until the status changes.
         self.navState = d.status.status
@@ -160,7 +169,7 @@ class SQL_Logger:
         
     def payload_cb(self,d):
         while d.index >= len(self.payloadStatus):
-            self.payloadStatus.append([len(self.payloadStatus)-1, 0, 0])
+            self.payloadStatus.append([len(self.payloadStatus), 0, 0])
         self.payloadStatus[d.index] = [d.index, d.state, d.sensor]
         self.newPayloadStat = True
 
@@ -295,7 +304,8 @@ class SQL_Logger:
         rospy.Subscriber("payloadStatus", payloadStatus, self.payload_cb)
         rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, self.localization_cb)
         rospy.Subscriber("odom", Odometry, self.odom_cb)
-        rospy.Subscriber('/move_base/result', MoveBaseActionResult, self.navStatus_cb)
+        rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.navTarget_cb)
+        rospy.Subscriber("/move_base/result", MoveBaseActionResult, self.navStatus_cb)
         
         while not rospy.is_shutdown():
             self.date = datetime.now()

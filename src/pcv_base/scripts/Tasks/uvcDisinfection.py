@@ -20,7 +20,7 @@ class Task():
         self.delayStart = 10
         
         # route file, combined. Route file is generated based on the "Left"-sided map.
-        self.pathName = '/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/traj/pvil_traj_no_pause.txt'
+        self.pathName = '/home/cartman/Dev/Mobile_Manipulation_Dev/src/pcv_base/resources/traj/pvil_traj.txt'
         if not (os.path.exists(self.pathName)):
             sys.exit('ERROR: '+self.pathName+' Does Not Exist! Aborting...')
         self.traj = np.loadtxt(self.pathName)
@@ -76,10 +76,10 @@ class Task():
             for i in range(self.waypt_idx+1, self.lenWaypt):
                 if self.targetActionList[i][1]!='via':
                     break
-            print('rosrun pcv_base pubgoalNew.py _timeout:=30 _waypt_file_path:='+\
+            print('rosrun pcv_base pubgoalNew.py _timeout:=40 _waypt_file_path:='+\
                           self.pathName+' _startLn:='+str(self.waypt_idx+1)+\
                           ' _endLn:='+str(i+1)+' _dir:=0'+' _isMirror:='+('1' if self.isMirror else '0'))
-            s = os.system('rosrun pcv_base pubgoalNew.py _timeout:=30 _waypt_file_path:='+\
+            s = os.system('rosrun pcv_base pubgoalNew.py _timeout:=40 _waypt_file_path:='+\
                           self.pathName+' _startLn:='+str(self.waypt_idx+1)+\
                           ' _endLn:='+str(i+1)+' _dir:=0'+' _isMirror:='+('1' if self.isMirror else '0'))
             if (s==0):
@@ -96,10 +96,10 @@ class Task():
                 for i in range(self.lenWaypt):
                     if self.targetActionList[i][1]!='via':
                         break
-                print('rosrun pcv_base pubgoalNew.py _timeout:=30 _waypt_file_path:='+\
+                print('rosrun pcv_base pubgoalNew.py _timeout:=40 _waypt_file_path:='+\
                           self.pathName+' _startLn:=1 _endLn:='+str(i+1)+\
                           ' _dir:=0'+' _isMirror:='+('1' if self.isMirror else '0'))
-                s = os.system('rosrun pcv_base pubgoalNew.py _timeout:=30 _waypt_file_path:='+\
+                s = os.system('rosrun pcv_base pubgoalNew.py _timeout:=40 _waypt_file_path:='+\
                           self.pathName+' _startLn:=1 _endLn:='+str(i+1)+\
                           ' _dir:=0'+' _isMirror:='+('1' if self.isMirror else '0'))
                 if (s==0):
@@ -156,9 +156,12 @@ class Task():
                 if s!=0:
                     payload.setDoneStatus()
                     print('HELP NEEDED!')
+                    s = os.system('rosrun teleop_twist_keyboard teleop_twist_keyboard.py')
+                    #if (s==0):
+                    #    self.waypt_idx = i
                     # payload.sendSMS('FIXME: Robot got stuck, task is INCOMPLETE!')
                     # help code...
-                    break
+                    #break
         payload.turnOffUVC()
         
     def amcl_cb(self,msg):
@@ -226,13 +229,13 @@ class Task():
         
         print('In main process')
         #pause_pub = rospy.Publisher('/pauseAction', Byte, queue_size=1)
-        payload_pub = rospy.Publisher('/payloadStatus', payloadUVC_Status, queue_size = 1)
+        payload_pub = rospy.Publisher('/payloadStatus', payloadStatus, queue_size = 1)
         self.payload_msg.index = 0
         while payload.isReady():
             self.payload_msg.state = payload.isOn()
             self.payload_msg.sensor = payload.getCurrent()
             payload_pub.publish(self.payload_msg)
-            time.sleep(0.5)
+            time.sleep(1.0)
             #print(payload.isPaused())
             #if payload.isPaused():
             #    pause_pub.publish(Byte(1))
