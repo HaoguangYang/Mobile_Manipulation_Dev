@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-#import requests
-#from payload import payload  #Used to get UVC lamp data
 import pymysql.cursors
+import socket
 from datetime import datetime
 import time
 import netifaces as ni
@@ -23,7 +22,16 @@ class SQL_IP_Logger:
         passwd = db_cred.findall('password')[0].get('value')
         self.dbName = db_cred.findall('databaseName')[0].get('value')
         thisNode = os.getenv('NODE_NO')
+        print (thisNode)
         self.telemetryTableName = 'CARTMAN'+(thisNode.zfill(2))+'_TELEMETRY'    #db_cred.findall('telemetryTableName')[0].get('value')
+        sock_test = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        while True:
+            try:
+                not_up = sock_test.connect_ex((server, portNo))
+                if not not_up:
+                    break
+            except:
+                pass
         self.connection = pymysql.connect(host=server, port=portNo, user=usrname, password=passwd, database=self.dbName)    # Fill in your credentials  
         self.UTC_OFFSET_TIMEDELTA = datetime.utcnow() - datetime.now()
 
@@ -41,6 +49,7 @@ class SQL_IP_Logger:
                 wlan_name = item
                 break
         self.robot_ip = ni.ifaddresses(wlan_name)[ni.AF_INET][0]['addr']
+        print (self.robot_ip)
 
     def reportIP(self):
         with self.connection.cursor() as cursor:
@@ -51,10 +60,10 @@ class SQL_IP_Logger:
             #cursor.execute(sql, vals)
             cursor.execute(sql)
             result = cursor.fetchone()
-            #print(sql)
+            print(sql)
         #print("db..navigation")
         self.connection.commit()
-        #print('telemetry sent')
+        print('telemetry sent')
         self.connection.close()
            
 
