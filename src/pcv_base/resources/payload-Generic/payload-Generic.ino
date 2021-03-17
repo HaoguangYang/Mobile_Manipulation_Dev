@@ -1,8 +1,10 @@
 const int inputPins[7]={0,1,2,3,4,5,6};
-const int outputPins[7]={7,9,10,12,13};
+const int outputPins[7]={7,9,10};
 const int analogPins[6]={14,15,16,17,18,19};
 const int buttonPin = 8;
 const int ledPin = 11;
+const int chargingPin = 12;
+const int chargingFaultPin = 13;
 
 unsigned long buttonMillis = 0;
 unsigned long buttonMillisDebounce = 0;
@@ -29,7 +31,10 @@ void setup() {
     }
     pinMode(buttonPin, INPUT_PULLUP);
     pinMode(ledPin, OUTPUT);
+    pinMode(chargingPin, OUTPUT);
+    pinMode(chargingFaultPin, INPUT_PULLUP);
     digitalWrite(ledPin, LOW);
+    digitalWrite(chargingPin, LOW);
     Serial.begin(9600);
 } 
 
@@ -39,29 +44,29 @@ void loop(){
    * Computer to Arduino: $cmd&: command: 1 byte command type + customizable payload
    * Arduino to Computer: @ret%: return: 1 byte indicator + customizable payload
    */
-	char cmd;
-	while (Serial.available() > 0){
-		Serial.readBytes(&cmd, 1);
-		if (cmd == '$'){	// a valid frame
-			Serial.readBytes(&cmd, 1);	// read in the command byte.
-      		char tail;
-			switch (cmd){
-				case 'Q':				// command for query analog values
-					Serial.readBytes(&cmd, 1);
-					Serial.readBytes(&tail, 1);
-					if (tail == '&'){	// valid command
-						int which = cmd-48; // ASCII to int
+  char cmd;
+  while (Serial.available() > 0){
+    Serial.readBytes(&cmd, 1);
+    if (cmd == '$'){  // a valid frame
+      Serial.readBytes(&cmd, 1);  // read in the command byte.
+          char tail;
+      switch (cmd){
+        case 'Q':       // command for query analog values
+          Serial.readBytes(&cmd, 1);
+          Serial.readBytes(&tail, 1);
+          if (tail == '&'){ // valid command
+            int which = cmd-48; // ASCII to int
             char buf[8];
             sprintf(buf, "@A%04d%%", (int)analogSen[which]);
             Serial.print(buf);
-					}
-					break;
-        case 'S':               // command for setting the state machine from the computer
+          }
+          break;
+        case 'S':               // command for setting the button state machine from the computer
           Serial.readBytes(&cmd, 1);
           Serial.readBytes(&tail, 1);
           if (tail == '&'){   // valid command
             int state = cmd-48; // ASCII to int
-            Serial.println(cmd);
+            //Serial.println(cmd);
             if (state == 0 || state == 3 || state == 5){
               programState = state;
               char buf[5];
@@ -70,12 +75,31 @@ void loop(){
             }
           }
           break;
-				default:
-					break;				// stops processing the current frame.
-			}
-		}
-	}
-	unsigned long curMillis = millis();
+        case 'C':                // command for setting the charging state from th computer
+          Serial.readBytes(&cmd, 1);
+          Serial.readBytes(&tail, 1);
+          if (tail == '&'){   // valid command
+            int state = cmd-48; // ASCII to int
+            if (state == 1 || state == 0){
+              digitalWrite(chargingPin, HIGH*state);
+              char buf[5];
+              sprintf(buf, "@C%1d%%", state);
+              Serial.print(buf);  // echo the state setting
+            }
+            else if (cmd == 'Q'){
+              state = !digitalRead(chargingFaultPin);
+              char buf[5];
+              sprintf(buf, "@F%1d%%", state>0? 1 : 0);
+              Serial.print(buf);  // echo the state setting
+            }
+          }
+          break;
+        default:
+          break;        // stops processing the current frame.
+      }
+    }
+  }
+  unsigned long curMillis = millis();
     pushbutton(curMillis);
     //relay();
     //currentsensor(curMillis);
@@ -122,7 +146,7 @@ void pushbutton(unsigned long curMillis)
                 if (curMillis - buttonMillis > intervalButton){
                     programState = 2;
                 }
-      		}
+          }
             else{
                programState = 0;
             }
