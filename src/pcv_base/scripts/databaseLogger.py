@@ -91,7 +91,7 @@ class SQL_Logger:
         
         self.payloadStatus = []
 
-        self.date = datetime.now()
+        self.date = datetime.utcnow() #datetime.now()
         #print("Starting..")
         
         # IP address will not change in a short period as long as it is connected,
@@ -107,7 +107,7 @@ class SQL_Logger:
     def electrical_cb(self,d):
         #timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         #print("Electric callback triggered")
-        self.date = datetime.fromtimestamp(d.stamp.to_sec()) #+ self.UTC_OFFSET_TIMEDELTA
+        self.date = datetime.fromtimestamp(d.stamp.to_sec()) + self.UTC_OFFSET_TIMEDELTA
 
         self.counter += 1
         self.bcounter += 1
@@ -298,6 +298,7 @@ class SQL_Logger:
             self.connection.commit()
             #print('telemetry sent')
 
+
     def run(self):
         rospy.init_node("database_logger")
         rospy.Subscriber("electricalStatus", electricalStatus, self.electrical_cb)
@@ -308,7 +309,7 @@ class SQL_Logger:
         rospy.Subscriber("/move_base/result", MoveBaseActionResult, self.navStatus_cb)
         
         while not rospy.is_shutdown():
-            self.date = datetime.now()
+            self.date = datetime.utcnow() #datetime.now()
             if (self.date - self.tLastTelemetry).total_seconds() > self.intervalTelemetry \
                 and self.bcounter > 0:
                 self.uploadTelemetryData()

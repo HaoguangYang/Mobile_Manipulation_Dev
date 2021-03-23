@@ -51,7 +51,8 @@ class gotoPos():
                 self.waypts[:,[5,6]] = self.waypts[:,[6,5]]     # swapping cos and sin values
                 self.waypts[:,6] = -self.waypts[:,6]            # make cos(a+90)=-sin(a).
             self.waypts = self.waypts[::-1,:]                   # reverse order
-
+        if self.waypts.ndim<2:                # in case of only one line in the traj...
+            self.waypts = np.expand_dims(self.waypts,0)
         print(self.waypts)
         self.waypt_lim = 0.02
         self.str_lim = 0.025

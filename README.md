@@ -91,6 +91,8 @@ sudo apt-get install librealsense2-dev
 gsettings set org.gnome.Vino require-encryption false
 ```
 
+- Optional: install [Aircrack-ng's RTL 8188EUS driver](https://github.com/aircrack-ng/rtl8188eus) for better WiFi connection.
+
 ### Steps to run the code: 
 Install more packages...
 ```sh
@@ -102,7 +104,10 @@ sudo apt-get install ros-kinetic-amcl ros-kinetic-move-base ros-kinetic-gmapping
 sudo -H pip install numpy pyserial pymysql boto3 twilio opencv-contrib-python pyrealsense2
 catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
-If using Python 2, the compatible version of pymysql is 0.x.
+
+If using Python 2, the compatible version of pip is `<21.0`.
+
+If using Python 2, the compatible version of pymysql is `<1.0`.
 
 Setup passwordless sudo for the current user: add the following line to `/etc/sudoers` **second line before ending** (Replace username with the actual username)
 

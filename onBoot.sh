@@ -24,7 +24,10 @@ echo "Mapped local HTTP port to 34.221.135.10:$NODE_VNC_REMOTE_PORT."
 
 setupdir=`find . -type d -iname "devel*" | head -1`
 . $setupdir/setup.sh
-screen -dm -S robotAutorun bash -c 'source devel/setup.sh; python ./autorun.py'
+screen -dm -S robotAutorun bash -c 'source /etc/profile.d/robot_name.sh; \
+                                    source devel/setup.sh; \
+                                    python ./reportIP.py; \
+                                    python ./autorun.py'
 #gnome-terminal -x sh -c ". devel/setup.sh; python ./autorun.py"
 
 # in case the network drops offline
