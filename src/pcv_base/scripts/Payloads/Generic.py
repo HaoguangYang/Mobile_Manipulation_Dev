@@ -28,10 +28,6 @@ class genericPayload():
         self.d[3] = False   # new value available
         self.d[4] = -1      # measurement to query
         self.d[5] = True    # rst_nCmd (Software-generated)
-        #try:
-        #    thread.start_new_thread( self.readSerial )
-        #except:
-        #    print "Error: unable to start Serial Listener thread"
 
     def serialComm(self):
         self.ser.write('$S0&')

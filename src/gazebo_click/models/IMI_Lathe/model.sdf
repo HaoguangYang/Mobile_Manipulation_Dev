@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="IMI_Lathe">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <scale>0.04 0.04 0.04</scale>
+            <uri>model://IMI_Lathe/meshes/ST-10.dae</uri>            
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <scale>0.04 0.04 0.04</scale>
+            <uri>model://IMI_Lathe/meshes/ST-10.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

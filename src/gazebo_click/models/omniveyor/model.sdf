@@ -1,0 +1,479 @@
+<?xml version='1.0'?>
+<sdf version='1.4'>
+
+  <model name="omniveyor">
+     <static>false</static>
+    <link name='chassis'>
+            <pose>0 0 0.5 0 0 0</pose>
+      <inertial>
+            <mass>50</mass>
+            <inertia> <!-- inertias are tricky to compute -->
+              <!-- http://gazebosim.org/tutorials?tut=inertia&cat=build_robot -->
+              <ixx>2.04</ixx>       <!-- for a box: ixx = 0.083 * mass * (y*y + z*z) -->
+              <ixy>0.0</ixy>         <!-- for a box: ixy = 0 -->
+              <ixz>0.0</ixz>         <!-- for a box: ixz = 0 -->
+              <iyy>2.04</iyy>       <!-- for a box: iyy = 0.083 * mass * (x*x + z*z) -->
+              <iyz>0.0</iyz>         <!-- for a box: iyz = 0 -->
+              <izz>3.19</izz>       <!-- for a box: izz = 0.083 * mass * (x*x + y*y) -->
+            </inertia>
+      </inertial>
+            <collision name='collision'>
+              <geometry>
+                <box>
+                  <size>.62 .62 .32</size>
+                </box>
+              </geometry>
+            </collision>
+
+            <visual name='visual'>
+              <geometry>
+                <box>
+                  <size>.62 .62 .32</size>
+                </box>
+              </geometry>
+            </visual>
+ <!--   <collision name='caster_collision'>
+            <pose>-0.25 0 -0.2 0 0 0</pose>
+            <geometry>
+                <sphere>
+                <radius>.05</radius>
+              </sphere>
+            </geometry>
+
+            <surface>
+              <friction>
+                <ode>
+                  <mu>0</mu>
+                  <mu2>0</mu2>
+                  <slip1>1.0</slip1>
+                  <slip2>1.0</slip2>
+                </ode>
+              </friction>
+            </surface>
+          </collision>
+
+          <visual name='caster_visual'>
+            <pose>-0.25 0 -0.2 0 0 0</pose>
+            <geometry>
+              <sphere>
+                <radius>.05</radius>
+              </sphere>
+            </geometry>
+          </visual>     -->
+    </link>
+<!-- ______________________________________________________________________ -->
+<!-- _______________________   FRONT LEFT CASTER     ______________________ -->
+
+<!-- links -->
+   <link name="steer_link_fl">
+    <pose>0.21 0.21 0.385 0 0 0</pose>
+    <visual name="visual">
+      <geometry>
+        <box>
+          <size>0.02 0.04 0.07 </size>
+        </box>
+      </geometry>
+    </visual>
+  </link>
+
+    <link name="wheel_fl">
+        <pose>0.21 0.21 0.36 0 1.5707 1.5707</pose>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>.03</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>.05</radius>
+              <length>.03</length>
+            </cylinder>
+          </geometry>
+          <material> <!-- Wheel material -->
+            <ambient>0.0 0.0 0.0 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0 0 0 0</specular>
+            <emissive>0.15 0.15 0.15 1</emissive>
+       </material>
+        </visual>
+      </link>
+
+      <!-- Joints -->
+            <joint type="fixed" name="fl_steer_hinge">
+              <pose>0 0 0.035 0 0 0</pose>
+              <child>steer_link_fl</child>
+              <parent>chassis</parent>
+              <axis>
+                <xyz>0 0 1</xyz>
+              </axis>
+            </joint>
+
+            <joint type="revolute" name="fl_roll_hinge">
+              <pose>0 0 0.0 0 0 0</pose>
+              <child>wheel_fl</child>
+              <parent>steer_link_fl</parent>
+              <axis>
+                <xyz>0 1 0</xyz>
+              </axis>
+            </joint>
+
+<!-- ______________________________________________________________________ -->
+<!-- _________________________  BACK LEFT CASTER  ______________________ -->
+
+<!-- links -->
+   <link name="steer_link_bl">
+    <pose>-0.21 0.21 0.385 0 0 0</pose>
+    <visual name="visual">
+      <geometry>
+        <box>
+          <size>0.02 0.04 0.07 </size>
+        </box>
+      </geometry>
+    </visual>
+  </link>
+
+     <link name="wheel_bl">
+        <pose>-0.21 0.21 0.36 0 1.5707 1.5707</pose>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>.05</radius>
+              <length>.03</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>.05</radius>
+              <length>.03</length>
+            </cylinder>
+          </geometry>
+          <material> <!-- Wheel material -->
+            <ambient>0.0 0.0 0.0 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0 0 0 0</specular>
+            <emissive>0.15 0.15 0.15 1</emissive>
+       </material>
+        </visual>
+      </link>
+
+
+      <!-- Joints -->
+            <joint type="fixed" name="bl_steer_hinge">
+              <pose>0 0 0.035 0 0 0</pose>
+              <child>steer_link_bl</child>
+              <parent>chassis</parent>
+              <axis>
+                <xyz>0 0 1</xyz>
+              </axis>
+            </joint>
+
+            <joint type="revolute" name="bl_roll_hinge">
+              <pose>0 0 0.0 0 0 0</pose>
+              <child>wheel_bl</child>
+              <parent>steer_link_bl</parent>
+              <axis>
+                <xyz>0 1 0</xyz>
+              </axis>
+            </joint>
+<!-- ______________________________________________________________________ -->
+<!-- _________________________   FRONT RIGHT CASTER  ______________________ -->
+
+<!-- links -->
+   <link name="steer_link_fr">
+    <pose>0.21 -0.21 0.385 0 0 0</pose>
+    <visual name="visual">
+      <geometry>
+        <box>
+          <size>0.02 0.04 0.07 </size>
+        </box>
+      </geometry>
+    </visual>
+  </link>
+
+   <link name="wheel_fr">
+        <pose>0.21 -0.21 0.36 0 1.5707 1.5707</pose>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>.05</radius>
+              <length>.03</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>.05</radius>
+              <length>.03</length>
+            </cylinder>
+          </geometry>
+          <material> <!-- Wheel material -->
+            <ambient>0.0 0.0 0.0 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0 0 0 0</specular>
+            <emissive>0.15 0.15 0.15 1</emissive>
+       </material>
+        </visual>
+      </link>
+
+<!-- Joints -->
+      <joint type="fixed" name="fr_steer_hinge">
+        <pose>0 0 0.035 0 0 0</pose>
+        <child>steer_link_fr</child>
+        <parent>chassis</parent>
+        <axis>
+          <xyz>0 0 1</xyz>
+        </axis>
+      </joint>
+
+      <joint type="revolute" name="fr_roll_hinge">
+        <pose>0 0 0.0 3.141592 0 0</pose>
+        <child>wheel_fr</child>
+        <parent>steer_link_fr</parent>
+        <axis>
+          <xyz>0 1 0</xyz>
+        </axis>
+      </joint>
+<!-- ______________________________________________________________________ -->
+<!-- _________________________   BACK RIGHT CASTER  ______________________ -->
+
+<!-- links -->
+   <link name="steer_link_br">
+    <pose>-0.21 -0.21 0.385 0 0 0</pose>
+    <visual name="visual">
+      <geometry>
+        <box>
+          <size>0.02 0.04 0.07 </size>
+        </box>
+      </geometry>
+    </visual>
+  </link>
+
+     <link name="wheel_br">
+        <pose>-0.21 -0.21 0.36 0 1.5707 1.5707</pose>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>.05</radius>
+              <length>.03</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>.05</radius>
+              <length>.03</length>
+            </cylinder>
+          </geometry>
+          <material> <!-- Wheel material -->
+            <ambient>0.0 0.0 0.0 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0 0 0 0</specular>
+            <emissive>0.15 0.15 0.15 1</emissive>
+       </material>
+        </visual>
+      </link>
+
+      <!-- Joints -->
+            <joint type="fixed" name="br_steer_hinge">
+              <pose>0 0 0.035 0 0 0</pose>
+              <child>steer_link_br</child>
+              <parent>chassis</parent>
+              <axis>
+                <xyz>0 0 1</xyz>
+              </axis>
+            </joint>
+
+            <joint type="revolute" name="br_roll_hinge">
+              <pose>0 0 0.0 3.141592 0 0</pose>
+              <child>wheel_br</child>
+              <parent>steer_link_br</parent>
+              <axis>
+                <xyz>0 1 0</xyz>
+              </axis>
+            </joint>
+
+<!-- ______________________________________________________________________ -->
+<!-- _________________________  DRIVE  PLUGINS       ______________________ -->
+
+    <plugin name="skid_steer_drive_controller" filename="libgazebo_ros_skid_steer_drive.so">
+      <updateRate>100.0</updateRate>
+      <robotNamespace>/</robotNamespace>
+      <leftFrontJoint>fl_roll_hinge</leftFrontJoint>
+      <rightFrontJoint>fr_roll_hinge</rightFrontJoint>
+      <leftRearJoint>bl_roll_hinge</leftRearJoint>
+      <rightRearJoint>br_roll_hinge</rightRearJoint>
+      <wheelSeparation>0.42</wheelSeparation>
+      <wheelDiameter>0.1</wheelDiameter>
+      <robotBaseFrame>chassis</robotBaseFrame>
+      <torque>20</torque>
+      <topicName>cmd_vel</topicName>
+      <broadcastTF>true</broadcastTF>
+    </plugin>
+
+<!-- ______________________________________________________________________ -->
+<!-- _________________________  SENSORS       ______________________ -->
+<!-- LIDAR -->
+    <include>
+          <uri>model://hokuyo_lidar</uri>
+          <pose>0.25 0 0.69 0 0 0</pose>
+    </include>
+    <joint name="hokuyo_joint" type="fixed">
+      <child>hokuyo_lidar::link</child>
+      <parent>chassis</parent>
+    </joint>
+
+<!-- Realsense camera front -->
+
+    <link name="rs_cam_front">
+      <pose>0.29 0 0.67 0 0 0</pose>
+      <inertial>
+        <mass>0.1</mass>
+      </inertial>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>0.03 0.12 0.02</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.03 0.12 0.02</size>
+          </box>
+        </geometry>
+        <material> <!-- Wheel material -->
+          <ambient>0.0 0.0 0.4 1</ambient>
+          <diffuse>0.1 0.1 0.4 1</diffuse>
+          <specular>0 0 0 0</specular>
+          <emissive>0.15 0.15 0.15 1</emissive>
+       </material>
+      </visual>
+      <sensor name="camera" type="depth">
+        <update_rate>20</update_rate>
+        <camera>
+          <horizontal_fov>1.047198</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.05</near>
+            <far>10</far>
+          </clip>
+        </camera>
+        <plugin name="realsense_controller" filename="libgazebo_ros_openni_kinect.so">
+         <baseline>0.2</baseline>
+         <alwaysOn>true</alwaysOn>
+         <updateRate>1.0</updateRate>
+         <cameraName>realsense_f</cameraName>
+         <imageTopicName>/camera/front/color/image_raw</imageTopicName>
+         <cameraInfoTopicName>/camera/front/color/camera_info</cameraInfoTopicName>
+         <depthImageTopicName>/camera/front/depth/image_raw</depthImageTopicName>
+         <depthImageInfoTopicName>/camera/front/depth/camera_info</depthImageInfoTopicName>
+         <pointCloudTopicName>/camera/front/depth/points</pointCloudTopicName>
+         <frameName>rs_front</frameName>
+         <pointCloudCutoff>0.5</pointCloudCutoff>
+         <pointCloudCutoffMax>10.0</pointCloudCutoffMax>
+         <distortionK1>0.00000001</distortionK1>
+         <distortionK2>0.00000001</distortionK2>
+         <distortionK3>0.00000001</distortionK3>
+         <distortionT1>0.00000001</distortionT1>
+         <distortionT2>0.00000001</distortionT2>
+         <CxPrime>0</CxPrime>
+         <Cx>0</Cx>
+         <Cy>0</Cy>
+         <focalLength>0</focalLength>
+         <hackBaseline>0</hackBaseline>
+       </plugin>
+      </sensor>
+    </link>
+
+      <joint name="realsense_joint_f" type="fixed">
+        <child>rs_cam_front</child>
+        <parent>chassis</parent>
+      </joint>
+
+<!-- Realsense camera back -->
+<link name="rs_cam_back">
+  <pose>-0.29 0 0.67 0 0 3.141592</pose>
+  <inertial>
+    <mass>0.1</mass>
+  </inertial>
+  <collision name="collision">
+    <geometry>
+      <box>
+        <size>0.03 0.12 0.02</size>
+      </box>
+    </geometry>
+  </collision>
+  <visual name="visual">
+    <geometry>
+      <box>
+        <size>0.03 0.12 0.02</size>
+      </box>
+    </geometry>
+    <material> <!-- Wheel material -->
+      <ambient>0.0 0.0 0.4 1</ambient>
+      <diffuse>0.1 0.1 0.4 1</diffuse>
+      <specular>0 0 0 0</specular>
+      <emissive>0.15 0.15 0.15 1</emissive>
+   </material>
+  </visual>
+  <sensor name="camera" type="depth">
+    <update_rate>20</update_rate>
+    <camera>
+      <horizontal_fov>1.047198</horizontal_fov>
+      <image>
+        <width>640</width>
+        <height>480</height>
+        <format>R8G8B8</format>
+      </image>
+      <clip>
+        <near>0.05</near>
+        <far>10</far>
+      </clip>
+    </camera>
+    <plugin name="realsense_controller" filename="libgazebo_ros_openni_kinect.so">
+     <baseline>0.2</baseline>
+     <alwaysOn>true</alwaysOn>
+     <updateRate>1.0</updateRate>
+     <cameraName>realsense_b</cameraName>
+     <imageTopicName>/camera/back/color/image_raw</imageTopicName>
+     <cameraInfoTopicName>/camera/back/color/camera_info</cameraInfoTopicName>
+     <depthImageTopicName>/camera/back/depth/image_raw</depthImageTopicName>
+     <depthImageInfoTopicName>/camera/back/depth/camera_info</depthImageInfoTopicName>
+     <pointCloudTopicName>/camera/back/depth/points</pointCloudTopicName>
+     <frameName>rs_back</frameName>
+     <pointCloudCutoff>0.5</pointCloudCutoff>
+     <pointCloudCutoffMax>10.0</pointCloudCutoffMax>
+     <distortionK1>0.00000001</distortionK1>
+     <distortionK2>0.00000001</distortionK2>
+     <distortionK3>0.00000001</distortionK3>
+     <distortionT1>0.00000001</distortionT1>
+     <distortionT2>0.00000001</distortionT2>
+     <CxPrime>0</CxPrime>
+     <Cx>0</Cx>
+     <Cy>0</Cy>
+     <focalLength>0</focalLength>
+     <hackBaseline>0</hackBaseline>
+   </plugin>
+  </sensor>
+</link>
+
+  <joint name="realsense_joint_b" type="fixed">
+    <child>rs_cam_back</child>
+    <parent>chassis</parent>
+  </joint>
+
+</model>
+</sdf>
