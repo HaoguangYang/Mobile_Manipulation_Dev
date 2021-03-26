@@ -5,7 +5,7 @@ import rospy
 def Payload(base):
     class PayloadClass(base):
         def __init__(self):
-            super().__init__()
+            super(PayloadClass, self).__init__()
             self.__payload_if = serial.Serial('/dev/ttyACM0', timeout=2)  # open serial port.
             time.sleep(1)
             self.__payload_if.setDTR(0)
@@ -22,7 +22,7 @@ def Payload(base):
             self.payload_out_queue = ""
             
         def execute(self):
-            super().execute()
+            super(PayloadClass, self).execute()
             self.__payload_if_cycle_inst = rospy.Timer(rospy.Duration(1./50.), self.__cycle)
         
         def __cycle(self):

@@ -5,7 +5,7 @@ import time
 def uvc(PayloadClass):
     class uvcClass(PayloadClass):
         def __init__(self):
-            super().__init__()
+            super(uvcClass, self).__init__()
             self.ser_send('$L0&')
             self.uvcOn = False
             self.uvcCurrent = 0.0  # (A)
@@ -18,7 +18,7 @@ def uvc(PayloadClass):
             #    print "Error: unable to start Serial Listener thread"
             
         def execute(self):
-            super().execute()
+            super(uvcClass, self).execute()
             self.__rx_cycle_inst = rospy.Timer(rospy.Duration(1.), self.__cycle)
 
         def turnOnUVC(self):
@@ -30,7 +30,7 @@ def uvc(PayloadClass):
             self.uvcOn = False
             
         def shutdown(self):
-            super().shutdown()
+            super(uvcClass, self).shutdown()
             self.turnOffUVC()
             self.__rx_cycle_inst.shutdown()
             

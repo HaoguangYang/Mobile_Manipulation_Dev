@@ -4,16 +4,16 @@ import rospy
 def button(PayloadClass):
     class buttonClass(PayloadClass):
         def __init__(self):
-            super().__init__()
+            super(buttonClass, self).__init__()
             self.ser_send('$S0&')
             self.buttonState = 0
             
         def execute(self):
-            super().execute()
+            super(buttonClass, self).execute()
             self.__rx_cycle_inst = rospy.Timer(rospy.Duration(0.2), self.__cycle)
             
         def shutdown(self):
-            super().shutdown()
+            super(buttonClass, self).shutdown()
             self.buttonStop()
             self.__rx_cycle_inst.shutdown()
             

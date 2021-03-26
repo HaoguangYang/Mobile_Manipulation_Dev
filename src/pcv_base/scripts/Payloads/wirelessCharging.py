@@ -5,17 +5,17 @@ import time
 def wirelessCharger(PayloadClass):
     class wirelessChargerClass(PayloadClass):
         def __init__(self):
-            super().__init__()
+            super(wirelessChargerClass, self).__init__()
             self.ser_send('$C0&')
             self.chargingState = 0
             self.chargingError = False
             
         def execute(self):
-            super().execute()
+            super(wirelessChargerClass, self).execute()
             self.__cycle_inst = rospy.Timer(rospy.Duration(1), self.__cycle)
             
         def shutdown(self):
-            super().shutdown()
+            super(wirelessChargerClass, self).shutdown()
             self.chargingStop()
             self.__cycle_inst.shutdown()
             

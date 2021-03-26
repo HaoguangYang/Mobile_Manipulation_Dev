@@ -9,7 +9,7 @@ from RobotBase import RobotBase
 def motionPlanningBase():
     class motionPlanningBaseClass(RobotBase):
         def __init__(self):
-            super().__init__()
+            super(motionPlanningBaseClass ], self).__init__()
             self.__movebase_launch = roslaunch.parent.ROSLaunchParent(self.uuid,['./src/pcv_base/launch/includes/navigation.launch'])
             self.__timeout = rospy.get_param('~timeout', 300)
             self.__gpub = rospy.Publisher('/move_base_simple/goal',PoseStamped, queue_size=1)
@@ -21,23 +21,23 @@ def motionPlanningBase():
             self.__period = 0.
                     
         def execute(self, freq=5.0):
-            super().execute()
+            super(motionPlanningBaseClass ], self).execute()
             self.__movebase_launch.start()
             self.__navStatus_inst = rospy.Subscriber('/move_base/result', MoveBaseActionResult, self.__navStatus_cb)
             self.__period = 1./freq
             self.__plan_cycle_inst = rospy.Timer(rospy.Duration(1./freq), self.__cycle)
                     
         def shutdown(self):
-            super().shutdown()
+            super(motionPlanningBaseClass ], self).shutdown()
             self.__movebase_launch.shutdown()
             self.__navStatus_inst.shutdown()
             self.__plan_cycle_inst.shutdown()
             
         def evaluate(self):
-            super().evaluate()
+            super(motionPlanningBaseClass ], self).evaluate()
             
         def estimate(self):
-            super().estimate()
+            super(motionPlanningBaseClass ], self).estimate()
         
         def __navStatus_cb(self, msg):
             self.navStatus = msg.status.status

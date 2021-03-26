@@ -3,8 +3,9 @@ import rospy
 import warnings
 import roslaunch
 import numpy as np
-from std_msgs.msg import Time
-from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
+import subprocess
+from std_msgs.msg import Byte, Time
+from geometry_msgs.msg import Twist, PoseWithCovarianceStamped
 from tf import transformations as ts
 
 class RobotBase(object):
@@ -28,14 +29,14 @@ class RobotBase(object):
         #init_data = rospy.wait_for_message('robot_pose_ekf/odom_combined', PoseWithCovarianceStamped)
         #self.__ekf_cb(init_data)
         self.paused = False
-        while not self.__ena_pub.get_num_connections():
-            pass
         
     def execute(self):
         self.__amcl_inst = rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.__amcl_cb)
         self.__ekf_inst = rospy.Subscriber('robot_pose_ekf/odom_combined', PoseWithCovarianceStamped, self.__ekf_cb)
         self.__watchdog_inst = rospy.Timer(rospy.Duration(1), self.__watchdog_cb)
-    
+        while not self.__ena_pub.get_num_connections():
+            pass
+        
     def shutdown(self):
         self.watchdog_inst.shutdown()
         self.amcl_inst.shutdown()
@@ -50,7 +51,7 @@ class RobotBase(object):
     
     def __watchdog_cb(self, event):
         try:
-            check_output(["pidof","pcv_base_node"])
+            subprocess.check_output(["pidof","pcv_base_node"])
         except subprocess.CalledProcessError:
             # thread is not running
             self.__launch_baseNode.shutdown()
