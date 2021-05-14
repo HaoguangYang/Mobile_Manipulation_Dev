@@ -1,4 +1,5 @@
 <launch>
     <node pkg="pcv_base" type="node_wrapper.sh" name="node_wrapper" output="screen"/>
     <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop" output="screen"/>
+    <node pkg="pcv_base" type="databaseLogger.py" name="db_logger" output="screen"/>
 </launch>

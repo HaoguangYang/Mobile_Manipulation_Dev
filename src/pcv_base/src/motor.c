@@ -354,10 +354,12 @@ motor_disable (struct motor *m)
 void motor_reset_communication (struct motor *m)
 {
 	assert (m != NULL);
-	struct CO_message msg = {NMT, .m.NMT = 0x82};
 	bool last_status = m->enabled;
 	// reset communication
+    struct CO_message msg = {NMT, .m.NMT = 0x82};
 	CO_send_message (m->s, m->no, &msg);
+    msg.m.NMT.data = 0x01;
+    CO_send_message (m->s, m->no, &msg);
 	// reset heartbeat timer
 	struct itimerspec itmr = {{0}};
 	itmr.it_value.tv_sec = HEARTBEAT_TIMEOUT;
@@ -552,7 +554,7 @@ heartbeat_timer_handler (union sigval val)
 {
 	struct motor *m = val.sival_ptr;
 	// Disable all motors
-	raise (SIGSTP);
+	raise (SIGTSTP);
 	// Reset communication
 	puts ("Motor controller heartbeat timeout, resetting communication");
 	motor_reset_communication(m);

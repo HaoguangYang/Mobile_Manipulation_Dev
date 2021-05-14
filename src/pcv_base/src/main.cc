@@ -71,6 +71,8 @@ static void perform_startup_tasks (void);
 static void parse_command_args (int argc, char *argv[]);
 static void *control_thread (void *aux);
 static void sig_handler_int (int);
+static void sig_handler_tstp (int);
+static void sig_handler_cont (int);
 static void sleep_until (struct timespec *ts, long delay);
 static int kbhit(void);
 /*------------------------static variable declarations------------------------*/
@@ -835,9 +837,9 @@ perform_startup_tasks (void)
 	sigaction (SIGINT, &sa1, NULL);
 	
 	struct sigaction sa2 = {0};
-	sa2.sa_handler = sig_handler_stp;
+	sa2.sa_handler = sig_handler_tstp;
 	sigfillset (&sa2.sa_mask);
-	sigaction (SIGSTP, &sa2, NULL);
+	sigaction (SIGTSTP, &sa2, NULL);
 	
 	struct sigaction sa3 = {0};
 	sa3.sa_handler = sig_handler_cont;
@@ -893,15 +895,15 @@ sig_handler_int (int)
 }
 
 static void
-sig_handler_stp (int)
+sig_handler_tstp (int)
 {
-	vehicle.disable();
+	vehicle->disable();
 }
 
 static void
 sig_handler_cont (int)
 {
-	vehicle.enable();
+	vehicle->enable();
 }
 
 
