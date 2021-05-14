@@ -351,6 +351,23 @@ motor_disable (struct motor *m)
 	m->enabled = false;
 }
 
+void motor_reset_communication (struct motor *m)
+{
+	assert (m != NULL);
+	struct CO_message msg = {NMT, .m.NMT = 0x82};
+	bool last_status = m->enabled;
+	// reset communication
+	CO_send_message (m->s, m->no, &msg);
+	// reset heartbeat timer
+	struct itimerspec itmr = {{0}};
+	itmr.it_value.tv_sec = HEARTBEAT_TIMEOUT;
+	timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
+	// recover motor to last state.
+	m->enabled = false;
+	if (last_status==true){
+		motor_enable(m);
+	}
+}
 
 /*
  * Sends out RPDO2 with the given torque data (n/m) to control a
@@ -360,7 +377,6 @@ void
 motor_set_torque (struct motor *m, double torque)
 {
 	assert (m != NULL);
-
 	/* ignore call if the motor is not in torque mode*/
     if (m->enabled) {
         if (m->cm == TORQUE)
@@ -534,8 +550,14 @@ msg_timer_handler (union sigval val)
 static void
 heartbeat_timer_handler (union sigval val)
 {
-	puts ("Motor controller heartbeat timeout, killing the process");
-	raise (SIGINT);
+	struct motor *m = val.sival_ptr;
+	// Disable all motors
+	raise (SIGSTP);
+	// Reset communication
+	puts ("Motor controller heartbeat timeout, resetting communication");
+	motor_reset_communication(m);
+	// Enable all motors
+	raise (SIGCONT);
 }
 
 

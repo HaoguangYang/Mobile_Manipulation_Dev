@@ -70,7 +70,7 @@ using std::endl;
 static void perform_startup_tasks (void);
 static void parse_command_args (int argc, char *argv[]);
 static void *control_thread (void *aux);
-static void sig_handler (int);
+static void sig_handler_int (int);
 static void sleep_until (struct timespec *ts, long delay);
 static int kbhit(void);
 /*------------------------static variable declarations------------------------*/
@@ -332,7 +332,7 @@ main (int argc, char *argv[])
 			//"SAFETY" -- stop vehicle and program if bumper is hit
 			if (vehicle->isBumperHit()) {
 				cout << "Bumper hit: " << vehicle->getBumperState() << endl; // Todo: remove print statement - not safe
-				sig_handler(0);
+				sig_handler_int(0);
 			}
 		}
 #endif
@@ -459,7 +459,7 @@ main (int argc, char *argv[])
 		// "SAFETY" -- convenience stop!
 		if (kbhit()) {
 			cout << "Key is hit" << endl; // Todo: remove print statement - not safe
-			sig_handler(0);
+			sig_handler_int(0);
 		}
 #endif
 	}
@@ -829,10 +829,20 @@ static void
 perform_startup_tasks (void)
 {
 	/* install the signal handler for abnormal program exit */
-	struct sigaction sa = {0};
-	sa.sa_handler = sig_handler;
-	sigfillset (&sa.sa_mask);
-	sigaction (SIGINT, &sa, NULL);
+	struct sigaction sa1 = {0};
+	sa1.sa_handler = sig_handler_int;
+	sigfillset (&sa1.sa_mask);
+	sigaction (SIGINT, &sa1, NULL);
+	
+	struct sigaction sa2 = {0};
+	sa2.sa_handler = sig_handler_stp;
+	sigfillset (&sa2.sa_mask);
+	sigaction (SIGSTP, &sa2, NULL);
+	
+	struct sigaction sa3 = {0};
+	sa3.sa_handler = sig_handler_cont;
+	sigfillset (&sa3.sa_mask);
+	sigaction (SIGCONT, &sa3, NULL);
 
 #ifdef JOYSTICK
 	/* open message queue with joystick */
@@ -869,7 +879,7 @@ parse_command_args (int argc, char *argv[])
  * if the program aborts abnormally
  */
 static void
-sig_handler (int)
+sig_handler_int (int)
 {
 	cout << endl;
 	cout << "SIGINT received, destroying vehicle and exiting" << std::endl;
@@ -880,6 +890,18 @@ sig_handler (int)
 		cout << "Closing file " << endl;
 	}
 	exit (0);
+}
+
+static void
+sig_handler_stp (int)
+{
+	vehicle.disable();
+}
+
+static void
+sig_handler_cont (int)
+{
+	vehicle.enable();
 }
 
 
