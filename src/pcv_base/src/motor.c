@@ -358,10 +358,65 @@ void motor_reset_communication (struct motor *m)
 	// reset communication
     struct CO_message msg = {NMT, .m.NMT = 0x82};
 	CO_send_message (m->s, m->no, &msg);
-    msg.m.NMT.data = 0x01;
-    CO_send_message (m->s, m->no, &msg);
-	// reset heartbeat timer
+    
+    struct event e;
 	struct itimerspec itmr = {{0}};
+	itmr.it_value.tv_sec = MSG_TIMEOUT;
+	unsigned i = 0;
+	CO_send_message (m->s, m->no, &communication_init_sequence[i]);
+	timer_settime (m->msg_timer, 0, &itmr, NULL);
+	while (i < NUM_COMM_INIT_STEPS)
+	{
+		mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
+		if (e.type == TIMEOUT)
+		{
+			printf("Motor %d init timer timeout, init_motor failed", m->no);
+		}
+		else if (e.type == communication_init_responses[i].type && e.param == communication_init_responses[i].param)
+		{
+			if (++i < NUM_COMM_INIT_STEPS)
+			{
+				struct CO_message cur = communication_init_sequence[i];
+
+				/* make sure to add the motor number to the data field for PDO inits
+				   and home offsets */
+				if (cur.type == SDO_Rx)
+				{
+                    //printf("Writing to index %X with subindex %X, %X\n", cur.m.SDO.index, cur.m.SDO.subindex, cur.m.SDO.data);
+                    switch (cur.m.SDO.index)
+					{
+						case RPDO1_COMM:
+						case RPDO2_COMM:
+						case RPDO3_COMM:
+						case RPDO4_COMM:
+						case TPDO1_COMM:
+						case TPDO2_COMM:
+						case TPDO3_COMM:
+						case TPDO4_COMM:
+							if (cur.m.SDO.subindex == 0x01)
+								cur.m.SDO.data += m->no;
+							break;
+						default:
+							break;
+					}
+				}
+
+				CO_send_message (m->s, m->no, &cur);
+				timer_settime (m->msg_timer, 0, &itmr, NULL);
+			}
+		}
+        else {
+            printf("Response error | ");
+            printf("Type: %X, Param: %X\n", e.type, e.param);
+            printf("Expected vals  | ");
+            printf("Type: %X, Param: %X\n", e.type, e.param);
+        }
+	}
+	/* stop timer */
+	itmr.it_value.tv_sec = 0;
+	timer_settime (m->msg_timer, 0, &itmr, NULL);
+    
+	// reset heartbeat timer
 	itmr.it_value.tv_sec = HEARTBEAT_TIMEOUT;
 	timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	// recover motor to last state.
@@ -822,10 +877,10 @@ init_motor (struct motor *m)
 
 	/* send first message to kick off */
 	unsigned i = 0;
-	CO_send_message (m->s, m->no, &init_sequence[i]);
+	CO_send_message (m->s, m->no, &actuation_init_sequence[i]);
 	timer_settime (m->msg_timer, 0, &itmr, NULL);
 
-	while (i < NUM_INIT_STEPS)
+	while (i < NUM_ACT_INIT_STEPS)
 	{
 		mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
 		if (e.type == TIMEOUT)
@@ -833,11 +888,48 @@ init_motor (struct motor *m)
 			printf("Motor %d init timer timeout, init_motor failed", m->no);
 			return -1;
 		}
-		if (e.type == init_responses[i].type && e.param == init_responses[i].param)
+		else if (e.type == actuation_init_responses[i].type && e.param == actuation_init_responses[i].param)
 		{
-			if (++i < NUM_INIT_STEPS)
+			if (++i < NUM_ACT_INIT_STEPS)
 			{
-				struct CO_message cur = init_sequence[i];
+				struct CO_message cur = actuation_init_sequence[i];
+
+				/* make sure to add the motor number to the data field for PDO inits
+				   and home offsets */
+				if (cur.type == SDO_Rx && cur.m.SDO.index == HOME_OFFSET)
+				{
+					cur.m.SDO.data = get_cal_offset (m);
+				}
+
+				CO_send_message (m->s, m->no, &cur);
+				timer_settime (m->msg_timer, 0, &itmr, NULL);
+			}
+		}
+        else {
+            printf("Response error | ");
+            printf("Type: %X, Param: %X\n", e.type, e.param);
+            printf("Expected vals  | ");
+            printf("Type: %X, Param: %X\n", e.type, e.param);
+        }
+	}
+
+    /*Repeat for communication setup*/
+	i = 0;
+	CO_send_message (m->s, m->no, &communication_init_sequence[i]);
+	timer_settime (m->msg_timer, 0, &itmr, NULL);
+	while (i < NUM_COMM_INIT_STEPS)
+	{
+		mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
+		if (e.type == TIMEOUT)
+		{
+			printf("Motor %d init timer timeout, init_motor failed", m->no);
+			return -1;
+		}
+		else if (e.type == communication_init_responses[i].type && e.param == communication_init_responses[i].param)
+		{
+			if (++i < NUM_COMM_INIT_STEPS)
+			{
+				struct CO_message cur = communication_init_sequence[i];
 
 				/* make sure to add the motor number to the data field for PDO inits
 				   and home offsets */
@@ -857,11 +949,6 @@ init_motor (struct motor *m)
 							if (cur.m.SDO.subindex == 0x01)
 								cur.m.SDO.data += m->no;
 							break;
-
-						case HOME_OFFSET:
-							cur.m.SDO.data = get_cal_offset (m);
-							break;
-
 						default:
 							break;
 					}
