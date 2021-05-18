@@ -359,9 +359,11 @@ void motor_reset_communication (struct motor *m)
 	// reset communication
     struct event e;
 	struct itimerspec itmr = {{0}};
+	itmr.it_value.tv_sec = 0;
+	timer_settime (m->heartbeat_timer, 0, &itmr, NULL); // disable hb timer
 	itmr.it_value.tv_sec = MSG_TIMEOUT;
 	unsigned i = 0;
-	CO_send_message (m->s, m->no, &comm_init_sequence[i]);
+	CO_send_message (m->s, m->no, &comm_init_sequence[i]);  // enable msg timer
 	timer_settime (m->msg_timer, 0, &itmr, NULL);
 	while (i < NUM_COMM_INIT_STEPS)
 	{
