@@ -715,7 +715,7 @@ init_mQueue (struct motor *m)
 	attr.mq_maxmsg = QUEUE_SIZE;
 	attr.mq_msgsize = sizeof (struct event);
 	attr.mq_flags = 0;
-	m->mQueue = mq_open (m->mQueue_name, O_RDWR | O_CREAT | O_CLOEXEC, 0664, &attr);	// Added O_CLOEXEC to prevebt race conditions
+	m->mQueue = mq_open (m->mQueue_name, O_RDWR | O_CREAT | O_CLOEXEC, 0664, &attr);	// Added O_CLOEXEC to prevent race conditions
 
 	if (m->mQueue == -1)
 	{
@@ -726,6 +726,20 @@ init_mQueue (struct motor *m)
 	return 0;
 }
 
+static void
+flush_mQueue (struct motor *m)
+{
+    struct mq_attr attr;
+    if (mq_getattr(m->mQueue, &attr))
+        printf("Failed to get message queue attribute for motor %u.\r\n", m->no);
+    else{
+        struct event e;
+        while (attr.mq_curmsgs > QUEUE_HIGH_WATER_MARK){
+            mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
+            attr.mq_curmsgs --;
+        }
+    }
+}
 
 /*
  * Implementation of an exponential moving average filter for the motor
@@ -858,6 +872,7 @@ listener (void *aux)
 		        //while(1) {}
 	    	}
 		}
+		flush_mQueue(m);
 	}
 }
 

@@ -4,6 +4,7 @@
 /********************************** MOTOR ******************************************/
 #define NUM_MOTORS					(8)
 #define QUEUE_SIZE					(32)
+#define QUEUE_HIGH_WATER_MARK       (28)
 #define MAX_NAME_LEN				(25)
 
 /* Constants for unit conversion */
