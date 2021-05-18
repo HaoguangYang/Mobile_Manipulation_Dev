@@ -15,8 +15,8 @@ extern "C" {
 #include "./event.h"
 #include "./hardware.h"
 
-#define NUM_ACT_INIT_STEPS		(sizeof (actuation_init_sequence) / sizeof (actuation_init_sequence[0]))
-#define NUM_COMM_INIT_STEPS     (sizeof (communication_init_sequence) / sizeof (communication_init_sequence[0]))
+#define NUM_ACT_INIT_STEPS		(sizeof (act_init_sequence) / sizeof (act_init_sequence[0]))
+#define NUM_COMM_INIT_STEPS     (sizeof (comm_init_sequence) / sizeof (comm_init_sequence[0]))
 #define NUM_ENABLE_STEPS	(sizeof (enable_sequence) / sizeof (enable_sequence[0]))
 
 
@@ -40,7 +40,7 @@ extern "C" {
 #define TORQUE_MODE				(0xFB) // -5
 
 /* initialization sequence for the technosoft motors  */
-const struct CO_message actuation_init_sequence[] = {
+const struct CO_message act_init_sequence[] = {
 	{NMT, .m.NMT = 0x81},
 	{SDO_Rx, .m.SDO = {POS_FACTOR, 0x01, POS_MULTIPLIER, 4}},					/* Position Factor Numerator */
 	{SDO_Rx, .m.SDO = {POS_FACTOR, 0x02, 1, 4}},								/* Position Factor Denominator */
@@ -56,7 +56,9 @@ const struct CO_message actuation_init_sequence[] = {
 	{SDO_Rx, .m.SDO = {HOMING_SPEEDS, 0x02, HOME_SPEED_SLOW, 4}},				/* Set fast homing speed (search for switch) to 0.096 rad/s */
 	{SDO_Rx, .m.SDO = {HOMING_ACCEL, 0x00, HOME_ACCEL, 4}}};						/* Set homing acceleration to 6.74 rad/s^2 */
 
-const struct CO_message communication_init_sequence[] = {
+const struct CO_message comm_init_sequence[] = {
+	{NMT, .m.NMT = 0x82},
+	
 	{SDO_Rx, .m.SDO = {RPDO1_COMM, 0x01, COB_ID_RPDO (0,1) | (1 << 31), 4}}, 	/* Disable RPDO1 */
 	{SDO_Rx, .m.SDO = {RPDO1_COMM, 0x02, 255, 1}},								/* Set RPDO1 transmission type to asynchronous (drive responds immediately) */
 	{SDO_Rx, .m.SDO = {RPDO1_MAPPING, 0x00, 0, 1}},								/* Disable RPDO1 mapping */
@@ -110,7 +112,7 @@ const struct CO_message communication_init_sequence[] = {
     {NMT, 	 .m.NMT = 0x01}};													/* Set NMT State machine to Operational */
 
 /* expected responses from motor driver during initialization */
-const struct event actuation_init_responses[] = {
+const struct event act_init_responses[] = {
 	{NMT_EC_REC, 0x0000},
 	{SDO_WR_ACK, POS_FACTOR},
 	{SDO_WR_ACK, POS_FACTOR},
@@ -126,7 +128,9 @@ const struct event actuation_init_responses[] = {
 	{SDO_WR_ACK, HOMING_SPEEDS},
 	{SDO_WR_ACK, HOMING_ACCEL}};
 
-const struct event communication_init_responses[] = {
+const struct event comm_init_responses[] = {
+    {NMT_EC_REC, 0x0000},
+
 	{SDO_WR_ACK, RPDO1_COMM},
 	{SDO_WR_ACK, RPDO1_COMM},
 	{SDO_WR_ACK, RPDO1_MAPPING},

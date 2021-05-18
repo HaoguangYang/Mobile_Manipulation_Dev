@@ -355,15 +355,13 @@ void motor_reset_communication (struct motor *m)
 {
 	assert (m != NULL);
 	bool last_status = m->enabled;
+	
 	// reset communication
-    struct CO_message msg = {NMT, .m.NMT = 0x82};
-	CO_send_message (m->s, m->no, &msg);
-    
     struct event e;
 	struct itimerspec itmr = {{0}};
 	itmr.it_value.tv_sec = MSG_TIMEOUT;
 	unsigned i = 0;
-	CO_send_message (m->s, m->no, &communication_init_sequence[i]);
+	CO_send_message (m->s, m->no, &comm_init_sequence[i]);
 	timer_settime (m->msg_timer, 0, &itmr, NULL);
 	while (i < NUM_COMM_INIT_STEPS)
 	{
@@ -372,11 +370,11 @@ void motor_reset_communication (struct motor *m)
 		{
 			printf("Motor %d init timer timeout, init_motor failed", m->no);
 		}
-		else if (e.type == communication_init_responses[i].type && e.param == communication_init_responses[i].param)
+		else if (e.type == comm_init_responses[i].type && e.param == comm_init_responses[i].param)
 		{
 			if (++i < NUM_COMM_INIT_STEPS)
 			{
-				struct CO_message cur = communication_init_sequence[i];
+				struct CO_message cur = comm_init_sequence[i];
 
 				/* make sure to add the motor number to the data field for PDO inits
 				   and home offsets */
@@ -409,7 +407,7 @@ void motor_reset_communication (struct motor *m)
             printf("Response error | ");
             printf("Type: %X, Param: %X\n", e.type, e.param);
             printf("Expected vals  | ");
-            printf("Type: %X, Param: %X\n", e.type, e.param);
+            printf("Type: %X, Param: %X\n", comm_init_responses[i].type, comm_init_responses[i].param);
         }
 	}
 	/* stop timer */
@@ -852,9 +850,9 @@ listener (void *aux)
 				printf("Error reset or no error \n");
 				m->enable_pin_active = true;
 			}else {
-	    		//printf("Data 1: %u \n", f.data[0]);
-	    		//printf("Data 2: %u \n", f.data[1]);
-		        //printf("Error message received\n");
+	    		printf("Data 1: %u \n", f.data[0]);
+	    		printf("Data 2: %u \n", f.data[1]);
+		        printf("Emergency message received\n");
 		        //while(1) {}
 	    	}
 		}
@@ -877,7 +875,7 @@ init_motor (struct motor *m)
 
 	/* send first message to kick off */
 	unsigned i = 0;
-	CO_send_message (m->s, m->no, &actuation_init_sequence[i]);
+	CO_send_message (m->s, m->no, &act_init_sequence[i]);
 	timer_settime (m->msg_timer, 0, &itmr, NULL);
 
 	while (i < NUM_ACT_INIT_STEPS)
@@ -888,11 +886,11 @@ init_motor (struct motor *m)
 			printf("Motor %d init timer timeout, init_motor failed", m->no);
 			return -1;
 		}
-		else if (e.type == actuation_init_responses[i].type && e.param == actuation_init_responses[i].param)
+		else if (e.type == act_init_responses[i].type && e.param == act_init_responses[i].param)
 		{
 			if (++i < NUM_ACT_INIT_STEPS)
 			{
-				struct CO_message cur = actuation_init_sequence[i];
+				struct CO_message cur = act_init_sequence[i];
 
 				/* make sure to add the motor number to the data field for PDO inits
 				   and home offsets */
@@ -909,13 +907,13 @@ init_motor (struct motor *m)
             printf("Response error | ");
             printf("Type: %X, Param: %X\n", e.type, e.param);
             printf("Expected vals  | ");
-            printf("Type: %X, Param: %X\n", e.type, e.param);
+            printf("Type: %X, Param: %X\n", act_init_responses[i].type, act_init_responses[i].param);
         }
 	}
 
     /*Repeat for communication setup*/
 	i = 0;
-	CO_send_message (m->s, m->no, &communication_init_sequence[i]);
+	CO_send_message (m->s, m->no, &comm_init_sequence[i]);
 	timer_settime (m->msg_timer, 0, &itmr, NULL);
 	while (i < NUM_COMM_INIT_STEPS)
 	{
@@ -925,11 +923,11 @@ init_motor (struct motor *m)
 			printf("Motor %d init timer timeout, init_motor failed", m->no);
 			return -1;
 		}
-		else if (e.type == communication_init_responses[i].type && e.param == communication_init_responses[i].param)
+		else if (e.type == comm_init_responses[i].type && e.param == comm_init_responses[i].param)
 		{
 			if (++i < NUM_COMM_INIT_STEPS)
 			{
-				struct CO_message cur = communication_init_sequence[i];
+				struct CO_message cur = comm_init_sequence[i];
 
 				/* make sure to add the motor number to the data field for PDO inits
 				   and home offsets */
@@ -962,7 +960,7 @@ init_motor (struct motor *m)
             printf("Response error | ");
             printf("Type: %X, Param: %X\n", e.type, e.param);
             printf("Expected vals  | ");
-            printf("Type: %X, Param: %X\n", e.type, e.param);
+            printf("Type: %X, Param: %X\n", comm_init_responses[i].type, comm_init_responses[i].param);
         }
 	}
 
