@@ -54,7 +54,7 @@ const struct CO_message act_init_sequence[] = {
 	{SDO_Rx, .m.SDO = {HOMING_METHOD, 0x00, HOME_METHOD, 1}},					/* Set method 19 for homing */
 	{SDO_Rx, .m.SDO = {HOMING_SPEEDS, 0x01, HOME_SPEED_FAST, 4}},				/* Set fast homing speed (search for switch) to 1.53 rad/s */
 	{SDO_Rx, .m.SDO = {HOMING_SPEEDS, 0x02, HOME_SPEED_SLOW, 4}},				/* Set fast homing speed (search for switch) to 0.096 rad/s */
-	{SDO_Rx, .m.SDO = {HOMING_ACCEL, 0x00, HOME_ACCEL, 4}}};						/* Set homing acceleration to 6.74 rad/s^2 */
+	{SDO_Rx, .m.SDO = {HOMING_ACCEL, 0x00, HOME_ACCEL, 4}}};					/* Set homing acceleration to 6.74 rad/s^2 */
 
 const struct CO_message comm_init_sequence[] = {
 	{NMT, .m.NMT = 0x82},
@@ -108,7 +108,7 @@ const struct CO_message comm_init_sequence[] = {
     {SDO_Rx, .m.SDO = {TPDO4_MAPPING, 0x00, 1, 1}},								/* Enable TPD04 mapping (1 entry) */
     {SDO_Rx, .m.SDO = {TPDO4_COMM, 0x01, COB_ID_TPDO (0,4), 4}},				/* Enable TPD04 */
 #endif
-	{SDO_Rx, .m.SDO = {PROD_HEARTBEAT_TIME, 0x00, HEARTBEAT_INTERVAL_ms, 2}},	/* Set maximum time between drive heartbeats to 50 ms */
+    {SDO_Rx, .m.SDO = {PROD_HEARTBEAT_TIME, 0x00, HEARTBEAT_INTERVAL_ms, 2}},	/* Set maximum time between drive heartbeats to 50 ms */    
     {NMT, 	 .m.NMT = 0x01}};													/* Set NMT State machine to Operational */
 
 /* expected responses from motor driver during initialization */
@@ -180,7 +180,7 @@ const struct event comm_init_responses[] = {
     {SDO_WR_ACK, TPDO4_MAPPING},
     {SDO_WR_ACK, TPDO4_COMM},
 #endif
-	{SDO_WR_ACK, PROD_HEARTBEAT_TIME},
+    {SDO_WR_ACK, PROD_HEARTBEAT_TIME},
     {STATUS_WRD_REC, 0x0240}};
 
 

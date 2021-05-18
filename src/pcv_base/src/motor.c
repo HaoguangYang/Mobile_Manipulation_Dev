@@ -59,6 +59,7 @@ struct motor
 
 /*------------------------static function declarations------------------------*/
 static int init_mQueue (struct motor *m);
+static void flush_mQueue (struct motor *m, unsigned int threshold);
 static int home_motor (struct motor *m);
 static int init_motor (struct motor *m);
 static int32_t get_cal_offset (struct motor *m);
@@ -310,7 +311,7 @@ motor_enable (struct motor *m)
 
 		if (e.type == TIMEOUT)
 		{
-			puts ("msg timer timeout, motor_enable failed");
+			puts ("msg timer timeout, motor_enable failed\r\n");
 			return -1;
 		}
 		else if (e.type == SDO_WR_ACK && e.param == MODES_OF_OPERATION)
@@ -361,6 +362,10 @@ void motor_reset_communication (struct motor *m)
 	struct itimerspec itmr = {{0}};
 	itmr.it_value.tv_sec = 0;
 	timer_settime (m->heartbeat_timer, 0, &itmr, NULL); // disable hb timer
+    struct CO_message msg_stop = {NMT, .m.NMT = 0x02};
+    CO_send_message (m->s, m->no, &msg_stop);
+    usleep(1000);
+    flush_mQueue(m, 0);
 	itmr.it_value.tv_sec = MSG_TIMEOUT;
 	unsigned i = 0;
 	CO_send_message (m->s, m->no, &comm_init_sequence[i]);  // enable msg timer
@@ -370,10 +375,15 @@ void motor_reset_communication (struct motor *m)
 		mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
 		if (e.type == TIMEOUT)
 		{
-			printf("Motor %d init timer timeout, init_motor failed", m->no);
+			printf("Motor %d reset timeout, reset motor failed\r\n", m->no);
+            i = 0;
+            flush_mQueue(m, 0);
+            CO_send_message (m->s, m->no, &comm_init_sequence[i]);  // enable msg timer
+	        timer_settime (m->msg_timer, 0, &itmr, NULL);
 		}
 		else if (e.type == comm_init_responses[i].type && e.param == comm_init_responses[i].param)
 		{
+            printf("RESETTING MOTOR %d --- %3u%\r\n", m->no, ((uint16_t)i+1)*100/(uint16_t)NUM_COMM_INIT_STEPS);
 			if (++i < NUM_COMM_INIT_STEPS)
 			{
 				struct CO_message cur = comm_init_sequence[i];
@@ -417,6 +427,8 @@ void motor_reset_communication (struct motor *m)
 	timer_settime (m->msg_timer, 0, &itmr, NULL);
     
 	// reset heartbeat timer
+    struct CO_message msg_hb_disable={SDO_Rx, .m.SDO = {0x1017, 0x00, 0, 2}};
+	CO_send_message (m->s, m->no, &msg_hb_disable);
 	itmr.it_value.tv_sec = HEARTBEAT_TIMEOUT;
 	timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	// recover motor to last state.
@@ -611,7 +623,7 @@ heartbeat_timer_handler (union sigval val)
 	// Disable all motors
 	raise (SIGTSTP);
 	// Reset communication
-	puts ("Motor controller heartbeat timeout, resetting communication");
+	printf ("Motor controller %d heartbeat timeout, resetting communication\r\n", m->no);
 	motor_reset_communication(m);
 	// Enable all motors
 	raise (SIGCONT);
@@ -727,14 +739,14 @@ init_mQueue (struct motor *m)
 }
 
 static void
-flush_mQueue (struct motor *m)
+flush_mQueue (struct motor *m, unsigned int threshold)
 {
     struct mq_attr attr;
     if (mq_getattr(m->mQueue, &attr))
         printf("Failed to get message queue attribute for motor %u.\r\n", m->no);
     else{
         struct event e;
-        while (attr.mq_curmsgs > QUEUE_HIGH_WATER_MARK){
+        while (attr.mq_curmsgs > threshold){
             mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
             attr.mq_curmsgs --;
         }
@@ -770,14 +782,12 @@ listener (void *aux)
 	/* listen for messages forever, thread gets cancelled on motor_destroy call */
 	while (m->ok)
 	{
-	  	int nbytes = read(m->s, &f, sizeof(struct can_frame));
-
-	  	if (nbytes < 0) {
+	  	if (read(m->s, &f, sizeof(struct can_frame)) < 0) {
 	      perror ("can raw socket read\n");
 	      exit (-1);
 	  	}
 	    //printf("Can ID: %X\n", f.can_id);
-
+        else{
 	  	/* translate the can frame */
 	  	if (f.can_id == COB_ID_NMT_EC_TX(m->no)) /* NMT */
 	  	{
@@ -866,13 +876,14 @@ listener (void *aux)
 				printf("Error reset or no error \n");
 				m->enable_pin_active = true;
 			}else {
-	    		printf("Data 1: %u \n", f.data[0]);
+		        printf("Emergency message received from Motor %d\n", m->no);
+                printf("Data 1: %u \n", f.data[0]);
 	    		printf("Data 2: %u \n", f.data[1]);
-		        printf("Emergency message received\n");
 		        //while(1) {}
 	    	}
 		}
-		flush_mQueue(m);
+		flush_mQueue(m, QUEUE_HIGH_WATER_MARK);
+    }
 	}
 }
 
@@ -900,7 +911,7 @@ init_motor (struct motor *m)
 		mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
 		if (e.type == TIMEOUT)
 		{
-			printf("Motor %d init timer timeout, init_motor failed", m->no);
+			printf("Motor %d init timer timeout, init_motor failed\r\n", m->no);
 			return -1;
 		}
 		else if (e.type == act_init_responses[i].type && e.param == act_init_responses[i].param)
@@ -937,7 +948,7 @@ init_motor (struct motor *m)
 		mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
 		if (e.type == TIMEOUT)
 		{
-			printf("Motor %d init timer timeout, init_motor failed", m->no);
+			printf("Motor %d init timer timeout, init_motor failed\r\n", m->no);
 			return -1;
 		}
 		else if (e.type == comm_init_responses[i].type && e.param == comm_init_responses[i].param)
@@ -1013,7 +1024,7 @@ home_motor (struct motor *m)
 
 		if (e.type == TIMEOUT)
 		{
-			puts ("msg timer timeout, home_motor failed");
+			puts ("msg timer timeout, home_motor failed\r\n");
 			return -1;
 		}
 		if (e.type == STATUS_WRD_REC && e.param == 0xD637)
