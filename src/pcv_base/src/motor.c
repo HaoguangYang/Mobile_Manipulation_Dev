@@ -188,15 +188,12 @@ motor_set_velocity (struct motor *m, double velocity)
 {
 	assert (m != NULL);
 
-	if (m->enabled)
+    /* ignore call if the motor is not in VELOCITY mode*/
+	if (m->enabled && m->cm == VELOCITY)
 	{
-		/* ignore call if the motor is not in VELOCITY mode*/
-		if (m->cm == VELOCITY)
-		{
-			uint32_t ui_vel = (uint32_t)velocity_SI_to_IU (velocity);
-			struct CO_message msg = {RPDO, .m.PDO = {2, ui_vel, 4}};
-			CO_send_message (m->s, m->no, &msg);
-		}
+		uint32_t ui_vel = (uint32_t)velocity_SI_to_IU (velocity);
+		struct CO_message msg = {RPDO, .m.PDO = {2, ui_vel, 4}};
+		CO_send_message (m->s, m->no, &msg);
 	}
 }
 
@@ -267,6 +264,114 @@ motor_get_inputs(struct motor *m)
 
 
 /*
+ * Sends out RPDO2 with the given torque data (n/m) to control a
+ * new torque
+ */
+void
+motor_set_torque (struct motor *m, double torque)
+{
+	assert (m != NULL);
+	/* ignore call if the motor is not in torque mode*/
+    if (m->enabled  && m->cm == TORQUE) {
+      	//printf("Motor torque: %f \r\n", torque);
+	    // if(abs(torque) > TORQUE_CONT){
+	    // 	printf( "Motor torque too high!");
+     //    	torque = ( (torque > 0) - (torque < 0) ) * TORQUE_CONT;
+     //    	printf("New torque: %f", torque);
+
+     //  	}
+	    uint16_t ui_trq = (uint16_t)torque_SI_to_IU (torque);
+	    //printf("UI torque: %u \r\n", ui_trq);
+        struct CO_message msg = {RPDO, .m.PDO = {2, (ui_trq<<16), 4}};
+	    CO_send_message (m->s, m->no, &msg);
+    }
+}
+
+
+/*
+ * Returns the most recently received torque value in SI units (n/m). If
+ * no new update received since the last call to motor_get_torque, the
+ * function returns -1
+ */
+int
+motor_get_torque (struct motor *m, double *torque)
+{
+	assert (m != NULL);
+	assert (torque != NULL);
+	int retVal = -1;
+
+	pthread_mutex_lock (&m->lock);
+	*torque = m->cur_trq;
+	if (!m->stale_trq)
+	{
+		m->stale_trq = true;
+		retVal = 0;
+	}
+	pthread_mutex_unlock (&m->lock);
+
+	return retVal;
+}
+
+
+/*
+ * Returns the most recently received Current and Voltage value in SI units (A) (V).
+ */
+void
+motor_get_amp (struct motor *m, double *amp)
+{
+	assert (m != NULL);
+	assert (amp != NULL);
+	
+	pthread_mutex_lock (&m->lock);
+	*amp = m->cur_amp;
+	pthread_mutex_unlock (&m->lock);
+}
+
+void
+motor_get_volt (struct motor *m, double *volt)
+{
+	assert (m != NULL);
+	assert (volt != NULL);
+	
+	pthread_mutex_lock (&m->lock);
+	*volt = m->cur_voltage;
+	pthread_mutex_unlock (&m->lock);
+}
+
+
+/* interface to the motor control mode */
+void
+motor_set_ctrl_mode (struct motor *m, enum ctrl_mode cm)
+{
+	assert (m != NULL);
+	m->cm = cm;
+	// puts ("motor_set_ctrl_mode not implemented");
+}
+
+
+/*
+ * Query function for the control mode of the motor (VELOCITY or TORQUE)
+ */
+enum ctrl_mode
+motor_get_ctrl_mode (struct motor *m)
+{
+	assert (m != NULL);
+	return m->cm;
+}
+
+
+/*
+ * Query function for the motor type (ROLLING or STEERING)
+ */
+enum motor_type
+motor_get_type (struct motor *m)
+{
+	assert (m != NULL);
+	return m->mt;
+}
+
+
+/*
  * Enables a motor, returns 0 on success and -1 on failure
  */
 int
@@ -298,6 +403,9 @@ motor_enable (struct motor *m)
 			msg.m.SDO.data += TORQUE_MODE;
             printf("Value: %hhd\n", msg.m.SDO.data);
 			break;
+		
+		default:
+		    break;
 	}
 
 	/* send first message to kick off enable sequence */
@@ -436,116 +544,6 @@ void motor_reset_communication (struct motor *m)
 	if (last_status==true){
 		motor_enable(m);
 	}
-}
-
-/*
- * Sends out RPDO2 with the given torque data (n/m) to control a
- * new torque
- */
-void
-motor_set_torque (struct motor *m, double torque)
-{
-	assert (m != NULL);
-	/* ignore call if the motor is not in torque mode*/
-    if (m->enabled) {
-        if (m->cm == TORQUE)
-	    {
-      	//printf("Motor torque: %f \r\n", torque);
-	    // if(abs(torque) > TORQUE_CONT){
-	    // 	printf( "Motor torque too high!");
-     //    	torque = ( (torque > 0) - (torque < 0) ) * TORQUE_CONT;
-     //    	printf("New torque: %f", torque);
-
-     //  	}
-	    uint16_t ui_trq = (uint16_t)torque_SI_to_IU (torque);
-	    //printf("UI torque: %u \r\n", ui_trq);
-        struct CO_message msg = {RPDO, .m.PDO = {2, (ui_trq<<16), 4}};
-	    CO_send_message (m->s, m->no, &msg);
-	    }
-    }
-}
-
-
-/*
- * Returns the most recently received torque value in SI units (n/m). If
- * no new update received since the last call to motor_get_torque, the
- * function returns -1
- */
-int
-motor_get_torque (struct motor *m, double *torque)
-{
-	assert (m != NULL);
-	assert (torque != NULL);
-	int retVal = -1;
-
-	pthread_mutex_lock (&m->lock);
-	*torque = m->cur_trq;
-	if (!m->stale_trq)
-	{
-		m->stale_trq = true;
-		retVal = 0;
-	}
-	pthread_mutex_unlock (&m->lock);
-
-	return retVal;
-}
-
-
-/*
- * Returns the most recently received Current and Voltage value in SI units (A) (V).
- */
-void
-motor_get_amp (struct motor *m, double *amp)
-{
-	assert (m != NULL);
-	assert (amp != NULL);
-	
-	pthread_mutex_lock (&m->lock);
-	*amp = m->cur_amp;
-	pthread_mutex_unlock (&m->lock);
-}
-
-void
-motor_get_volt (struct motor *m, double *volt)
-{
-	assert (m != NULL);
-	assert (volt != NULL);
-	
-	pthread_mutex_lock (&m->lock);
-	*volt = m->cur_voltage;
-	pthread_mutex_unlock (&m->lock);
-}
-
-
-/* interface to the motor control mode */
-void
-motor_set_ctrl_mode (struct motor *m, enum ctrl_mode cm)
-{
-	assert (m != NULL);
-	m->cm = cm;
-	// puts ("motor_set_ctrl_mode not implemented");
-}
-
-
-/*
- * Query function for the control mode of the motor (VELOCITY or TORQUE)
- */
-enum ctrl_mode
-motor_get_ctrl_mode (struct motor *m)
-{
-	assert (m != NULL);
-	return m->cm;
-}
-
-
-/*
- * Query function for the motor type (ROLLING or STEERING)
- */
-enum motor_type
-motor_get_type (struct motor *m)
-{
-	assert (m != NULL);
-	return m->mt;
 }
 
 
@@ -744,9 +742,9 @@ flush_mQueue (struct motor *m, unsigned int threshold)
     struct mq_attr attr;
     if (mq_getattr(m->mQueue, &attr))
         printf("Failed to get message queue attribute for motor %u.\r\n", m->no);
-    else{
+    else {
         struct event e;
-        while (attr.mq_curmsgs > threshold){
+        while (attr.mq_curmsgs > threshold) {
             mq_receive (m->mQueue, (char *)&e, sizeof (e), NULL);
             attr.mq_curmsgs --;
         }
@@ -778,112 +776,112 @@ listener (void *aux)
 	struct itimerspec itmr = {{0}};
 	itmr.it_value.tv_sec = HEARTBEAT_TIMEOUT;
 	printf("Motor listener thread launched!\r\n");
+	
+	const unsigned int cob_id_nmt_ec_tx = COB_ID_NMT_EC_TX(m->no);
+	const unsigned int cob_id_tpdo1 = COB_ID_TPDO (m->no, 1);
+	const unsigned int cob_id_tpdo2 = COB_ID_TPDO (m->no, 2);
+	const unsigned int cob_id_tpdo3 = COB_ID_TPDO (m->no, 3);
+	const unsigned int cob_id_tpdo4 = COB_ID_TPDO (m->no, 4);
+	const unsigned int cob_id_sdo_tx = COB_ID_SDO_TX (m->no);
+	const unsigned int cob_id_emcy_tx = COB_ID_EMCY_TX (m->no);
+	uint16_t *data_u16;
+	int16_t *data_16;
+	int32_t *data_32;
 
 	/* listen for messages forever, thread gets cancelled on motor_destroy call */
-	while (m->ok)
-	{
+	while (m->ok) {
 	  	if (read(m->s, &f, sizeof(struct can_frame)) < 0) {
 	      perror ("can raw socket read\n");
 	      exit (-1);
-	  	}
+	  	} else {
 	    //printf("Can ID: %X\n", f.can_id);
-        else{
 	  	/* translate the can frame */
-	  	if (f.can_id == COB_ID_NMT_EC_TX(m->no)) /* NMT */
-	  	{
-	  		if (f.data[0] == 0x05) /* heartbeat in operational state */
-	  		{
-	  			/* restart the heartbeat timer */
-	  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
-	  		}
-	  		else if (f.data[0] == 0x00) /* bootup */
-	  		{
-	  			e.type = NMT_EC_REC;
-	  			e.param = f.data[0];
-	  			mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
-	  		}
-	  	}
-	  	else if (f.can_id == COB_ID_TPDO (m->no, 1)) /* TPDO1 - status word*/
-	  	{
-	  		/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
-  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
-			uint16_t *data = (uint16_t *)&f.data;
-	  		e.type = STATUS_WRD_REC;
-	  		e.param = data[0];
-	  		mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
-	  	}
-	  	else if (f.can_id == COB_ID_TPDO (m->no, 2)) /* TPDO2 - {pos, vel/trq}*/
-	  	{
-	  		int32_t *data = (int32_t *)&f.data; // why not uint32_t
-	  		/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
-  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
-	  		/* critical section */
-	  		pthread_mutex_lock (&m->lock);
-	  		m->cur_pos = position_IU_to_SI (data[0]);
-		    m->stale_pos = false;
+	  	    switch (f.can_id){
+	  	        cob_id_nmt_ec_tx:   /* NMT */
+	  	            if (f.data[0] == 0x05) {    /* heartbeat in operational state */
+	          			/* restart the heartbeat timer */
+	          			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
+	          		} else if (f.data[0] == 0x00) {   /* bootup */
+	          			e.type = NMT_EC_REC;
+	          			e.param = f.data[0];
+	          			mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
+	          		}
+	          		break;
+	          	cob_id_tpdo1:       /* TPDO1 - status word*/
+	          	    /* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+          			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
+			        data_u16 = (uint16_t *)&f.data;
+	          		e.type = STATUS_WRD_REC;
+	          		e.param = data_u16[0];
+	          		mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
+	          		break;
+	          	cob_id_tpdo2:       /* TPDO2 - {pos, vel/trq}*/
+	          	    data_32 = (int32_t *)&f.data; // why not uint32_t
+	          		/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+          			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
+	          		/* critical section */
+	          		pthread_mutex_lock (&m->lock);
+	          		m->cur_pos = position_IU_to_SI (data_32[0]);
+		            m->stale_pos = false;
 
-			/* translate the last 4 bytes of data into vel */
-		    m->cur_vel = filter (m->cur_vel, velocity_IU_to_SI (data[1]), LP_VEL_FILTER_COEFF);
-		    m->stale_vel = false;
-			pthread_mutex_unlock (&m->lock);
-			/* end of critical section */
-	  	}
-	    else if (f.can_id == COB_ID_TPDO (m->no, 3)) /* TPD03 - {current, modes of operation */
-	    {
-	        int16_t *data = (int16_t *)&f.data; // why not uint16_t?
-			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
-  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
-	        //printf("data[0]: %X\ndata[1]: %X\n\n",data[0],data[1]);
-	        pthread_mutex_lock (&m->lock);
-	        m->cur_amp = amp_IU_to_SI (data[0]);
-	        m->cur_voltage = volt_IU_to_SI (data[1]);
-	        m->cur_trq = filter (m->cur_trq, amp_to_torque_SI (m->cur_amp), LP_TRQ_FILTER_COEFF);
-	        m->stale_trq = false;
-	        pthread_mutex_unlock (&m->lock);
-	    }
-	    else if (f.can_id == COB_ID_TPDO (m->no, 4)) /* TPD04 - digital inputs */
-	    {
-	    	int32_t *data = (int32_t *)&f.data; // why not uint32_t?
-			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
-  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
-	    	/* critical section */
-	  		pthread_mutex_lock (&m->lock);
-	  		m->inputs = data[0];
-	  		pthread_mutex_unlock (&m->lock);
-	  		/* end of critical section */
-	    }
-	  	else if (f.can_id == COB_ID_SDO_TX (m->no)) /* SDO */
-	  	{
-	  		if (f.data[0] == CO_WRITE_Ack)
-	  		{
-	  			/* send an SDO_WR_ACK event and save the object index in param */
-	  			e.type = SDO_WR_ACK;
-	  			e.param = *(uint16_t *)&(f.data[1]);
-	  			mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
-	  		}
-			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
-  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
-	  	}
-	    else if (f.can_id == COB_ID_EMCY_TX (m->no)) /* Emergency message */
-	    {
-			/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
-  			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
-	    	if ((f.data[0] == 0x41) && (f.data[1] == 0x54))
-	    	{
-	    		m->enable_pin_active = false;
-	    		printf("Motor %d enable pin DISABLED\n", m->no);
-			} else if ((f.data[0] == 0x00) && (f.data[1] == 0x00)) {
-				printf("Error reset or no error \n");
-				m->enable_pin_active = true;
-			}else {
-		        printf("Emergency message received from Motor %d\n", m->no);
-                printf("Data 1: %u \n", f.data[0]);
-	    		printf("Data 2: %u \n", f.data[1]);
-		        //while(1) {}
-	    	}
-		}
-		flush_mQueue(m, QUEUE_HIGH_WATER_MARK);
-    }
+			        /* translate the last 4 bytes of data into vel */
+		            m->cur_vel = filter (m->cur_vel, velocity_IU_to_SI (data_32[1]), LP_VEL_FILTER_COEFF);
+		            m->stale_vel = false;
+			        pthread_mutex_unlock (&m->lock);
+			        /* end of critical section */
+			        break;
+			    cob_id_tpdo3:       /* TPD03 - {current, modes of operation */
+			        data_16 = (int16_t *)&f.data; // why not uint16_t?
+			        /* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+          			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
+	                //printf("data[0]: %X\ndata[1]: %X\n\n",data[0],data[1]);
+	                pthread_mutex_lock (&m->lock);
+	                m->cur_amp = amp_IU_to_SI (data_16[0]);
+	                m->cur_voltage = volt_IU_to_SI (data_16[1]);
+	                m->cur_trq = filter (m->cur_trq, amp_to_torque_SI (m->cur_amp), LP_TRQ_FILTER_COEFF);
+	                m->stale_trq = false;
+	                pthread_mutex_unlock (&m->lock);
+	                break;
+                cob_id_tpdo4:       /* TPD04 - digital inputs */
+                    data_32 = (int32_t *)&f.data; // why not uint32_t?
+			        /* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+          			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
+	            	/* critical section */
+	          		pthread_mutex_lock (&m->lock);
+	          		m->inputs = data_32[0];
+	          		pthread_mutex_unlock (&m->lock);
+	          		/* end of critical section */
+	          		break;
+          		cob_id_sdo_tx:      /* SDO */
+          		    if (f.data[0] == CO_WRITE_Ack) {
+	          			/* send an SDO_WR_ACK event and save the object index in param */
+	          			e.type = SDO_WR_ACK;
+	          			e.param = *(uint16_t *)&(f.data[1]);
+	          			mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
+	          		}
+			        /* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+          			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
+          			break;
+      			cob_id_emcy_tx:     /* Emergency message */
+      			    /* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
+          			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
+	            	if ((f.data[0] == 0x41) && (f.data[1] == 0x54)) {
+	            		m->enable_pin_active = false;
+	            		printf("Motor %d enable pin DISABLED\n", m->no);
+			        } else if ((f.data[0] == 0x00) && (f.data[1] == 0x00)) {
+				        printf("Error reset or no error \n");
+				        m->enable_pin_active = true;
+			        } else {
+		                printf("Emergency message received from Motor %d\n", m->no);
+                        printf("Data: %X, %X \n", f.data[1], f.data[0]);
+		                //while(1) {}
+	            	}
+	            	break;
+            	default:
+            	    break;
+	  	    }
+		    flush_mQueue(m, QUEUE_HIGH_WATER_MARK);
+        }
 	}
 }
 

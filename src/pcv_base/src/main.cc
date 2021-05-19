@@ -562,14 +562,12 @@ control_thread (void *aux)
 #endif
 
 	// Disable HB since we are receiving synced status update.
-/*	
     struct CO_message msg_hb_disable;
 	msg_hb_disable.type = SDO_Rx;
 	msg_hb_disable.m.SDO = {0x1017, 0x00, 0, 2};
 	for (int k = 1; k < 9; k++)
 		CO_send_message (vehicle->s, k, &msg_hb_disable);
 	usleep(1000);
-*/
 
 	/* initial sync message */
 	CO_send_message (vehicle->s, 0, &msg);
@@ -800,9 +798,8 @@ control_thread (void *aux)
 		sleep_until (&next, CONTROL_PERIOD_ns);
 		//rate.sleep();
 	}
-  printf("Exiting control thread ... ");
-  raise (SIGINT);
-
+    printf("Exiting control thread ... ");
+    raise (SIGINT);
 }
 
 
@@ -900,12 +897,22 @@ static void
 sig_handler_tstp (int)
 {
 	vehicle->disable();
-    /*struct CO_message msg_stop;
+    /*
+    // this method will stop all communications of the motor, causing vast timeouts.
+    struct CO_message msg_stop;
     msg_stop.type = NMT;
     msg_stop.m.NMT = {0x02};
 	for (int k = 1; k < 9; k++)
 		CO_send_message (vehicle->s, k, &msg_stop);
-	usleep(1000);*/
+	usleep(1000);
+	// re-enabling heartbeat -- untested
+	struct CO_message msg_hb_enable;
+	msg_hb_disable.type = SDO_Rx;
+	msg_hb_disable.m.SDO = {0x1017, 0x00, 50, 2};
+	for (int k = 1; k < 9; k++)
+		CO_send_message (vehicle->s, k, &msg_hb_enable);
+	usleep(1000);
+	*/
 }
 
 static void
@@ -917,7 +924,15 @@ sig_handler_cont (int)
     msg_cont.m.NMT = {0x01};
 	for (int k = 1; k < 9; k++)
 		CO_send_message (vehicle->s, k, &msg_cont);
-	usleep(1000);*/
+	usleep(1000);
+	// re-disabling heartbeat -- untested
+	struct CO_message msg_hb_enable;
+	msg_hb_disable.type = SDO_Rx;
+	msg_hb_disable.m.SDO = {0x1017, 0x00, 0, 2};
+	for (int k = 1; k < 9; k++)
+		CO_send_message (vehicle->s, k, &msg_hb_enable);
+	usleep(1000);
+	*/
 }
 
 
