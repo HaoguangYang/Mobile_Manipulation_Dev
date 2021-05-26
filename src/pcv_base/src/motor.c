@@ -725,7 +725,7 @@ init_mQueue (struct motor *m)
 	attr.mq_maxmsg = QUEUE_SIZE;
 	attr.mq_msgsize = sizeof (struct event);
 	attr.mq_flags = 0;
-	m->mQueue = mq_open (m->mQueue_name, O_RDWR | O_CREAT | O_CLOEXEC, 0664, &attr);	// Added O_CLOEXEC to prevent race conditions
+	m->mQueue = mq_open (m->mQueue_name, O_RDWR | O_CREAT | O_CLOEXEC , 0664, &attr);	// Added O_CLOEXEC to prevent race conditions
 
 	if (m->mQueue == -1)
 	{
@@ -777,13 +777,6 @@ listener (void *aux)
 	itmr.it_value.tv_sec = HEARTBEAT_TIMEOUT;
 	printf("Motor listener thread launched!\r\n");
 	
-	const unsigned int cob_id_nmt_ec_tx = COB_ID_NMT_EC_TX(m->no);
-	const unsigned int cob_id_tpdo1 = COB_ID_TPDO (m->no, 1);
-	const unsigned int cob_id_tpdo2 = COB_ID_TPDO (m->no, 2);
-	const unsigned int cob_id_tpdo3 = COB_ID_TPDO (m->no, 3);
-	const unsigned int cob_id_tpdo4 = COB_ID_TPDO (m->no, 4);
-	const unsigned int cob_id_sdo_tx = COB_ID_SDO_TX (m->no);
-	const unsigned int cob_id_emcy_tx = COB_ID_EMCY_TX (m->no);
 	uint16_t *data_u16;
 	int16_t *data_16;
 	int32_t *data_32;
@@ -796,8 +789,8 @@ listener (void *aux)
 	  	} else {
 	    //printf("Can ID: %X\n", f.can_id);
 	  	/* translate the can frame */
-	  	    switch (f.can_id){
-	  	        cob_id_nmt_ec_tx:   /* NMT */
+	  	    switch (f.can_id - m->no){
+	  	        case COB_ID_NMT_EC_TX_BASE:   /* NMT */
 	  	            if (f.data[0] == 0x05) {    /* heartbeat in operational state */
 	          			/* restart the heartbeat timer */
 	          			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
@@ -807,7 +800,7 @@ listener (void *aux)
 	          			mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
 	          		}
 	          		break;
-	          	cob_id_tpdo1:       /* TPDO1 - status word*/
+	          	case COB_ID_TPDO1_BASE:       /* TPDO1 - status word*/
 	          	    /* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
           			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 			        data_u16 = (uint16_t *)&f.data;
@@ -815,7 +808,7 @@ listener (void *aux)
 	          		e.param = data_u16[0];
 	          		mq_send (m->mQueue, (char *)&e, sizeof (e), 0);
 	          		break;
-	          	cob_id_tpdo2:       /* TPDO2 - {pos, vel/trq}*/
+	          	case COB_ID_TPDO2_BASE:       /* TPDO2 - {pos, vel/trq}*/
 	          	    data_32 = (int32_t *)&f.data; // why not uint32_t
 	          		/* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
           			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
@@ -830,7 +823,7 @@ listener (void *aux)
 			        pthread_mutex_unlock (&m->lock);
 			        /* end of critical section */
 			        break;
-			    cob_id_tpdo3:       /* TPD03 - {current, modes of operation */
+			    case COB_ID_TPDO3_BASE:       /* TPD03 - {current, modes of operation */
 			        data_16 = (int16_t *)&f.data; // why not uint16_t?
 			        /* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
           			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
@@ -842,7 +835,7 @@ listener (void *aux)
 	                m->stale_trq = false;
 	                pthread_mutex_unlock (&m->lock);
 	                break;
-                cob_id_tpdo4:       /* TPD04 - digital inputs */
+                case COB_ID_TPDO4_BASE:       /* TPD04 - digital inputs */
                     data_32 = (int32_t *)&f.data; // why not uint32_t?
 			        /* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
           			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
@@ -852,7 +845,7 @@ listener (void *aux)
 	          		pthread_mutex_unlock (&m->lock);
 	          		/* end of critical section */
 	          		break;
-          		cob_id_sdo_tx:      /* SDO */
+          		case COB_ID_SDO_TX_BASE:      /* SDO */
           		    if (f.data[0] == CO_WRITE_Ack) {
 	          			/* send an SDO_WR_ACK event and save the object index in param */
 	          			e.type = SDO_WR_ACK;
@@ -862,7 +855,7 @@ listener (void *aux)
 			        /* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
           			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
           			break;
-      			cob_id_emcy_tx:     /* Emergency message */
+      			case COB_ID_EMCY_TX_BASE:     /* Emergency message */
       			    /* restart the heartbeat timer -- DIRTY FIX TO PREVENT TIMEOUT, NOT SECURED*/
           			timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	            	if ((f.data[0] == 0x41) && (f.data[1] == 0x54)) {

@@ -23,7 +23,7 @@
 
 /* timer */
 #define MS_TO_NS(a)					((a)*1000*1000)
-#define MSG_TIMEOUT					(1)  				// [s]
+#define MSG_TIMEOUT					(2)  				// [s]
 #define HOME_TIMEOUT				(20)				// [s]
 #define HEARTBEAT_TIMEOUT			(2)					// [s]
 
