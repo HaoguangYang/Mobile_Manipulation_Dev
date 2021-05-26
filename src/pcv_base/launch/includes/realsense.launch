@@ -49,6 +49,9 @@
       <arg name="depth_width"           value="$(arg depth_width)"/>
       <arg name="depth_height"          value="$(arg depth_height)"/>
       <arg name="clip_distance"         value="$(arg clip_distance)"/>
+      <arg name="unite_imu_method"      value="linear_interpolation"/>
+      <arg name="enable_gyro"           value="true"/>
+      <arg name="enable_accel"          value="true"/>
     </include>
   </group>
   
@@ -66,6 +69,9 @@
       <arg name="depth_width"           value="$(arg depth_width)"/>
       <arg name="depth_height"          value="$(arg depth_height)"/>
       <arg name="clip_distance"         value="$(arg clip_distance)"/>
+      <arg name="unite_imu_method"      value="linear_interpolation"/>
+      <arg name="enable_gyro"           value="true"/>
+      <arg name="enable_accel"          value="true"/>
     </include>
   </group-->
   
