@@ -800,6 +800,7 @@ control_thread (void *aux)
 	}
     printf("Exiting control thread ... ");
     raise (SIGINT);
+    return 0;
 }
 
 
