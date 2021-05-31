@@ -444,6 +444,7 @@ motor_enable (struct motor *m)
 
 	/* set to enabled */
 	m->enabled = true;
+	flush_mQueue(m, 0);
 	return 0;
 }
 
@@ -458,6 +459,7 @@ motor_disable (struct motor *m)
 	struct CO_message msg = {SDO_Rx, .m.SDO = {CONTROL_WORD, 0x00, 0x00, 2}};
 	CO_send_message (m->s, m->no, &msg);
 	m->enabled = false;
+	flush_mQueue(m, 0);
 }
 
 void motor_reset_communication (struct motor *m)
@@ -491,7 +493,7 @@ void motor_reset_communication (struct motor *m)
 		}
 		else if (e.type == comm_init_responses[i].type && e.param == comm_init_responses[i].param)
 		{
-            printf("RESETTING MOTOR %d --- %3u%\r\n", m->no, ((uint16_t)i+1)*100/(uint16_t)NUM_COMM_INIT_STEPS);
+            printf("RESETTING MOTOR %d --- %3u%%\r\n", m->no, ((uint16_t)i+1)*100/(uint16_t)NUM_COMM_INIT_STEPS);
 			if (++i < NUM_COMM_INIT_STEPS)
 			{
 				struct CO_message cur = comm_init_sequence[i];
@@ -537,6 +539,7 @@ void motor_reset_communication (struct motor *m)
 	// reset heartbeat timer
     struct CO_message msg_hb_disable={SDO_Rx, .m.SDO = {0x1017, 0x00, 0, 2}};
 	CO_send_message (m->s, m->no, &msg_hb_disable);
+	flush_mQueue(m, 0);
 	itmr.it_value.tv_sec = HEARTBEAT_TIMEOUT;
 	timer_settime (m->heartbeat_timer, 0, &itmr, NULL);
 	// recover motor to last state.
@@ -986,6 +989,7 @@ init_motor (struct motor *m)
 	/* stop timer */
 	itmr.it_value.tv_sec = 0;
 	timer_settime (m->msg_timer, 0, &itmr, NULL);
+	flush_mQueue(m, 0);
 	return 0;
 }
 
@@ -1028,6 +1032,7 @@ home_motor (struct motor *m)
 	/* stop timer */
 	itmr.it_value.tv_sec = 0;
 	timer_settime (m->msg_timer, 0, &itmr, NULL);
+	flush_mQueue(m, 0);
 	return 0;
 }
 
