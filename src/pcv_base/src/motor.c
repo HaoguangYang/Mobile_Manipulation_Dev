@@ -894,7 +894,7 @@ init_motor (struct motor *m)
 	struct event e;
 	struct itimerspec itmr = {{0}};
 	itmr.it_value.tv_sec = MSG_TIMEOUT;
-
+    
 	/* send first message to kick off */
 	unsigned i = 0;
 	CO_send_message (m->s, m->no, &act_init_sequence[i]);

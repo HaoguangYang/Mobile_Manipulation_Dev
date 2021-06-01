@@ -72,7 +72,7 @@
   
   <!-- Already synchronized RGB-D related topic, with rtabmap_ros/rgbd_sync nodelet -->
   <arg name="rgbd_sync"               default="true"/>         <!-- pre-sync rgb_topic, depth_topic, camera_info_topic -->
-  <arg name="approx_rgbd_sync"        default="true"/>          <!-- false=exact synchronization -->
+  <arg name="approx_rgbd_sync"        default="false"/>          <!-- false=exact synchronization -->
   <arg name="subscribe_rgbd"          default="$(arg rgbd_sync)"/>
   <arg name="rgbd_topic"              default="rgbd_image" />
   <arg name="depth_scale"             default="1.0" />         <!-- Deprecated, use rgbd_depth_scale instead -->

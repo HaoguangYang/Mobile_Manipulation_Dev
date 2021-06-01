@@ -74,6 +74,7 @@ struct CO_message
    this function, it does not check for proper reception of the message
    by the remote node, ,motor_no = 0 is a broadcast for NMT messages */
 void CO_send_message (int s, uint8_t motor_no, const struct CO_message *msg);
+void CO_Set_bitrate (int s, unsigned int br);
 
 /* cpp - c cross compilation */
 #ifdef __cplusplus

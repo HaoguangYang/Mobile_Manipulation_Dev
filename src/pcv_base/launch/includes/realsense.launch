@@ -17,6 +17,8 @@
   <arg name="color_height"              default="720"/>
   <arg name="depth_width"               default="1280"/>
   <arg name="depth_height"              default="720"/>
+  <arg name="color_fps"                 default="15"/>
+  <arg name="depth_fps"                 default="15"/>
   <arg name="clip_distance"             default="5"/>
   <arg name="topic_odom_in"             default="odom"/>
   <arg name="calib_odom_file"           default=""/>
@@ -48,11 +50,14 @@
       <arg name="tf_prefix"		        value="$(arg tf_prefix_camera_d1)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>
       <arg name="align_depth"           value="true"/>
+      <arg name="enable_sync"           value="true"/>
       <arg name="filters"               value="decimation,disparity,spatial"/>
       <arg name="color_width"           value="$(arg color_width)"/>
       <arg name="color_height"          value="$(arg color_height)"/>
       <arg name="depth_width"           value="$(arg depth_width)"/>
       <arg name="depth_height"          value="$(arg depth_height)"/>
+      <arg name="color_fps"             value="$(arg color_fps)"/>
+      <arg name="depth_fps"             value="$(arg depth_fps)"/>
       <arg name="clip_distance"         value="$(arg clip_distance)"/>
       <arg name="unite_imu_method"      value="linear_interpolation"/>
       <arg name="enable_gyro"           value="true"/>
@@ -68,11 +73,14 @@
       <arg name="tf_prefix"		        value="$(arg tf_prefix_camera_d2)"/>
       <arg name="initial_reset"         value="$(arg initial_reset)"/>
       <arg name="align_depth"           value="true"/>
-      <arg name="filters"               value="pointcloud"/>
+      <arg name="enable_sync"           value="true"/>
+      <arg name="filters"               value="decimation,disparity,spatial"/>
       <arg name="color_width"           value="$(arg color_width)"/>
       <arg name="color_height"          value="$(arg color_height)"/>
       <arg name="depth_width"           value="$(arg depth_width)"/>
       <arg name="depth_height"          value="$(arg depth_height)"/>
+      <arg name="color_fps"             value="$(arg color_fps)"/>
+      <arg name="depth_fps"             value="$(arg depth_fps)"/>
       <arg name="clip_distance"         value="$(arg clip_distance)"/>
       <arg name="unite_imu_method"      value="linear_interpolation"/>
       <arg name="enable_gyro"           value="true"/>
