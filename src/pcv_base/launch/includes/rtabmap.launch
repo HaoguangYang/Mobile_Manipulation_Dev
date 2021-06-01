@@ -45,7 +45,7 @@
   <arg name="database_path"           default="~/.ros/rtabmap.db"/>
   <arg name="queue_size"              default="10"/>
   <arg name="wait_for_transform"      default="0.2"/>
-  <arg name="args"                    default=""/>              <!-- delete_db_on_start, udebug -->
+  <arg name="args"                    default="--Optimizer/GravitySigma 0.3"/>              <!-- delete_db_on_start, udebug -->
   <arg name="rtabmap_args"            default="$(arg args)"/>   <!-- deprecated, use "args" argument -->
   <arg name="gdb"                     default="false"/>         <!-- Launch nodes in gdb for debugging (apt install xterm gdb) -->
   <arg     if="$(arg gdb)" name="launch_prefix" default="xterm -e gdb -q -ex run --args"/>

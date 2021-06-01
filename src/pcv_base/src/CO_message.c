@@ -147,10 +147,10 @@ CO_Set_bitrate (int s, unsigned int br)
             ind = 0;
             break;
     }
-    uint8_t cmd[] = {0x13, 0x00, ind, 0x00, 0x00, 0x00, 0x00, 0x00};
+    uint8_t cmd[] = {0x00, 0x00, 0x00, 0x00, 0x00, ind, 0x00, 0x13};
     send_frame(s, 0X7E5, 8, cmd);
-    cmd[1] = 0x00;
-    cmd[2] = 0x0A;
+    cmd[6] = 0x00;
+    cmd[5] = 0x0A;
     send_frame(s, 0X7E5, 8, cmd);
     usleep(20000);
 }
