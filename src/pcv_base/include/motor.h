@@ -64,6 +64,7 @@ int motor_get_position (struct motor *m, double *position);
 /* Interface for enabling/disabling the motors */
 int motor_enable (struct motor *m);
 void motor_disable (struct motor *m);
+void motor_reset_communication (struct motor *m);
 
 /* Interface to motor torque */
 void motor_set_torque (struct motor *m, double torque);

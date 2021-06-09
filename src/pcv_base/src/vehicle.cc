@@ -74,6 +74,9 @@ Vehicle::Vehicle()
 
 	/* create a socket for the control thread */
 	s = create_can_socket (UNUSED_NODE_ID, 0xF);
+	
+	CO_Set_bitrate(s, 500000);
+	
 	if (s < 0)
 	{
 		perror ("Unable to open control socket\n");

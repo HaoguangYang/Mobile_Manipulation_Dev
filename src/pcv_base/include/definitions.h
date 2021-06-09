@@ -4,6 +4,7 @@
 /********************************** MOTOR ******************************************/
 #define NUM_MOTORS					(8)
 #define QUEUE_SIZE					(32)
+#define QUEUE_HIGH_WATER_MARK       (28)
 #define MAX_NAME_LEN				(25)
 
 /* Constants for unit conversion */
@@ -22,7 +23,7 @@
 
 /* timer */
 #define MS_TO_NS(a)					((a)*1000*1000)
-#define MSG_TIMEOUT					(1)  				// [s]
+#define MSG_TIMEOUT					(2)  				// [s]
 #define HOME_TIMEOUT				(20)				// [s]
 #define HEARTBEAT_TIMEOUT			(2)					// [s]
 

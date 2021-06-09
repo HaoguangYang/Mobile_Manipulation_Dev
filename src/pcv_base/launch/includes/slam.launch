@@ -1,13 +1,15 @@
 <launch>
-  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
-  <param name="particles" type="int" value="100" />
-  <param name="linearUpdate" type="double" value="0.1" />
-  <param name="angularUpdate" type="double" value="0.1" />
-  <param name="delta" type="double" value="0.04" />
-  <param name="xmin" type="double" value="-20"/>
+  <!--node pkg="gmapping" type="slam_gmapping" name="slam_gmapping">
+    <param name="particles" type="int" value="100" />
+    <param name="linearUpdate" type="double" value="0.1" />
+    <param name="angularUpdate" type="double" value="0.1" />
+    <param name="delta" type="double" value="0.04" />
+    <param name="xmin" type="double" value="-20"/>
     <param name="ymin" type="double" value="-20"/>
     <param name="xmax" type="double" value="20"/>
     <param name="ymax" type="double" value="20"/>
-  </node>
+  </node-->
+  
+  <include file="$(find pcv_base)/launch/includes/rtabmap.launch"/>
   
 </launch>

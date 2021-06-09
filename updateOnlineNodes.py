@@ -9,7 +9,7 @@ import numpy as np
 from datetime import datetime
 import xml.etree.ElementTree as ET
 
-class SQL_IP_Logger:
+class PeerFinder:
     def __init__(self):
         db_cred = ET.parse('/home/cartman/Dev/dbCredentials.xml')
         server = db_cred.findall('server')[0].get('value')
@@ -52,24 +52,30 @@ class SQL_IP_Logger:
         self.robot_ip = ni.ifaddresses(wlan_name)[ni.AF_INET][0]['addr']
         print (self.robot_ip)
 
-    def reportIP(self):
+    def find(self, robotNumber):
         with self.connection.cursor() as cursor:
             # INSERT INTO [TABLE NAME] (COLUMN NAME) VALUE(value1, value2)...
-            sql = "INSERT INTO `"+self.dbName+"`.`" + self.telemetryTableName + "` \
-                    (`TimeStamp`, `IP`) VALUES(\
-                    '"+str(self.date)+"', '"+self.robot_ip+"');"
+            sql = "SELECT `TimeStamp`, `IP` FROM `CARTMAN03_TELEMETRY` ORDER BY `TimeStamp` DESC LIMIT 1"
             #cursor.execute(sql, vals)
             cursor.execute(sql)
-            result = cursor.fetchone()
+            result = cursor.fetchall()  #(Time, IP)
             print(sql)
-        #print("db..navigation")
+        # try connect to the ROS port on the target machine to determine if robot is reachable.
+        not_up = sock_test.connect_ex((result[1], 11311))
+        if not not_up:
+            # this robot is not online / unreachable
+            pass
+        else:
+            # add this hostIP+name set to /etc/hosts
+        
+    def cleanup(self):
         self.connection.commit()
-        print('telemetry sent')
         self.connection.close()
            
 
 if __name__ == "__main__":
-    dbLogger = SQL_IP_Logger()
-    dbLogger.reportIP()
+    pf = PeerFinder()
+    # draft
+    pf.find([1,2,3,4,5,6,7,8,9,10])
     
 

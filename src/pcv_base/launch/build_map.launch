@@ -16,7 +16,7 @@
     <!--include file="$(find pcv_base)/launch/includes/realsense.launch" /-->
 	
     <!-- Visualization -->
-    <node pkg="rviz" type="rviz" name="rviz"/>
+    <!--node pkg="rviz" type="rviz" name="rviz"/-->
     
 	<!-- control scripts below -->
     <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen"/>

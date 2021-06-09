@@ -20,4 +20,9 @@
 #define COB_ID_SDO_RX(Node_ID)					((Node_ID) + COB_ID_SDO_RX_BASE)
 #define COB_ID_NMT_EC_TX(Node_ID)				((Node_ID) + COB_ID_NMT_EC_TX_BASE)
 
+#define COB_ID_TPDO1_BASE       (0x180)
+#define COB_ID_TPDO2_BASE       (0x280)
+#define COB_ID_TPDO3_BASE       (0x380)
+#define COB_ID_TPDO4_BASE       (0x480)
+
 #endif

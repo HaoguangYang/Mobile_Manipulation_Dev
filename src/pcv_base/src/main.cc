@@ -70,7 +70,9 @@ using std::endl;
 static void perform_startup_tasks (void);
 static void parse_command_args (int argc, char *argv[]);
 static void *control_thread (void *aux);
-static void sig_handler (int);
+static void sig_handler_int (int);
+static void sig_handler_tstp (int);
+static void sig_handler_cont (int);
 static void sleep_until (struct timespec *ts, long delay);
 static int kbhit(void);
 /*------------------------static variable declarations------------------------*/
@@ -332,7 +334,7 @@ main (int argc, char *argv[])
 			//"SAFETY" -- stop vehicle and program if bumper is hit
 			if (vehicle->isBumperHit()) {
 				cout << "Bumper hit: " << vehicle->getBumperState() << endl; // Todo: remove print statement - not safe
-				sig_handler(0);
+				sig_handler_int(0);
 			}
 		}
 #endif
@@ -459,7 +461,7 @@ main (int argc, char *argv[])
 		// "SAFETY" -- convenience stop!
 		if (kbhit()) {
 			cout << "Key is hit" << endl; // Todo: remove print statement - not safe
-			sig_handler(0);
+			sig_handler_int(0);
 		}
 #endif
 	}
@@ -560,7 +562,7 @@ control_thread (void *aux)
 #endif
 
 	// Disable HB since we are receiving synced status update.
-	struct CO_message msg_hb_disable;
+    struct CO_message msg_hb_disable;
 	msg_hb_disable.type = SDO_Rx;
 	msg_hb_disable.m.SDO = {0x1017, 0x00, 0, 2};
 	for (int k = 1; k < 9; k++)
@@ -796,9 +798,9 @@ control_thread (void *aux)
 		sleep_until (&next, CONTROL_PERIOD_ns);
 		//rate.sleep();
 	}
-  printf("Exiting control thread ... ");
-  raise (SIGINT);
-
+    printf("Exiting control thread ... ");
+    raise (SIGINT);
+    return 0;
 }
 
 
@@ -829,10 +831,20 @@ static void
 perform_startup_tasks (void)
 {
 	/* install the signal handler for abnormal program exit */
-	struct sigaction sa = {0};
-	sa.sa_handler = sig_handler;
-	sigfillset (&sa.sa_mask);
-	sigaction (SIGINT, &sa, NULL);
+	struct sigaction sa1 = {0};
+	sa1.sa_handler = sig_handler_int;
+	sigfillset (&sa1.sa_mask);
+	sigaction (SIGINT, &sa1, NULL);
+	
+	struct sigaction sa2 = {0};
+	sa2.sa_handler = sig_handler_tstp;
+	sigfillset (&sa2.sa_mask);
+	sigaction (SIGTSTP, &sa2, NULL);
+	
+	struct sigaction sa3 = {0};
+	sa3.sa_handler = sig_handler_cont;
+	sigfillset (&sa3.sa_mask);
+	sigaction (SIGCONT, &sa3, NULL);
 
 #ifdef JOYSTICK
 	/* open message queue with joystick */
@@ -869,7 +881,7 @@ parse_command_args (int argc, char *argv[])
  * if the program aborts abnormally
  */
 static void
-sig_handler (int)
+sig_handler_int (int)
 {
 	cout << endl;
 	cout << "SIGINT received, destroying vehicle and exiting" << std::endl;
@@ -880,6 +892,48 @@ sig_handler (int)
 		cout << "Closing file " << endl;
 	}
 	exit (0);
+}
+
+static void
+sig_handler_tstp (int)
+{
+	vehicle->disable();
+    /*
+    // this method will stop all communications of the motor, causing vast timeouts.
+    struct CO_message msg_stop;
+    msg_stop.type = NMT;
+    msg_stop.m.NMT = {0x02};
+	for (int k = 1; k < 9; k++)
+		CO_send_message (vehicle->s, k, &msg_stop);
+	usleep(1000);
+	// re-enabling heartbeat -- untested
+	struct CO_message msg_hb_enable;
+	msg_hb_disable.type = SDO_Rx;
+	msg_hb_disable.m.SDO = {0x1017, 0x00, 50, 2};
+	for (int k = 1; k < 9; k++)
+		CO_send_message (vehicle->s, k, &msg_hb_enable);
+	usleep(1000);
+	*/
+}
+
+static void
+sig_handler_cont (int)
+{
+    vehicle->enable();	
+    /*struct CO_message msg_cont;
+    msg_cont.type = NMT;
+    msg_cont.m.NMT = {0x01};
+	for (int k = 1; k < 9; k++)
+		CO_send_message (vehicle->s, k, &msg_cont);
+	usleep(1000);
+	// re-disabling heartbeat -- untested
+	struct CO_message msg_hb_enable;
+	msg_hb_disable.type = SDO_Rx;
+	msg_hb_disable.m.SDO = {0x1017, 0x00, 0, 2};
+	for (int k = 1; k < 9; k++)
+		CO_send_message (vehicle->s, k, &msg_hb_enable);
+	usleep(1000);
+	*/
 }
 
 
