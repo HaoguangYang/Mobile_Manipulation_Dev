@@ -122,7 +122,11 @@ if __name__=="__main__":
                 y = 0
                 z = 0
                 th = 0
-                if (key == '\x03'):
+                if (key == '\x70'):
+                    pub2.publish(Byte(data=0))
+                elif (key == '\x50'):
+                    pub2.publish(Byte(data=1))
+                elif (key == '\x03'):
                     break
 
             twist = Twist()

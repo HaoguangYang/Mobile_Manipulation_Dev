@@ -326,6 +326,7 @@ class SQL_Logger:
                 and self.newNavStat :
                 self.uploadNavData()
                 self.tLastNav = self.date
+            time.sleep(1)
         try:
             pass
         finally:

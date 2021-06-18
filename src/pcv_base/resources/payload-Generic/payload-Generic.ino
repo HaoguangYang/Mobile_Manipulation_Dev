@@ -16,6 +16,7 @@ const unsigned int analogSenPeriod = 100;
 bool buttonState = false;
 bool buttonStateLast = false;
 bool ledState = false;
+bool chargingState = false;
 const long intervalButton = 3000;
 unsigned short programState = 255;
 unsigned int analogSen[6] = {0};
@@ -81,7 +82,8 @@ void loop(){
           if (tail == '&'){   // valid command
             int state = cmd-48; // ASCII to int
             if (state == 1 || state == 0){
-              digitalWrite(chargingPin, HIGH*state);
+              chargingState = true*state;
+              digitalWrite(chargingPin, chargingState);
               char buf[5];
               sprintf(buf, "@C%1d%%", state);
               Serial.print(buf);  // echo the state setting
@@ -109,6 +111,18 @@ void loop(){
     //Serial.println(digitalRead(buttonPin));
     //Serial.println(programState);
     //delay(100);
+    chargingReset(curMillis);
+}
+
+void chargingReset(unsigned long curMillis)
+{
+  bool chargingFault;
+  chargingFault = !digitalRead(chargingFaultPin);
+  if (chargingState && chargingFault){
+    digitalWrite(chargingPin, LOW);
+    delay(1);
+    digitalWrite(chargingPin, HIGH);
+  }
 }
 
 //For Push Button
